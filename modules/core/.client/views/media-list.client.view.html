@@ -1,0 +1,62 @@
+<div ng-if="vm.media && vm.media.length > 0">
+	<div layout="row"
+	    layout-align-gt-sm="start center"
+	    layout-padding>
+		<span class="md-headline">Media</span>
+	</div>
+
+	<slick class="media-carousel"
+	    settings="slickConfig"
+	    infinite=false
+	    arrows
+	    ng-if="mediaLoaded">
+		<div ng-repeat="media in vm.media">
+			<md-card class="media-card">
+				<div class="header-image-wrapper">
+					<div style="background-image: url({{media.image}})"
+					    class="header-image ">
+					</div>
+				</div>
+				<md-card-title>
+					<md-card-title-text ng-init="limit = 66">
+						<div layout="row"
+						    layout-align="start end">
+							<md-truncate flex
+							    class="md-headline title"><a href="{{media.url}}"
+								    target="_blank"
+								    ng-bind-html="media.title"></a></md-truncate>
+							<!-- <span class="md-headline"
+						    ng-show="media.title.length > limit">...</span> -->
+						</div>
+						<span class="md-subhead description">{{media.description}}</span>
+					</md-card-title-text>
+				</md-card-title>
+				<md-card-actions layout="row"
+				    layout-align="start center">
+					<md-button class="md-icon-button vote-btn"
+					    ng-class="{ selected: media.votes.currentUser.voteValue===1 }"
+					    ng-click="vm.vote(media, 'str_agree', $event)">
+						<md-tooltip>
+							<span ng-if="media.votes.currentUser.voteValue===1">Undo</span>
+							<span ng-if="media.votes.currentUser.voteValue!==1">Like</span>
+						</md-tooltip>
+						<md-icon>thumb_up</md-icon>
+					</md-button>
+					<div ng-if="authentication.user.roles.indexOf('admin')>-1 || authentication.user._id===media.user._id"
+					    layout-align="end center">
+						<md-button class="md-icon-button"
+						    ng-click="vm.delete(media)">
+							<md-tooltip>Delete Media</md-tooltip>
+							<md-icon>delete</md-icon>
+						</md-button>
+						<md-button class="md-icon-button"
+						    ui-sref="media.edit({mediaId: media._id, previousObjectId: vm.objectId, objectType: vm.objectType})">
+							<md-tooltip>Edit Media</md-tooltip>
+							<md-icon>edit</md-icon>
+						</md-button>
+					</div>
+				</md-card-actions>
+			</md-card>
+		</div>
+	</slick>
+</div>

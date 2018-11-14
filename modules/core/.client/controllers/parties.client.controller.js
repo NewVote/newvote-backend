@@ -1,0 +1,67 @@
+'use strict';
+
+angular.module('core')
+	.controller('PartiesController', ['$scope', '$rootScope', '$state',
+	function ($scope, $rootScope, $state) {
+			// Update Title
+			$scope.title = $rootScope.titlePrefix + 'Party Profiles' + $rootScope.titleSuffix;
+			$scope.desc = 'Learn more about the policies of the different parties at UQ';
+			$rootScope.headerTitle = 'Parties';
+			var vm = this;
+
+			vm.tiles = [{
+				name: 'Student Action',
+				description: 'Student Action is a progressive political body of students that believes the union has a responsibility to encourage student political engagement with fundamental issues that affect them.',
+				imageUrl: '/public/img/parties/student-action.png',
+				url: 'https://www.newvote.org.au/student-action'
+			},
+			{
+				name: 'Momentum',
+				description: 'Momentum is a team of progressive activists that are focused on issues that concern the wellbeing and safety of students on campus.',
+				imageUrl: '/public/img/parties/momentum.png',
+				url: 'https://www.newvote.org.au/momentum'
+			},
+			{
+				name: 'Focus',
+				description: 'Focus is an apolitical party with the core mission of improving upon the quality of life for students on campus.',
+				imageUrl: '/public/img/parties/focus.png',
+				url: 'https://www.newvote.org.au/focus'
+			},
+			{
+				name: ' Smokers Rights',
+				description: 'Advocating for the rights of smokers, this party is fighting for the return of smoking to campus at UQ which was banned in July 2018. The party’s platforms are based on issues for smokers.',
+				imageUrl: '/public/img/placeholder.png',
+				url: 'https://www.newvote.org.au/smokers-rights'
+			},
+			{
+				name: 'Team Rocket',
+				description: 'Team Rocket is mainly about ensuring no one political party faction gets too much power, providing checks and balances to make sure that neither side of politics tries to do anything too dodgy.',
+				imageUrl: '/public/img/parties/rocket.jpg',
+				url: 'https://www.newvote.org.au/team-rocket'
+			},
+			{
+				name: 'International Student Assembly',
+				description: 'International Students Assembly seemingly have no campaign and no policies. We\'re still trying to connect with them',
+				imageUrl: '/public/img/placeholder.png',
+				url: 'https://www.newvote.org.au/international'
+			},
+			{
+				name: 'Revive',
+				description: 'Revive is more conservative than other student parties. Revive’s solutions are to reestablish organisations such as the pro-life student organisation at UQ campus, the introduction of the western civilisation degree at UQ and containing student enrolment numbers at a sustainable level.',
+				imageUrl: '/public/img/parties/revive.png',
+				url: 'https://www.newvote.org.au/revive'
+			}]
+
+			vm.randomize = function(arr) {
+				return arr.sort(function() {
+					return .5 - Math.random();
+				})
+			}
+
+			function shuffle() {
+				vm.tiles = vm.randomize(vm.tiles);
+			}
+
+			shuffle();
+	}
+]);

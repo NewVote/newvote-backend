@@ -1,0 +1,77 @@
+<md-content class="user-verification"
+    ng-controller="AuthenticationController">
+
+	<!-- Meta tags -->
+	<!-- Basic meta tags -->
+	<update-title title="{{ title }}"></update-title>
+
+	<!-- Facebook META -->
+	<update-meta property="og:title"
+	    content="{{ title }}"></update-meta>
+	<update-meta property="og:url"
+	    use-abs-url="true"></update-meta>
+
+	<!-- Twitter META -->
+	<update-meta name="twitter:title"
+	    content="{{ title }}"></update-meta>
+	<update-meta name="twitter:url"
+	    use-abs-url="true"></update-meta>
+
+	<div layout="column"
+	    flex-offset-lg="25"
+	    flex-lg="50"
+	    flex-offset-xl="25"
+	    flex-xl="50">
+		<h1 class="md-display-1">Account Verification</h1>
+		<div class="info-banner"
+		    ng-hide="verificationStatus.success">
+			<p layout-padding>
+				Thank you for creating your account, please check your e-mail for your verification URL.
+			</p>
+			<p layout-padding>
+				If you have not received an e-mail <strong>please check your spam folder or settings</strong>.
+			</p>
+			<p layout-padding>
+				Alternatively, you can try sending it again.
+			</p>
+			<p ng-show="verificationStatus.message"
+			    layout-padding>{{verificationStatus.message}}</p>
+
+				<!-- ng-click="sendEmail();" -->
+			<md-button type="button"
+			    class="md-raised md-primary"
+			    ng-disabled="verificationStatus.status=='sending'">Resend Email</md-button>
+		</div>
+
+		<div class="info-banner"
+		    ng-show="verificationStatus.success">
+			<p ng-show="verificationStatus.message"
+			    layout-padding>{{verificationStatus.message}}</p>
+		</div>
+		<form name="userForm"
+		    ng-submit="setup(userForm.$valid)"
+		    class="user-form">
+			<md-input-container class="md-block"
+			    flex-gt-sm>
+				<md-checkbox ng-model="user.terms"
+				    aria-label="I accept the terms and conditions"
+				    required
+				    name="terms">
+					I accept the <a href="#">Terms and Conditions</a> and have viewed the <a target="_blank"
+					    href="privacy">Privacy Policy</a>
+				</md-checkbox>
+
+				<div ng-messages="userForm.terms.$error"
+				    md-auto-hide="false">
+					<div ng-message="required">
+						You must accept the terms of service before you can proceed.
+					</div>
+				</div>
+			</md-input-container>
+
+			<md-button type="submit"
+			    class="md-raised md-primary"
+			    ng-disabled="!user.verified || !user.terms">Done</md-button>
+		</form>
+	</div>
+</md-content>

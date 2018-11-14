@@ -1,0 +1,187 @@
+<md-toolbar class="md-primary md-hue-2 app-header">
+	<div class="md-toolbar-tools">
+		<div flex="50"
+		    flex-gt-sm="25">
+			<md-button ng-if="!vm.isBackState"
+			    ng-click="vm.toggleSidenav()"
+			    class="md-icon-button"
+			    tour-step="home.step.openMenu"
+			    tour-step-belongs-to="homeTour"
+			    tour-step-title="Main Menu"
+			    tour-step-content="Navigate the site using the main menu."
+			    tour-step-order="10"
+			    tour-step-placement="right">
+				<md-icon>menu</md-icon>
+			</md-button>
+			<md-button ng-if="vm.isBackState"
+			    ng-click="vm.navigateBack()"
+			    class="md-icon-button">
+				<md-icon>arrow_back_ios</md-icon>
+			</md-button>
+			<md-truncate class="home-title">{{headerTitle}}
+				<md-tooltip>{{headerTitle}}</md-tooltip>
+			</md-truncate>
+			<div tour-step="home.step.0"
+			    tour-step-belongs-to="homeTour"
+			    tour-step-title="Welcome to UQ Votes"
+			    tour-step-content="UQvotes is an independent and nonpartisan voting app for the students of the University of Queensland."
+			    tour-step-order="0"
+			    tour-step-placement="bottom-left">
+			</div>
+		</div>
+
+		<div flex="50"
+		    flex-xl="50"
+		    layout="column"
+		    ng-if="vm.mdMedia('gt-sm')">
+			<md-input-container md-no-float
+			    class="md-block search-input simple"
+			    md-no-asterisk>
+				<md-autocomplete md-no-cache="true"
+				    md-clear-button="false"
+				    placeholder="Search"
+				    md-selected-item="selectedItem"
+				    md-search-text="searchText"
+				    md-items="item in results"
+				    md-search-text-change="vm.searchAll(searchText)"
+				    md-item-text="vm.getItemTitle(item)"
+				    md-delay="300"
+				    md-min-length="1">
+
+					<md-item-template>
+						<a class="search-item"
+						    href="{{vm.getHyperLink(item)}}">
+                  			<span><strong>{{item.model}}: </strong></span>
+                  			<span md-highlight-text="searchText" md-highlight-flags="gi">{{vm.getItemTitle(item)}}</span>
+                		</a>
+					</md-item-template>
+					<md-not-found>
+						Nothing found. <a href="suggestions">Make a suggestion?</a>
+					</md-not-found>
+
+				</md-autocomplete>
+			</md-input-container>
+		</div>
+
+		<span flex></span>
+
+		<md-button aria-label="Show search"
+		    ng-if="!vm.mdMedia('gt-sm')"
+		    class="md-icon-button"
+		    ng-click="vm.openSearch()">
+			<md-icon>search</md-icon>
+		</md-button>
+
+		<md-button ng-show="!vm.authentication.user"
+		    aria-label="Sign In"
+		    class="md-raised"
+		    ui-sref="authentication.signin"
+		    md-colors="{color: 'grey-A200', 'background': 'default-warn'}"
+		    class="md-accent md-hue-1">
+			Sign In
+		</md-button>
+
+		<md-menu ng-show="vm.authentication.user">
+			<md-button aria-label="Open overflow menu"
+			    class="md-icon-button"
+			    ng-click="vm.openMenu($mdMenu, $event)">
+				<md-icon>person</md-icon>
+				<md-tooltip md-direction="left">Signed in as {{vm.authentication.user.displayName}}</md-tooltip>
+			</md-button>
+			<md-menu-content width="4">
+
+				<md-menu-item>
+					<md-button ui-sref="settings.profile">
+						My Profile
+					</md-button>
+				</md-menu-item>
+
+				<md-menu-item ng-if="vm.authentication.user.roles.indexOf('admin') != -1">
+					<md-button ui-sref="admin.users">
+						Manage Users
+					</md-button>
+				</md-menu-item>
+
+				<md-menu-divider></md-menu-divider>
+
+				<md-menu-item>
+					<md-button href="/api/auth/signout"
+					    target="_self">
+						Sign Out
+					</md-button>
+				</md-menu-item>
+			</md-menu-content>
+		</md-menu>
+	</div>
+</md-toolbar>
+
+<md-toolbar class="md-primary"
+    layout-padding
+    ng-if="searchOpen">
+	<md-input-container flex="auto"
+	    md-no-float
+	    class="md-block search-input simple"
+	    md-no-asterisk>
+		<md-autocomplete md-no-cache="true"
+		    md-clear-button="false"
+		    placeholder="Search"
+		    md-selected-item="selectedItem"
+		    md-search-text="searchText"
+		    md-items="item in results"
+		    md-search-text-change="vm.searchAll(searchText)"
+		    md-item-text="vm.getItemTitle(item)"
+		    md-delay="300"
+		    md-min-length="1">
+
+			<md-item-template>
+				<a class="search-item"
+				    href="{{vm.getHyperLink(item)}}">
+			          <span><strong>{{item.model}}: </strong></span>
+			          <span md-highlight-text="searchText" md-highlight-flags="gi">{{vm.getItemTitle(item)}}</span>
+			        </a>
+			</md-item-template>
+			<md-not-found>
+				No matches found.
+			</md-not-found>
+
+		</md-autocomplete>
+	</md-input-container>
+</md-toolbar>
+
+<md-content md-colors="{color: 'grey-A200', 'background': 'default-warn'}"
+    class="md-accent md-hue-1">
+
+	<!-- <div ng-if="authentication.user && !authentication.user.verified"
+	    class="footer"
+	    layout-padding
+	    layout="row"
+	    layout-align="center center"
+	    flex>
+		<span>Your account isn't verified yet. Please Verify your account below.</span>
+	</div> -->
+	<div ng-if="vm.message"
+	    class="footer"
+	    layout-padding
+	    layout="row"
+	    layout-align="center center"
+	    flex>
+		<span>We've just launched! <a target="_blank" href="https://goo.gl/forms/qJTM0SeVzaA4ocOr1">Please give us your feedback.</a></span>
+		<md-button ng-click="vm.toggleMessage()"
+		    class="md-icon-button"
+		    aria-label="More">
+			<md-icon>close</md-icon>
+		</md-button>
+	</div>
+</md-content>
+
+<!-- //FAB Speed dial for adding suggestions -->
+<div class="lock-size fab-float"
+	ng-if="vm.state.current.name !== 'authentication.signin' "
+    layout="row"
+    layout-align="center center">
+	<md-button aria-label="Suggest"
+	    ui-sref="suggestions"
+	    class="md-fab md-primary">
+		<md-icon>add</md-icon>
+	</md-button>
+</div>
