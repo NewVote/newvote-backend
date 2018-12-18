@@ -301,6 +301,7 @@ function mapObjectWithVotes(objects, user, votes) {
 		var userVote = null;
 		var up = 0;
 		var down = 0;
+		var total = 0;
 		object.votes = {};
 
 		votes.forEach(function (vote) {

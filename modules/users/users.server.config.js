@@ -7,7 +7,8 @@ var passport = require('passport'),
 	User = require('mongoose')
 	.model('User'),
 	path = require('path'),
-	config = require(path.resolve('./config/config'));
+	config = require(path.resolve('./config/config')),
+	jwt = require('express-jwt');
 
 /**
  * Module init function.
@@ -35,5 +36,5 @@ module.exports = function (app, db) {
 
 	// Add passport's middleware
 	app.use(passport.initialize());
-	app.use(passport.session());
+	// app.use(passport.session());
 };

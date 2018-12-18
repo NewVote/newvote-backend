@@ -172,12 +172,25 @@ exports.proposalByID = function (req, res, next, id) {
 		});
 };
 
+exports.attachProposals = function (objects, user, regions) {
+	// debugger;
+	const promises = objects.map((obj => {
+		return Proposal.find({ solutions: obj._id }).then(props => {
+			return votes.attachVotes(props, user, regions).then(props => {
+				obj.proposals = props;
+				return obj;
+			})
+		})
+	}))
+	return Promise.all(promises);
+}
+
 function updateSchema(proposals) {
 	console.log('schema update called');
 	for(var i = 0; i < proposals.length; i++) {
 		var proposal = proposals[i];
 		console.log('testing: ', proposal.title);
-		if(proposal.goals && proposal.goals.length > 0){
+		if(proposal.goals && proposal.goals.length > 0) {
 			proposal.solutions = proposal.goals;
 			// proposal.goal = undefined;
 			proposal.goals = undefined;

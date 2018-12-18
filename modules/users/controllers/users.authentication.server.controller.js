@@ -7,6 +7,7 @@ var path = require('path'),
 	config = require(path.resolve('./config/config')),
 	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
 	mongoose = require('mongoose'),
+	jwt = require('jsonwebtoken'),
 	passport = require('passport'),
 	User = mongoose.model('User'),
 	nodemailer = require('nodemailer'),
@@ -25,14 +26,14 @@ var recaptcha = new Recaptcha({
 	verbose: true
 });
 
-try{
+try {
 	var mailchimp = new Mailchimp(config.mailchimp.api);
 	const MAILCHIMP_LIST_ID = config.mailchimp.list;
-}catch(err) {
-	console.log('Error while connecting to mailchimp API:', err)
+} catch(err) {
+	console.log('Error while connecting to mailchimp API');
 }
 
-var addToMailingList = function(user) {
+var addToMailingList = function (user) {
 	return mailchimp.post(`/lists/${MAILCHIMP_LIST_ID}/members`, {
 		email_address: user.email,
 		status: 'subscribed'
@@ -76,12 +77,14 @@ exports.signup = function (req, res) {
 			user.username = user.email;
 
 			try {
-				addToMailingList(user).then(results => {
-					// console.log('Added user to mailchimp');
-				}).catch(err => {
-					console.log('Error saving to mailchimp: ', err);
-				})
-			}catch(err) {
+				addToMailingList(user)
+					.then(results => {
+						// console.log('Added user to mailchimp');
+					})
+					.catch(err => {
+						console.log('Error saving to mailchimp: ', err);
+					})
+			} catch(err) {
 				console.log('Issue with mailchimp: ', err);
 			}
 
@@ -93,21 +96,24 @@ exports.signup = function (req, res) {
 					User.generateRandomPassphrase()
 						.then(pass => {
 							user.verificationCode = user.hashVerificationCode(pass);
-							user.save().then(() => {
-								// sendEmail(user, pass, req)
+							user.save()
+								.then(() => {
+									// sendEmail(user, pass, req)
 
-								// Remove sensitive data before login
-								user.password = undefined;
-								user.salt = undefined;
-								req.login(user, function (err) {
-									if(err) {
-										res.status(400)
-										.send(err);
-									} else {
-										res.json(user);
-									}
+									// Remove sensitive data before login
+									user.password = undefined;
+									user.salt = undefined;
+									req.login(user, function (err) {
+										if(err) {
+											res.status(400)
+												.send(err);
+										} else {
+											const payload = { _id: user._id, roles: user.roles };
+											const token = jwt.sign(payload, config.jwtSecret);
+											res.json({ user: user, token: token });
+										}
+									});
 								});
-							});
 						})
 				})
 				.catch(err => {
@@ -145,7 +151,7 @@ var sendEmail = function (user, pass, req) {
  * Signin after passport authentication
  */
 exports.signin = function (req, res, next) {
-	passport.authenticate('local', function (err, user, info) {
+	passport.authenticate('local', { session: false }, function (err, user, info) {
 		if(err || !user) {
 			res.status(400)
 				.send(info);
@@ -162,7 +168,9 @@ exports.signin = function (req, res, next) {
 							res.status(400)
 								.send(err);
 						} else {
-							res.json(user);
+							const payload = { _id: user._id, roles: user.roles };
+							const token = jwt.sign(payload, config.jwtSecret);
+							res.json({ user: user, token: token });
 						}
 					});
 				});

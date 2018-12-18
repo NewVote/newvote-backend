@@ -80,40 +80,37 @@ exports.delete = function (req, res) {
  * List of Issues
  */
 exports.list = function (req, res) {
-	var topicId = req.query.topicId;
-	var searchParams = req.query.search;
-	var query;
+	let query = {};
+	var topicId = req.query.topicId || null;
+	let org = req.query.organization || null;
+	let search = req.query.search || null;
 
-	if (topicId) {
-		query = {
-			topics: topicId
-		};
-	} else if (searchParams) {
-		query = {
-			$or: [{
-					title: {
-						$regex: req.query.search,
-						$options: 'i'
-					}
-				},
-				{
-					description: {
-						$regex: req.query.search,
-						$options: 'i'
-					}
+	let orgMatch = org ? { 'organizations.url': org } : {};
+	let topicMatch = topicId ? { 'topics': mongoose.Types.ObjectId(topicId) } : {};
+
+	// debugger;
+
+	Issue.aggregate([
+			{ $match: topicMatch },
+			{
+				$lookup: {
+					'from': 'organizations',
+					'localField': 'organizations',
+					'foreignField': '_id',
+					'as': 'organizations'
 				}
-			]
-		};
-	} else {
-		query = null;
-	}
-
-	// console.log('query is: ', searchParams.$or[0].name.$regex);
-
-	Issue.find(query)
-		.sort('-created')
-		.populate('user', 'displayName')
-		.populate('topics', 'name')
+			},
+			{ $match: orgMatch },
+			{
+				$lookup: {
+					'from': 'topics',
+					'localField': 'topics',
+					'foreignField': '_id',
+					'as': 'topics'
+				}
+			},
+			{ $sort: { 'name': 1 } }
+	])
 		.exec(function (err, issues) {
 			if(err) {
 				return res.status(400)

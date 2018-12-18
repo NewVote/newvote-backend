@@ -101,17 +101,20 @@ module.exports.initMiddleware = function (app) {
 
 	// Add the cookie parser and flash middleware
 	app.use(cookieParser());
+
 	app.use(flash());
-	app.use(csrf({ cookie: true }));
+
+	app.use(csrf({
+		path: '/',
+		cookie: true,
+		httpOnly: false
+	}));
+
 	app.use(function (req, res, next) {
 		res.cookie('XSRF-TOKEN', req.csrfToken());
 		next();
 	});
 
-	app.use('/api', jwt({
-			secret: config.sessionSecret,
-			credentialsRequired: false
-		}));
 	//https redirect
 	if(process.env.NODE_ENV === 'production') {
 		app.use('/', httpsRedirect());

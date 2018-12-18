@@ -15,7 +15,6 @@ var path = require('path'),
 	_ = require('lodash');
 
 var buildMessage = function (suggestion, req) {
-	debugger;
 	var messageString = '';
 	var url = req.protocol + '://' + req.get('host');
 	if(suggestion.type == 'new') {

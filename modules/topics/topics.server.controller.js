@@ -19,10 +19,11 @@ exports.create = function (req, res) {
 	var topic = new Topic(req.body);
 	topic.user = req.user;
 	topic.save(function (err) {
-		if (err) {
-			return res.status(400).send({
-				message: errorHandler.getErrorMessage(err)
-			});
+		if(err) {
+			return res.status(400)
+				.send({
+					message: errorHandler.getErrorMessage(err)
+				});
 		} else {
 			res.json(topic);
 		}
@@ -46,10 +47,11 @@ exports.update = function (req, res) {
 	// topic.content = req.body.content;
 
 	topic.save(function (err) {
-		if (err) {
-			return res.status(400).send({
-				message: errorHandler.getErrorMessage(err)
-			});
+		if(err) {
+			return res.status(400)
+				.send({
+					message: errorHandler.getErrorMessage(err)
+				});
 		} else {
 			res.json(topic);
 		}
@@ -63,10 +65,11 @@ exports.delete = function (req, res) {
 	var topic = req.topic;
 
 	topic.remove(function (err) {
-		if (err) {
-			return res.status(400).send({
-				message: errorHandler.getErrorMessage(err)
-			});
+		if(err) {
+			return res.status(400)
+				.send({
+					message: errorHandler.getErrorMessage(err)
+				});
 		} else {
 			res.json(topic);
 		}
@@ -77,31 +80,35 @@ exports.delete = function (req, res) {
  * List of Topics
  */
 exports.list = function (req, res) {
-	var searchParams = req.query.search ? {
-		$or: [{
-				name: {
-					$regex: req.query.search,
-					$options: 'i'
+	let query = {};
+	let org = req.query.organization || null;
+	let search = req.query.search || null;
+
+	let orgMatch = org ? { 'organizations.url' : org } : {};
+
+	Topic.aggregate([
+			{
+				$lookup: {
+					'from': 'organizations',
+					'localField': 'organizations',
+					'foreignField': '_id',
+					'as': 'organizations'
 				}
 			},
-			{
-				description: {
-					$regex: req.query.search,
-					$options: 'i'
-				}
+			{ $match: orgMatch },
+			{ $sort: { 'name': 1 } }
+	])
+		.exec(function (err, topics) {
+			if(err) {
+				console.log(err);
+				return res.status(400)
+					.send({
+						message: errorHandler.getErrorMessage(err)
+					});
+			} else {
+				res.json(topics);
 			}
-		]
-	} : null;
-
-	Topic.find(searchParams).sort('-created').populate('user', 'displayName').exec(function (err, topics) {
-		if (err) {
-			return res.status(400).send({
-				message: errorHandler.getErrorMessage(err)
-			});
-		} else {
-			res.json(topics);
-		}
-	});
+		});
 };
 
 /**
@@ -109,21 +116,25 @@ exports.list = function (req, res) {
  */
 exports.topicByID = function (req, res, next, id) {
 
-	if (!mongoose.Types.ObjectId.isValid(id)) {
-		return res.status(400).send({
-			message: 'Topic is invalid'
-		});
+	if(!mongoose.Types.ObjectId.isValid(id)) {
+		return res.status(400)
+			.send({
+				message: 'Topic is invalid'
+			});
 	}
 
-	Topic.findById(id).populate('user', 'displayName').exec(function (err, topic) {
-		if (err) {
-			return next(err);
-		} else if (!topic) {
-			return res.status(404).send({
-				message: 'No topic with that identifier has been found'
-			});
-		}
-		req.topic = topic;
-		next();
-	});
+	Topic.findById(id)
+		.populate('user', 'displayName')
+		.exec(function (err, topic) {
+			if(err) {
+				return next(err);
+			} else if(!topic) {
+				return res.status(404)
+					.send({
+						message: 'No topic with that identifier has been found'
+					});
+			}
+			req.topic = topic;
+			next();
+		});
 };

@@ -41,7 +41,6 @@ angular.module('core').controller('SuggestionsController', ['$scope', '$rootScop
 		}
 
 		vm.create = function () {
-			debugger;
 			console.log(vm.suggestion);
 			var promise = $q.resolve();
 

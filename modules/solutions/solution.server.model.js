@@ -42,6 +42,10 @@ var SolutionSchema = new Schema({
 		ref: 'Issue',
 		required: true
 	}],
+	proposals: [{
+		type: Schema.ObjectId,
+		ref: 'Proposal'
+	}],
 	votes: {
 		up: Number,
 		down: Number,
@@ -58,7 +62,11 @@ var SolutionSchema = new Schema({
 	likert: {
 		type: Boolean,
 		default: false
-	}
+	},
+	organizations:  [{
+		type: Schema.ObjectId,
+		ref: 'Organization'
+	}]
 });
 
 mongoose.model('Solution', SolutionSchema);

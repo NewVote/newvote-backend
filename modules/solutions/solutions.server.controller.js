@@ -8,6 +8,7 @@ var path = require('path'),
 	Solution = mongoose.model('Solution'),
 	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
 	votes = require('../votes/votes.server.controller'),
+	proposals = require('../proposals/proposals.server.controller'),
 	_ = require('lodash');
 
 /**
@@ -78,40 +79,35 @@ exports.delete = function (req, res) {
  * List of Solutions
  */
 exports.list = function (req, res) {
-	var issueId = req.query.issueId;
-	var searchParams = req.query.search;
-	var query;
-	if(issueId) {
-		query = {
-			issues: issueId
-		};
-	} else if(searchParams) {
-		query = {
-			$or: [{
-					title: {
-						$regex: req.query.search,
-						$options: 'i'
-					}
-				},
-				{
-					description: {
-						$regex: req.query.search,
-						$options: 'i'
-					}
-				},
-				{
-					tags: req.query.search
-				}
-			]
-		};
-	} else {
-		query = null;
-	}
+	let query = {};
+	let issueId = req.query.issueId || null;
+	let search = req.query.search || null;
+	let org = req.query.organization || null;
 
-	Solution.find(query)
-		.sort('-created')
-		.populate('user', 'displayName')
-		.populate('issues')
+	let orgMatch = org ? { 'organizations.url': org } : {};
+	let issueMatch = issueId ? { 'issues': mongoose.Types.ObjectId(issueId) } : {};
+
+	Solution.aggregate([
+			{ $match: issueMatch },
+			{
+				$lookup: {
+					'from': 'organizations',
+					'localField': 'organizations',
+					'foreignField': '_id',
+					'as': 'organizations'
+				}
+			},
+			{ $match: orgMatch },
+			{
+				$lookup: {
+					'from': 'issues',
+					'localField': 'issues',
+					'foreignField': '_id',
+					'as': 'topics'
+				}
+			},
+			{ $sort: { 'created': -1 } }
+	])
 		.exec(function (err, solutions) {
 			if(err) {
 				return res.status(400)
@@ -121,7 +117,11 @@ exports.list = function (req, res) {
 			} else {
 				votes.attachVotes(solutions, req.user, req.query.regions)
 					.then(function (solutions) {
-						res.json(solutions);
+						proposals.attachProposals(solutions, req.user, req.query.regions)
+							.then(solutions => {
+								// debugger;
+								res.json(solutions);
+							})
 					})
 					.catch(function (err) {
 						// console.log(err);
@@ -160,8 +160,12 @@ exports.solutionByID = function (req, res, next, id) {
 			}
 			votes.attachVotes([solution], req.user, req.query.regions)
 				.then(function (solutionArr) {
-					req.solution = solutionArr[0];
-					next();
+					proposals.attachProposals(solutionArr, req.user, req.query.regions)
+						.then(solutions => {
+							// debugger;
+							req.solution = solutions[0];
+							next();
+						})
 				})
 				.catch(next);
 		});

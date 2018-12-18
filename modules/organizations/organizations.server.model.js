@@ -9,34 +9,29 @@ var mongoose = require('mongoose'),
 /**
  * Article Schema
  */
-var TopicSchema = new Schema({
+var OrganizationSchema = new Schema({
 	created: {
 		type: Date,
 		default: Date.now
 	},
-	name: {
+	prettyName: {
 		type: String,
 		trim: true,
-		required: 'Title cannot be blank'
+		required: 'Name cannot be blank'
 	},
-	description: {
+	url: {
 		type: String,
-		default: '',
-		trim: true
+		trim: true,
+		required: 'Url cannot be blank'
 	},
 	imageUrl: {
 		type: String,
-		default: '',
 		trim: true
 	},
-	user: {
+	owner: {
 		type: Schema.ObjectId,
 		ref: 'User'
-	},
-	organizations: {
-		type: Schema.ObjectId,
-		ref: 'Organization'
 	}
 });
 
-mongoose.model('Topic', TopicSchema);
+mongoose.model('Organization', OrganizationSchema);

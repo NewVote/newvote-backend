@@ -18,16 +18,17 @@ var _ = require('lodash'),
 	}),
 	path = require('path'),
 	endOfLine = require('os')
-	.EOL,
+		.EOL,
 	protractor = require('gulp-protractor')
-	.protractor,
+		.protractor,
 	webdriver_update = require('gulp-protractor')
-	.webdriver_update,
+		.webdriver_update,
 	webdriver_standalone = require('gulp-protractor')
-	.webdriver_standalone,
+		.webdriver_standalone,
 	node = undefined,
 	spawn = require('child_process')
-	.spawn;
+		.spawn,
+	debug = true;
 
 // Set NODE_ENV to 'test'
 gulp.task('env:test', function (done) {
@@ -47,10 +48,23 @@ gulp.task('env:prod', function (done) {
 	done();
 });
 
+// Set debug to true
+gulp.task('debug:true', function (done) {
+	debug = true;
+	done();
+});
+
+// Set debug to false
+gulp.task('debug:false', function (done) {
+	debug = false;
+	done();
+});
+
 gulp.task('server', function (done) {
+	console.log('starting server task.');
 	if(node) node.kill();
 
-	node = spawn('node', ['server.js'], { stdio: 'inherit' })
+	node = spawn('node', ['--inspect=9229', 'server.js'], { stdio: 'inherit' })
 	node.on('close', function (code) {
 		console.log(`Got code ${code}`);
 		if(code === 8) {
@@ -61,6 +75,7 @@ gulp.task('server', function (done) {
 })
 
 gulp.task('server-debug', function (done) {
+	console.log('starting server-debug task.');
 	if(node) node.kill();
 
 	node = spawn('node', ['--inspect=9229', '--inspect-brk', 'server.js'], { stdio: 'inherit' })
@@ -88,7 +103,11 @@ gulp.task('watch', function (done) {
 		gulp.watch(defaultAssets.server.gulpConfig, gulp.series('lint'));
 	} else {
 		gulp.watch(defaultAssets.server.gulpConfig, gulp.series('lint'));
-		gulp.watch(_.union(defaultAssets.server.views, defaultAssets.server.allJS, defaultAssets.server.config), gulp.series('server'))
+		if(debug){
+			gulp.watch(_.union(defaultAssets.server.views, defaultAssets.server.allJS, defaultAssets.server.config), gulp.series('server-debug'))
+		}else {
+			gulp.watch(_.union(defaultAssets.server.views, defaultAssets.server.allJS, defaultAssets.server.config), gulp.series('server'))
+		}
 	}
 	done();
 });
@@ -190,6 +209,7 @@ gulp.task('protractor', gulp.series('webdriver_update', function () {
 // runSequence('env:test', 'lint', 'mocha', done);
 gulp.task('test:server', gulp.series(
 	'env:test',
+	'debug:false',
 	'lint',
 	'mocha'
 ));
@@ -197,6 +217,7 @@ gulp.task('test:server', gulp.series(
 // Run the project in development mode
 gulp.task('default', gulp.series(
 	'env:dev',
+	'debug:false',
 	'lint',
 	gulp.parallel('server', 'watch')
 ));
@@ -205,6 +226,7 @@ gulp.task('default', gulp.series(
 // runSequence('env:dev', 'lint', ['server', 'watch'], done);
 gulp.task('debug', gulp.series(
 	'env:dev',
+	'debug:true',
 	'lint',
 	gulp.parallel('server-debug', 'watch')
 ));
@@ -213,6 +235,7 @@ gulp.task('debug', gulp.series(
 // runSequence('templatecache', 'build', 'env:prod', 'lint', ['server', 'watch'], done);
 gulp.task('prod', gulp.series(
 	'env:prod',
+	'debug:false',
 	'lint',
 	gulp.parallel('server', 'watch')
 ));

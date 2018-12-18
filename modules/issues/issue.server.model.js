@@ -46,6 +46,10 @@ var IssueSchema = new Schema({
 	topics: [{
 		type: Schema.ObjectId,
 		ref: 'Topic'
+	}],
+	organizations:  [{
+		type: Schema.ObjectId,
+		ref: 'Organization'
 	}]
 });
 
