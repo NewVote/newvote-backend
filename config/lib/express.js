@@ -123,9 +123,10 @@ module.exports.initMiddleware = function (app) {
 
 	app.use(csrf({
 		path: '/',
-		cookie: true,
-		httpOnly: false,
-		domain: '.newvote.org'
+		cookie: {
+			domain: '.newvote.org'
+		},
+		httpOnly: false
 	}));
 
 	app.use(function (req, res, next) {
