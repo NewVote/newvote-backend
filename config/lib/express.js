@@ -125,7 +125,7 @@ module.exports.initMiddleware = function (app) {
 		cookie: {
 			path: '/',
 			domain: '.newvote.org',
-			sameSite: false,
+			sameSite: 'Lax',
 			httpOnly: false
 		},
 	}));
