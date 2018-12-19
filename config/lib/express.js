@@ -123,8 +123,7 @@ module.exports.initMiddleware = function (app) {
 		path: '/',
 		cookie: true,
 		httpOnly: false,
-		domain: '*.newvote.org',
-		sameSite: false
+		domain: 'newvote.org'
 	}));
 
 	app.use(function (req, res, next) {
