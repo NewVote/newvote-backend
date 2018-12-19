@@ -132,7 +132,7 @@ module.exports.initMiddleware = function (app) {
 
 	app.use(function (req, res, next) {
 		console.log('setting cookie: ', req.csrfToken());
-		res.cookie('XSRF-TOKEN', req.csrfToken());
+		res.cookie('XSRF-TOKEN', req.csrfToken(), { domain: '.newvote.org' });
 		next();
 	});
 
