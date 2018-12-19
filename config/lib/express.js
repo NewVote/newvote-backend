@@ -118,15 +118,16 @@ module.exports.initMiddleware = function (app) {
 
 	// Add the cookie parser and flash middleware
 	app.use(cookieParser());
-
 	app.use(flash());
 
+	// set up csurf
 	app.use(csrf({
-		path: '/',
 		cookie: {
-			domain: '.newvote.org'
+			path: '/',
+			domain: '.newvote.org',
+			sameSite: false,
+			httpOnly: false
 		},
-		httpOnly: false
 	}));
 
 	app.use(function (req, res, next) {
