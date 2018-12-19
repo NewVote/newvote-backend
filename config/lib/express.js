@@ -24,8 +24,10 @@ var config = require('../config'),
 
 var allowCrossDomain = function (req, res, next) {
 	res.header('Access-Control-Allow-Origin', '*');
+	res.header('Access-Control-Allow-Credentials', true);
+	res.header('Access-Control-Allow-Origin', req.headers.origin);
 	res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-	res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+	res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With, X-CSRF-Token');
 
 	// intercept OPTIONS method
 	if('OPTIONS' == req.method) {
@@ -127,14 +129,15 @@ module.exports.initMiddleware = function (app) {
 	}));
 
 	app.use(function (req, res, next) {
+		console.log('setting cookie: ', req.csrfToken());
 		res.cookie('XSRF-TOKEN', req.csrfToken());
 		next();
 	});
 
 	//https redirect
-	if(process.env.NODE_ENV === 'production') {
-		app.use('/', httpsRedirect());
-	}
+	// if(process.env.NODE_ENV === 'production') {
+	// 	app.use('/', httpsRedirect());
+	// }
 };
 
 /**
