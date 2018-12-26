@@ -86,8 +86,10 @@ exports.list = function (req, res) {
 
 	let orgMatch = org ? { 'organizations.url': org } : {};
 	let issueMatch = issueId ? { 'issues': mongoose.Types.ObjectId(issueId) } : {};
+	let searchMatch = search ? { $text: { $search: search } } : {};
 
 	Solution.aggregate([
+			{ $match: searchMatch },
 			{ $match: issueMatch },
 			{
 				$lookup: {

@@ -85,8 +85,10 @@ exports.list = function (req, res) {
 	let search = req.query.search || null;
 
 	let orgMatch = org ? { 'organizations.url' : org } : {};
+	let searchMatch = search ? { $text: { $search: search } } : {};
 
 	Topic.aggregate([
+			{ $match: searchMatch },
 			{
 				$lookup: {
 					'from': 'organizations',

@@ -17,12 +17,14 @@ var TopicSchema = new Schema({
 	name: {
 		type: String,
 		trim: true,
+		test: true,
 		required: 'Title cannot be blank'
 	},
 	description: {
 		type: String,
 		default: '',
-		trim: true
+		trim: true,
+		test: true,
 	},
 	imageUrl: {
 		type: String,
@@ -39,4 +41,5 @@ var TopicSchema = new Schema({
 	}
 });
 
+TopicSchema.index({ 'name': 'text', 'description': 'text' });
 mongoose.model('Topic', TopicSchema);

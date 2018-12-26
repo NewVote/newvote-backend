@@ -69,4 +69,5 @@ var SolutionSchema = new Schema({
 	}]
 });
 
+SolutionSchema.index({ 'title': 'text', 'description': 'text' });
 mongoose.model('Solution', SolutionSchema);

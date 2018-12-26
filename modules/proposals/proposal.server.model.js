@@ -57,4 +57,5 @@ var ProposalSchema = new Schema({
 	}
 });
 
+ProposalSchema.index({ 'title': 'text', 'description': 'text' });
 mongoose.model('Proposal', ProposalSchema);

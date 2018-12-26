@@ -53,4 +53,5 @@ var IssueSchema = new Schema({
 	}]
 });
 
+IssueSchema.index({ 'name': 'text', 'description': 'text' });
 mongoose.model('Issue', IssueSchema);
