@@ -79,61 +79,48 @@ exports.delete = function (req, res) {
  * List of Proposals
  */
 exports.list = function (req, res) {
-	var solutionId = req.query.solutionId;
-	var searchParams = req.query.search;
-	var proposalId = req.query.proposalId;
-	var issueId = req.query.issueId;
-	var getQuery = function () {
-		return new Promise(function (resolve, reject) {
-			//build thhe query
-			if(solutionId) {
-				return resolve({ $or: [{ solutions: solutionId }, { solution: solutionId }, { proposals: solutionId }, { proposal: solutionId }] });
-			} else if(issueId) {
-				//get the solutions for an issue
-				//create query to find any proposals with matching solutionId's
-				Solution.find({ issues: issueId })
-					.then(function (solutions) {
-						// console.log('Solution.find query found: ', solutions.length);
-						var solutionIds = solutions.map(function (solution) {
-							return solution._id;
-						});
-						return resolve({ $or: [{ solutions: { $in: solutionIds } }, { proposals: { $in: solutionIds } }] });
-					});
-			} else if(searchParams) {
-				return resolve({ title: { $regex: searchParams, $options: 'i' } });
-			} else {
-				return resolve(null);
-			}
-		});
-	};
+	let query = {};
+	let solutionId = req.query.solutionId || null;
+	let search = req.query.search || null;
+	let org = req.query.organization || null;
 
-	getQuery()
-		.then(function (query) {
-			// console.log('query from promise is: ', query);
-			Proposal.find(query)
-				.sort('-created')
-				.populate('user', 'displayName')
-				.populate('solutions', 'title')
-				.exec(function (err, proposals) {
-					if(err) {
-						return res.status(400)
+	let orgMatch = org ? { 'organizations.url': org } : {};
+	let solutionMatch = solutionId ? { 'solutions': mongoose.Types.ObjectId(solutionId) } : {};
+	let searchMatch = search ? { $text: { $search: search } } : {};
+
+	Solution.aggregate([
+			{ $match: searchMatch },
+			{ $match: solutionMatch },
+			{
+				$lookup: {
+					'from': 'organizations',
+					'localField': 'organizations',
+					'foreignField': '_id',
+					'as': 'organizations'
+				}
+			},
+			{ $match: orgMatch },
+			{ $sort: { 'created': -1 } }
+	])
+		.exec(function (err, proposals) {
+			if(err) {
+				return res.status(400)
+					.send({
+						message: errorHandler.getErrorMessage(err)
+					});
+			} else {
+				updateSchema(proposals);
+				votes.attachVotes(proposals, req.user, req.query.regions)
+					.then(function (proposals) {
+						res.json(proposals);
+					})
+					.catch(function (err) {
+						res.status(500)
 							.send({
 								message: errorHandler.getErrorMessage(err)
 							});
-					} else {
-						updateSchema(proposals);
-						votes.attachVotes(proposals, req.user, req.query.regions)
-							.then(function (proposals) {
-								res.json(proposals);
-							})
-							.catch(function (err) {
-								res.status(500)
-									.send({
-										message: errorHandler.getErrorMessage(err)
-									});
-							});
-					}
-				});
+					});
+			}
 		});
 };
 
@@ -175,12 +162,14 @@ exports.proposalByID = function (req, res, next, id) {
 exports.attachProposals = function (objects, user, regions) {
 	// debugger;
 	const promises = objects.map((obj => {
-		return Proposal.find({ solutions: obj._id }).then(props => {
-			return votes.attachVotes(props, user, regions).then(props => {
-				obj.proposals = props;
-				return obj;
+		return Proposal.find({ solutions: obj._id })
+			.then(props => {
+				return votes.attachVotes(props, user, regions)
+					.then(props => {
+						obj.proposals = props;
+						return obj;
+					})
 			})
-		})
 	}))
 	return Promise.all(promises);
 }

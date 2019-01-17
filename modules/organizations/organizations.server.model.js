@@ -14,7 +14,7 @@ var OrganizationSchema = new Schema({
 		type: Date,
 		default: Date.now
 	},
-	prettyName: {
+	name: {
 		type: String,
 		trim: true,
 		required: 'Name cannot be blank'

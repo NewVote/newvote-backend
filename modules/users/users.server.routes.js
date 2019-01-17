@@ -14,7 +14,7 @@ module.exports = function (app) {
 	app.route('/api/users/email')
 		.all(jwt({ secret: config.jwtSecret, credentialsRequired: false }))
 		.post(users.sendVerificationCode);
-		
+
 	app.route('/api/users/verify')
 		.all(jwt({ secret: config.jwtSecret, credentialsRequired: false }))
 		.post(users.verify);
@@ -23,6 +23,11 @@ module.exports = function (app) {
 	app.route('/api/users/me')
 		.all(jwt({ secret: config.jwtSecret, credentialsRequired: false }))
 		.get(users.me);
+
+	//
+	app.route('/api/users/count')
+		.all(jwt({ secret: config.jwtSecret, credentialsRequired: false }))
+		.get(users.count)
 
 	app.route('/api/users')
 		.all(jwt({ secret: config.jwtSecret, credentialsRequired: false }))

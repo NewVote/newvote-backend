@@ -101,3 +101,10 @@ exports.changeProfilePicture = function (req, res) {
 exports.me = function (req, res) {
   res.json(req.user || null);
 };
+
+/**
+ * Get count of all users
+ */
+exports.count = function(req, res) {
+	return User.find().then(users => res.json(users.length));	
+}
