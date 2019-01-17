@@ -109,7 +109,6 @@ exports.list = function (req, res) {
 						message: errorHandler.getErrorMessage(err)
 					});
 			} else {
-				updateSchema(proposals);
 				votes.attachVotes(proposals, req.user, req.query.regions)
 					.then(function (proposals) {
 						res.json(proposals);
