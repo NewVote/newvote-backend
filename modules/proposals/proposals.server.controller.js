@@ -88,7 +88,7 @@ exports.list = function (req, res) {
 	let solutionMatch = solutionId ? { 'solutions': mongoose.Types.ObjectId(solutionId) } : {};
 	let searchMatch = search ? { $text: { $search: search } } : {};
 
-	Solution.aggregate([
+	Proposal.aggregate([
 			{ $match: searchMatch },
 			{ $match: solutionMatch },
 			{
