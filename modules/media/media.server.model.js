@@ -35,7 +35,7 @@ var MediaSchema = new Schema({
 		type: String,
 		required: true
 	},
-  issues: [{
+	issues: [{
 		type: Schema.ObjectId,
 		ref: 'Issue'
 	}],
@@ -56,6 +56,10 @@ var MediaSchema = new Schema({
 			ref: 'Vote'
 		}
 	},
+	organizations: [{
+		type: Schema.ObjectId,
+		ref: 'Organization'
+	}]
 });
 
 mongoose.model('Media', MediaSchema);

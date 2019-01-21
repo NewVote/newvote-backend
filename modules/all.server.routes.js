@@ -80,7 +80,7 @@ module.exports = function (app) {
 		.get(countries.list);
 
 	app.route('/api/meta/:uri')
-		.all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+		// .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
 		.get(media.getMeta);
 
 	// Single article routes

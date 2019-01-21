@@ -54,7 +54,11 @@ var ProposalSchema = new Schema({
 	likert: {
 		type: Boolean,
 		default: false
-	}
+	},
+	organizations:  [{
+		type: Schema.ObjectId,
+		ref: 'Organization'
+	}]
 });
 
 ProposalSchema.index({ 'title': 'text', 'description': 'text' });
