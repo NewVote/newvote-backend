@@ -190,7 +190,6 @@ exports.mediaByID = function (req, res, next, id) {
 
 exports.getMeta = function (req, res) {
 	var url = req.params.uri;
-	console.log(url);
 	return scrape(url)
 		.then(function (meta) {
 			var media = {};

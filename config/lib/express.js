@@ -136,10 +136,10 @@ module.exports.initMiddleware = function (app) {
 		next();
 	});
 
-	//https redirect
-	// if(process.env.NODE_ENV === 'production') {
-	// 	app.use('/', httpsRedirect());
-	// }
+	// https redirect
+	if(process.env.NODE_ENV === 'production') {
+		app.use('/', httpsRedirect());
+	}
 };
 
 /**

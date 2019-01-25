@@ -19,10 +19,11 @@ exports.create = function (req, res) {
 	var organization = new Organization(req.body);
 	organization.user = req.user;
 	organization.save(function (err) {
-		if (err) {
-			return res.status(400).send({
-				message: errorHandler.getErrorMessage(err)
-			});
+		if(err) {
+			return res.status(400)
+				.send({
+					message: errorHandler.getErrorMessage(err)
+				});
 		} else {
 			res.json(organization);
 		}
@@ -44,10 +45,11 @@ exports.update = function (req, res) {
 	_.extend(organization, req.body);
 
 	organization.save(function (err) {
-		if (err) {
-			return res.status(400).send({
-				message: errorHandler.getErrorMessage(err)
-			});
+		if(err) {
+			return res.status(400)
+				.send({
+					message: errorHandler.getErrorMessage(err)
+				});
 		} else {
 			res.json(organization);
 		}
@@ -61,10 +63,11 @@ exports.delete = function (req, res) {
 	var organization = req.organization;
 
 	organization.remove(function (err) {
-		if (err) {
-			return res.status(400).send({
-				message: errorHandler.getErrorMessage(err)
-			});
+		if(err) {
+			return res.status(400)
+				.send({
+					message: errorHandler.getErrorMessage(err)
+				});
 		} else {
 			res.json(organization);
 		}
@@ -77,15 +80,18 @@ exports.delete = function (req, res) {
 exports.list = function (req, res) {
 	let query = req.query.url ? { url: req.query.url } : {};
 
-	Organization.find(query).sort('-created').exec(function (err, organizations) {
-		if (err) {
-			return res.status(400).send({
-				message: errorHandler.getErrorMessage(err)
-			});
-		} else {
-			res.json(organizations);
-		}
-	});
+	Organization.find(query)
+		.sort('-created')
+		.exec(function (err, organizations) {
+			if(err) {
+				return res.status(400)
+					.send({
+						message: errorHandler.getErrorMessage(err)
+					});
+			} else {
+				res.json(organizations);
+			}
+		});
 };
 
 /**
@@ -93,21 +99,26 @@ exports.list = function (req, res) {
  */
 exports.organizationByID = function (req, res, next, id) {
 
-	if (!mongoose.Types.ObjectId.isValid(id)) {
-		return res.status(400).send({
-			message: 'Organization is invalid'
-		});
+	if(!mongoose.Types.ObjectId.isValid(id)) {
+		return res.status(400)
+			.send({
+				message: 'Organization is invalid'
+			});
 	}
 
-	Organization.findById(id).populate('user', 'displayName').exec(function (err, organization) {
-		if (err) {
-			return next(err);
-		} else if (!organization) {
-			return res.status(404).send({
-				message: 'No organization with that identifier has been found'
-			});
-		}
-		req.organization = organization;
-		next();
-	});
+	Organization.findById(id)
+		.populate('user', 'displayName')
+		.populate('owner')
+		.exec(function (err, organization) {
+			if(err) {
+				return next(err);
+			} else if(!organization) {
+				return res.status(404)
+					.send({
+						message: 'No organization with that identifier has been found'
+					});
+			}
+			req.organization = organization;
+			next();
+		});
 };
