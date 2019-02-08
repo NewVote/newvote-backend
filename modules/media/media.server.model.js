@@ -56,10 +56,10 @@ var MediaSchema = new Schema({
 			ref: 'Vote'
 		}
 	},
-	organizations: [{
+	organizations: {
 		type: Schema.ObjectId,
 		ref: 'Organization'
-	}]
+	}
 });
 
 mongoose.model('Media', MediaSchema);

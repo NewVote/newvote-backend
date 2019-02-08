@@ -34,7 +34,18 @@ exports.create = function (req, res) {
  * Show the current issue
  */
 exports.read = function (req, res) {
-	res.json(req.issue);
+	// debugger;
+	IssuesController.attachMetaData([req.issue], req.user)
+		.then(function (issueArr) {
+			const updatedIssue = issueArr[0];
+			res.json(updatedIssue);
+		})
+		.catch(err => {
+			return res.status(400)
+				.send({
+					message: errorHandler.getErrorMessage(err)
+				});
+		});
 };
 
 /**
@@ -138,6 +149,7 @@ exports.list = function (req, res) {
  * Issue middleware
  */
 exports.issueByID = function (req, res, next, id) {
+	console.log('issueById user: ', req.user);
 
 	if(!mongoose.Types.ObjectId.isValid(id)) {
 		return res.status(400)
@@ -149,6 +161,7 @@ exports.issueByID = function (req, res, next, id) {
 	Issue.findById(id)
 		.populate('user', 'displayName')
 		.populate('topics', 'name')
+		.populate('organizations')
 		.exec(function (err, issue) {
 			if(err) {
 				return next(err);
@@ -158,12 +171,8 @@ exports.issueByID = function (req, res, next, id) {
 						message: 'No issue with that identifier has been found'
 					});
 			}
-			IssuesController.attachMetaData([issue], req.user)
-				.then(function (issueArr) {
-					req.issue = issueArr[0];
-					next();
-				})
-				.catch(next);
+			req.issue = issue;
+			next();
 		});
 };
 

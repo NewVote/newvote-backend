@@ -33,7 +33,17 @@ exports.create = function (req, res) {
  * Show the current proposal
  */
 exports.read = function (req, res) {
-	res.json(req.proposal);
+	votes.attachVotes([req.proposal], req.user, req.query.regions)
+		.then(function (proposalArr) {
+			const updatedProposal = proposalArr[0];
+			res.json(updatedProposal);
+		})
+		.catch(err => {
+			return res.status(400)
+				.send({
+					message: errorHandler.getErrorMessage(err)
+				});
+		});
 };
 
 /**
@@ -139,6 +149,7 @@ exports.proposalByID = function (req, res, next, id) {
 		.populate('user', 'displayName')
 		.populate('solutions')
 		.populate('solution')
+		.populate('organizations')
 		.exec(function (err, proposal) {
 			if(err) {
 				return next(err);
@@ -148,13 +159,8 @@ exports.proposalByID = function (req, res, next, id) {
 						message: 'No proposal with that identifier has been found'
 					});
 			}
-			updateSchema([proposal]);
-			votes.attachVotes([proposal], req.user, req.query.regions)
-				.then(function (proposalArr) {
-					req.proposal = proposalArr[0];
-					next();
-				})
-				.catch(next);
+			req.proposal = proposal;
+			next();
 		});
 };
 

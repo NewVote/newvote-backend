@@ -159,7 +159,6 @@ exports.voteByID = function (req, res, next, id) {
 };
 
 exports.attachVotes = function (objects, user, regions) {
-	// console.log('votes got object for attaching: ', objects)
 	if (!objects) return Promise.resolve(objects);
 	var objectIds = objects.map(function (object) {
 		return object._id;

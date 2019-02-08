@@ -55,10 +55,10 @@ var ProposalSchema = new Schema({
 		type: Boolean,
 		default: false
 	},
-	organizations:  [{
+	organizations:  {
 		type: Schema.ObjectId,
 		ref: 'Organization'
-	}]
+	}
 });
 
 ProposalSchema.index({ 'title': 'text', 'description': 'text' });

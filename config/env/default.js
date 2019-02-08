@@ -24,6 +24,7 @@ module.exports = {
 	// sessionSecret should be changed for security measures and concerns
 	sessionSecret: process.env.SESSION_SECRET || 'MEAN',
 	jwtSecret: process.env.JWT_SECRET || 'JWTISBETTERTHANSESSION',
+	jwtExpiry: '30d',
 	// sessionKey is set to the generic sessionId key used by PHP applications
 	// for obsecurity reasons
 	sessionKey: 'sessionId',

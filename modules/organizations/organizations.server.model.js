@@ -19,6 +19,10 @@ var OrganizationSchema = new Schema({
 		trim: true,
 		required: 'Name cannot be blank'
 	},
+	description: {
+		type: String,
+		trim: true
+	},
 	url: {
 		type: String,
 		trim: true,
@@ -26,6 +30,10 @@ var OrganizationSchema = new Schema({
 		unique: 'This url is already in use.',
 	},
 	imageUrl: {
+		type: String,
+		trim: true
+	},
+	iconUrl: {
 		type: String,
 		trim: true
 	},

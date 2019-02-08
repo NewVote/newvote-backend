@@ -109,7 +109,7 @@ exports.signup = function (req, res) {
 												.send(err);
 										} else {
 											const payload = { _id: user._id, roles: user.roles };
-											const token = jwt.sign(payload, config.jwtSecret);
+											const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
 											res.json({ user: user, token: token });
 										}
 									});
@@ -169,7 +169,7 @@ exports.signin = function (req, res, next) {
 								.send(err);
 						} else {
 							const payload = { _id: user._id, roles: user.roles };
-							const token = jwt.sign(payload, config.jwtSecret);
+							const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
 							res.json({ user: user, token: token });
 						}
 					});

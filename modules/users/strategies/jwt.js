@@ -19,7 +19,7 @@ module.exports = function () {
 			secretOrKey: config.jwtSecret
 		},
 		function (jwtPayload, done) {
-			debugger;
+			// debugger;
 			User.findOne({ _id: jwtPayload._id })
 				.then(user => {
 					return done(null, user);

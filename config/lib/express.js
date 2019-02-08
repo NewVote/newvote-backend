@@ -121,20 +121,21 @@ module.exports.initMiddleware = function (app) {
 	app.use(flash());
 
 	// set up csurf
-	app.use(csrf({
-		cookie: {
-			path: '/',
-			domain: '.newvote.org',
-			sameSite: 'Lax',
-			httpOnly: false
-		},
-	}));
-
-	app.use(function (req, res, next) {
-		// console.log('setting cookie: ', req.csrfToken());
-		res.cookie('XSRF-TOKEN', req.csrfToken(), { domain: '.newvote.org', sameSite: 'Lax', httpOnly: false });
-		next();
-	});
+	// app.use(csrf({
+	// 	cookie: {
+	// 		path: '/',
+	// 		domain: '.newvote.org',
+	// 		sameSite: 'Lax',
+	// 		httpOnly: false,
+	// 		expires: new Date(Date.now() + 60 * 60)
+	// 	},
+	// }));
+	//
+	// app.use(function (req, res, next) {
+	// 	// console.log('setting cookie: ', req.csrfToken());
+	// 	res.cookie('XSRF-TOKEN', req.csrfToken(), { domain: '.newvote.org', sameSite: 'Lax', httpOnly: false });
+	// 	next();
+	// });
 
 	// https redirect
 	if(process.env.NODE_ENV === 'production') {

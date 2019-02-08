@@ -6,7 +6,6 @@
 var path = require('path'),
 	mongoose = require('mongoose'),
 	Organization = mongoose.model('Organization'),
-	OrganizationsController = require('./organizations.server.controller'),
 	votes = require('../votes/votes.server.controller'),
 	Solution = mongoose.model('Solution'),
 	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
@@ -108,7 +107,7 @@ exports.organizationByID = function (req, res, next, id) {
 
 	Organization.findById(id)
 		.populate('user', 'displayName')
-		.populate('owner')
+		.populate('owner', '_id displayName firstName lastName email')
 		.exec(function (err, organization) {
 			if(err) {
 				return next(err);
@@ -122,3 +121,16 @@ exports.organizationByID = function (req, res, next, id) {
 			next();
 		});
 };
+
+exports.organizationByUrl = function(url) {
+	if(!url) {
+		return null;
+	}
+
+	let query = { url };
+
+	return Organization.findOne(query)
+		.populate('user', 'displayName')
+		.populate('owner', '_id displayName firstName lastName email')
+		.exec();
+}

@@ -33,7 +33,20 @@ exports.create = function (req, res) {
  * Show the current solution
  */
 exports.read = function (req, res) {
-	res.json(req.solution);
+	votes.attachVotes([req.solution], req.user, req.query.regions)
+		.then(function (solutionArr) {
+			proposals.attachProposals(solutionArr, req.user, req.query.regions)
+				.then(solutions => {
+					const updatedSolution = solutions[0];
+					res.json(updatedSolution);
+				})
+		})
+		.catch(err => {
+			return res.status(400)
+				.send({
+					message: errorHandler.getErrorMessage(err)
+				});
+		});
 };
 
 /**
@@ -140,7 +153,7 @@ exports.list = function (req, res) {
  * Solution middleware
  */
 exports.solutionByID = function (req, res, next, id) {
-
+	console.log('solutionById user: ', req.user);
 	if(!mongoose.Types.ObjectId.isValid(id)) {
 		return res.status(400)
 			.send({
@@ -151,6 +164,7 @@ exports.solutionByID = function (req, res, next, id) {
 	Solution.findById(id)
 		.populate('user', 'displayName')
 		.populate('issues')
+		.populate('organizations')
 		.exec(function (err, solution) {
 			if(err) {
 				return next(err);
@@ -160,15 +174,7 @@ exports.solutionByID = function (req, res, next, id) {
 						message: 'No solution with that identifier has been found'
 					});
 			}
-			votes.attachVotes([solution], req.user, req.query.regions)
-				.then(function (solutionArr) {
-					proposals.attachProposals(solutionArr, req.user, req.query.regions)
-						.then(solutions => {
-							// debugger;
-							req.solution = solutions[0];
-							next();
-						})
-				})
-				.catch(next);
+			req.solution = solution;
+			next();
 		});
 };

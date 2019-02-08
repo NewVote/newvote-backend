@@ -127,6 +127,7 @@ exports.topicByID = function (req, res, next, id) {
 
 	Topic.findById(id)
 		.populate('user', 'displayName')
+		.populate('organizations')
 		.exec(function (err, topic) {
 			if(err) {
 				return next(err);

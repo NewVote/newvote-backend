@@ -63,10 +63,10 @@ var SolutionSchema = new Schema({
 		type: Boolean,
 		default: false
 	},
-	organizations:  [{
+	organizations:  {
 		type: Schema.ObjectId,
 		ref: 'Organization'
-	}]
+	}
 });
 
 SolutionSchema.index({ 'title': 'text', 'description': 'text' });

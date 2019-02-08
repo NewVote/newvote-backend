@@ -29,30 +29,21 @@ exports.create = function (req, res) {
 	});
 };
 
-// exports.updateOrCreate = function (req, res) {
-// 	var user = req.user;
-// 	var object = req.body.object;
-// 	Media.findOne({
-// 		user: user,
-// 		object: object
-// 	}).exec(function (err, media) {
-// 		if (err) {
-// 			return res.status(400).send({
-// 				message: errorHandler.getErrorMessage(err)
-// 			});
-// 		} else if (!media) {
-// 			return exports.create(req, res);
-// 		}
-// 		req.media = media;
-// 		return exports.update(req, res);
-// 	});
-// };
-
 /**
  * Show the current media
  */
 exports.read = function (req, res) {
-	res.json(req.media);
+	votes.attachVotes([req.media], req.user)
+		.then(function (mediaArr) {
+			const updatedMedia = mediaArr[0];
+			res.json(req.media);
+		})
+		.catch(err => {
+			return res.status(400)
+				.send({
+					message: errorHandler.getErrorMessage(err)
+				});
+		});
 };
 
 /**
@@ -170,6 +161,7 @@ exports.mediaByID = function (req, res, next, id) {
 		.populate('issues')
 		.populate('solutions')
 		.populate('proposals')
+		.populate('organizations')
 		.exec(function (err, media) {
 			if(err) {
 				return next(err);
@@ -179,12 +171,8 @@ exports.mediaByID = function (req, res, next, id) {
 						message: 'No media with that identifier has been found'
 					});
 			}
-			votes.attachVotes([media], req.user)
-				.then(function (mediaArr) {
-					req.media = mediaArr[0];
-					next();
-				})
-				.catch(next);
+			req.media = media;
+			next();
 		});
 };
 

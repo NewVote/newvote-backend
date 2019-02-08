@@ -47,10 +47,10 @@ var IssueSchema = new Schema({
 		type: Schema.ObjectId,
 		ref: 'Topic'
 	}],
-	organizations:  [{
+	organizations:  {
 		type: Schema.ObjectId,
 		ref: 'Organization'
-	}]
+	}
 });
 
 IssueSchema.index({ 'name': 'text', 'description': 'text' });
