@@ -118,7 +118,7 @@ exports.list = function (req, res) {
 					'from': 'issues',
 					'localField': 'issues',
 					'foreignField': '_id',
-					'as': 'topics'
+					'as': 'issues'
 				}
 			},
 			{ $sort: { 'created': -1 } }

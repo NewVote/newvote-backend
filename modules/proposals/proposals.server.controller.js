@@ -109,6 +109,14 @@ exports.list = function (req, res) {
 					'as': 'organizations'
 				}
 			},
+			{
+				$lookup: {
+					'from': 'solutions',
+					'localField': 'solutions',
+					'foreignField': '_id',
+					'as': 'solutions'
+				}
+			},
 			{ $match: orgMatch },
 			{ $sort: { 'created': -1 } }
 	])
@@ -167,7 +175,7 @@ exports.proposalByID = function (req, res, next, id) {
 exports.attachProposals = function (objects, user, regions) {
 	// debugger;
 	const promises = objects.map((obj => {
-		return Proposal.find({ solutions: obj._id })
+		return Proposal.find({ solutions: obj._id }).populate('solutions')
 			.then(props => {
 				return votes.attachVotes(props, user, regions)
 					.then(props => {
