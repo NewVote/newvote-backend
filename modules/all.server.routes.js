@@ -123,6 +123,7 @@ module.exports = function (app) {
 	app.route('/api/suggestions/:suggestionId')
 		.all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
 		.get(suggestions.read)
+		.put(suggestions.update)
 		.delete(suggestions.delete);
 
 	app.route('/api/endorsement/:endorsementId')

@@ -89,7 +89,6 @@ exports.delete = function (req, res) {
  * List of Proposals
  */
 exports.list = function (req, res) {
-	let query = {};
 	let solutionId = req.query.solutionId || null;
 	let search = req.query.search || null;
 	let org = req.query.organization || null;

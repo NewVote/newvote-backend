@@ -45,8 +45,13 @@ exports.invokeRolesPolicies = function () {
 			resources: objectRoutes,
 			permissions: ['get']
   }, {
-			resources: ['/api/votes', '/api/suggestions'],
+	  		// users can create votes
+			resources: ['/api/votes'],
 			permissions: ['get', 'post']
+  }, {
+	  		// users can create and edit suggestions
+			resources: ['/api/suggestions'],
+			permissions: ['get', 'post', 'put']
   }]
   }, {
 		roles: ['guest'],
@@ -70,7 +75,7 @@ exports.isAllowed = function (req, res, next) {
 	// debugger;
 
 	// If an article is being processed and the current user created it then allow any manipulation
-	var object = req.article || req.vote || req.issue || req.solution || req.proposal || req.organization || req.endorsement || req.topic || req.media;
+	var object = req.article || req.vote || req.issue || req.solution || req.proposal || req.organization || req.endorsement || req.topic || req.media || req.suggestion;
 	if(object && req.user && object.user && object.user.id === req.user.id) {
 		return next();
 	}
@@ -130,8 +135,8 @@ function isOrganizationOwner(req, object) {
 				}
 			});
 	} else if(method === 'put' || method === 'delete') {
-		if(req.organization) {
-			return Promise.resolve(object.owner._id == user._id);
+		if(!req.organization) {
+			return Promise.resolve(object.user._id == user._id);
 		} else {
 			return Promise.resolve(object.organizations.owner._id == user._id);
 		}

@@ -9,6 +9,7 @@ var path = require('path'),
 	Suggestion = mongoose.model('Suggestion'),
 	Issue = mongoose.model('Issue'),
 	Solution = mongoose.model('Solution'),
+	votes = require('../votes/votes.server.controller'),
 	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
 	nodemailer = require('nodemailer'),
 	transporter = nodemailer.createTransport(config.mailer.options),
@@ -20,7 +21,7 @@ var buildMessage = function (suggestion, req) {
 	if(suggestion.type == 'new') {
 		messageString += '<h2> This is a new suggestion' + '</h2>';
 		messageString += '<h3>Title: ' + suggestion.title + '</h3>';
-	}else {
+	} else {
 		messageString += '<h2> This is an edit for:' + '</h2>';
 		messageString += `<h3>Title: <a href='${url}/${suggestion.parentType.toLowerCase()}s/${suggestion.parent._id}'>` + suggestion.title + '</a></h3>';
 	}
@@ -76,7 +77,17 @@ exports.create = function (req, res) {
  * Show the current suggestion
  */
 exports.read = function (req, res) {
-	res.json(req.suggestion);
+	votes.attachVotes([req.suggestion], req.user, req.query.regions)
+		.then(function (suggestionArr) {
+			const updatedSuggestion = suggestionArr[0];
+			res.json(updatedSuggestion);
+		})
+		.catch(err => {
+			return res.status(400)
+				.send({
+					message: errorHandler.getErrorMessage(err)
+				});
+		});
 };
 
 /**
@@ -122,32 +133,25 @@ exports.delete = function (req, res) {
  * List of Suggestions
  */
 exports.list = function (req, res) {
-	var issueId = req.query.issueId;
-	var solutionId = req.query.solutionId;
-	var searchParams = req.query.search;
-	var query;
-	if(issueId) {
-		query = {
-			issues: issueId
-		};
-	} else if(solutionId) {
-		query = {
-			solutions: solutionId
-		};
-	} else if(searchParams) {
-		query = {
-			title: {
-				$regex: searchParams,
-				$options: 'i'
-			}
-		};
-	} else {
-		query = null;
-	}
+	let search = req.query.search || null;
+	let org = req.query.organization || null;
 
-	Suggestion.find(query)
-		.sort('-created')
-		.populate('user', 'displayName')
+	let orgMatch = org ? { 'organizations.url': org } : {};
+	let searchMatch = search ? { $text: { $search: search } } : {};
+
+	Suggestion.aggregate([
+			{ $match: searchMatch },
+			{
+				$lookup: {
+					'from': 'organizations',
+					'localField': 'organizations',
+					'foreignField': '_id',
+					'as': 'organizations'
+				}
+			},
+			{ $match: orgMatch },
+			{ $sort: { 'created': -1 } }
+	])
 		.exec(function (err, suggestions) {
 			if(err) {
 				return res.status(400)
@@ -155,7 +159,16 @@ exports.list = function (req, res) {
 						message: errorHandler.getErrorMessage(err)
 					});
 			} else {
-				res.json(suggestions);
+				votes.attachVotes(suggestions, req.user, req.query.regions)
+					.then(function (suggestions) {
+						res.json(suggestions);
+					})
+					.catch(function (err) {
+						res.status(500)
+							.send({
+								message: errorHandler.getErrorMessage(err)
+							});
+					});
 			}
 		});
 };
@@ -174,8 +187,8 @@ exports.suggestionByID = function (req, res, next, id) {
 
 	Suggestion.findById(id)
 		.populate('user', 'displayName')
-		.populate('issues')
-		.populate('solutions')
+		.populate('parent')
+		.populate('organizations')
 		.exec(function (err, suggestion) {
 			if(err) {
 				return next(err);
