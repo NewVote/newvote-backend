@@ -4,6 +4,8 @@
  * Module dependencies.
  */
 var mongoose = require('mongoose'),
+	arrayUniquePlugin = require('mongoose-unique-array'),
+ 	_ = require('lodash'),
 	Schema = mongoose.Schema,
 	crypto = require('crypto'),
 	validator = require('validator'),
@@ -28,9 +30,9 @@ var validateLocalStrategyProperty = function (property) {
 /**
  * A Validation function for checking UQ emails
  */
-var validateUQEmail = function(email) {
+var validateUQEmail = function (email) {
 	var regex = /^[a-zA-Z0-9_.+-]+@(?:(?:[a-zA-Z0-9-]+\.)?[a-zA-Z]+\.)?(uqconnect|uq)\.(edu|net)\.au$/;
-	var pass = (email.match(regex) != null) ;
+	var pass = (email.match(regex) != null);
 	return pass;
 }
 /**
@@ -39,7 +41,6 @@ var validateUQEmail = function(email) {
 var validateLocalStrategyEmail = function (email) {
 	return ((this.provider !== 'local' && !this.updated) || (validator.isEmail(email) && validateUQEmail(email)) || (email == 'rohan.m.richards@gmail.com'));
 };
-
 
 /**
  * User Schema
@@ -81,12 +82,12 @@ var UserSchema = new Schema({
 	username: {
 		type: String,
 	},
-    mobileNumber: {
-        type: String
-    },
-    verified : {
-        type: Boolean
-    },
+	mobileNumber: {
+		type: String
+	},
+	verified: {
+		type: Boolean
+	},
 	gender: {
 		type: String
 	},
@@ -116,7 +117,7 @@ var UserSchema = new Schema({
 		type: String,
 		default: '',
 		required: function () {
-			if(this.isNew){
+			if(this.isNew) {
 				return false;
 			}
 		}
@@ -148,33 +149,26 @@ var UserSchema = new Schema({
 		type: Date,
 		default: Date.now
 	},
-	/* For endorser profiles */
-	organisationName: {
-		type: String
-	},
-	organisationWebsite: {
-		type: String
-	},
-	organisationAbn: {
-		type: String
-	},
-	organisationBio: {
-		type: String
-	},
 	/* For reset password */
 	resetPasswordToken: {
 		type: String
 	},
 	resetPasswordExpires: {
 		type: Date
-	}
+	},
+	// for tracking org memberships
+	organizations: [{
+		type: Schema.ObjectId,
+		ref: 'Organization',
+		unique: true
+	}]
 });
 
 /**
  * Hook a pre save method to hash the password
  */
 UserSchema.pre('save', function (next) {
-	if (this.password && this.isModified('password')) {
+	if(this.password && this.isModified('password')) {
 		this.salt = crypto.randomBytes(16)
 			.toString('base64');
 		this.password = this.hashPassword(this.password);
@@ -187,9 +181,9 @@ UserSchema.pre('save', function (next) {
  * Hook a pre validate method to test the local password
  */
 UserSchema.pre('validate', function (next) {
-	if (this.provider === 'local' && this.password && this.isModified('password')) {
+	if(this.provider === 'local' && this.password && this.isModified('password')) {
 		var result = owasp.test(this.password);
-		if (result.requiredTestErrors.length) {
+		if(result.requiredTestErrors.length) {
 			var error = result.requiredTestErrors.join(' ');
 			this.invalidate('password', error);
 		}
@@ -202,7 +196,7 @@ UserSchema.pre('validate', function (next) {
  * Create instance method for hashing a password
  */
 UserSchema.methods.hashPassword = function (password) {
-	if (this.salt && password) {
+	if(this.salt && password) {
 		return crypto.pbkdf2Sync(password, Buffer.from(this.salt, 'base64'), 100000, 64, 'SHA512')
 			.toString('base64');
 	} else {
@@ -221,7 +215,7 @@ UserSchema.methods.authenticate = function (password) {
  * Create instance method for hashing a verification code (sent by SMS)
  */
 UserSchema.methods.hashVerificationCode = function (code) {
-	if (this.salt && code) {
+	if(this.salt && code) {
 		console.log('hashing code: ', code);
 		return crypto.pbkdf2Sync(code.toString(), Buffer.from(this.salt, 'base64'), 100000, 64, 'SHA512')
 			.toString('base64');
@@ -252,8 +246,8 @@ UserSchema.statics.findUniqueUsername = function (username, suffix, callback) {
 	_this.findOne({
 		username: possibleUsername
 	}, function (err, user) {
-		if (!err) {
-			if (!user) {
+		if(!err) {
+			if(!user) {
 				callback(possibleUsername);
 			} else {
 				return _this.findUniqueUsername(username, (suffix || 0) + 1, callback);
@@ -276,7 +270,7 @@ UserSchema.statics.generateRandomPassphrase = function () {
 
 		// iterate until the we have a valid passphrase.
 		// NOTE: Should rarely iterate more than once, but we need this to ensure no repeating characters are present.
-		while (password.length < 20 || repeatingCharacters.test(password)) {
+		while(password.length < 20 || repeatingCharacters.test(password)) {
 			// build the random password
 			password = generatePassword.generate({
 				length: Math.floor(Math.random() * (20)) + 20, // randomize length between 20 and 40 characters
@@ -291,7 +285,7 @@ UserSchema.statics.generateRandomPassphrase = function () {
 		}
 
 		// Send the rejection back if the passphrase fails to pass the strength test
-		if (owasp.test(password)
+		if(owasp.test(password)
 			.requiredTestErrors.length) {
 			reject(new Error('An unexpected problem occured while generating the random passphrase'));
 		} else {
@@ -301,4 +295,5 @@ UserSchema.statics.generateRandomPassphrase = function () {
 	});
 };
 
+UserSchema.plugin(arrayUniquePlugin);
 mongoose.model('User', UserSchema);

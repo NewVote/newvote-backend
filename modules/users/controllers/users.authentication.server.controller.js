@@ -10,6 +10,7 @@ var path = require('path'),
 	jwt = require('jsonwebtoken'),
 	passport = require('passport'),
 	User = mongoose.model('User'),
+	Vote = mongoose.model('Vote'),
 	nodemailer = require('nodemailer'),
 	transporter = nodemailer.createTransport(config.mailer.options),
 	Mailchimp = require('mailchimp-api-v3'),
@@ -29,7 +30,7 @@ var recaptcha = new Recaptcha({
 try {
 	var mailchimp = new Mailchimp(config.mailchimp.api);
 	const MAILCHIMP_LIST_ID = config.mailchimp.list;
-} catch(err) {
+} catch (err) {
 	console.log('Error while connecting to mailchimp API');
 }
 
@@ -84,7 +85,7 @@ exports.signup = function (req, res) {
 					.catch(err => {
 						console.log('Error saving to mailchimp: ', err);
 					})
-			} catch(err) {
+			} catch (err) {
 				console.log('Issue with mailchimp: ', err);
 			}
 
@@ -156,6 +157,9 @@ exports.signin = function (req, res, next) {
 			res.status(400)
 				.send(info);
 		} else {
+			// need to update user orgs in case they've voted on a new org
+			exports.updateOrgs(user);
+
 			User.populate(user, { path: 'country' })
 				.then(function (user) {
 
@@ -349,3 +353,31 @@ exports.removeOAuthProvider = function (req, res, next) {
 		}
 	});
 };
+
+/**
+ * Makes sure the user has the correct orgs listed
+ * any time a user votes they are considered a member of an org
+ **/
+exports.updateOrgs = function (loginData) {
+	debugger;
+	// get all votes for the user
+	User.findOne({ _id: loginData._id })
+		.then(user => {
+			if(user) {
+				Vote.find({ user })
+					.populate('object')
+					.then(votes => {
+						if(votes) {
+							// get a list of orgs from all of the votes (filter)
+							const orgs = votes.map(v => (v.object.organizations ? v.object.organizations._id : null));
+							// merge list of orgs into users orgs
+							// orgs.forEach(org => {
+							// 	user.organizations.push(org);
+							// })
+							// user.organizations = user.organizations.concat(orgs);
+							user.update({ $addToSet: { organizations: orgs } });
+						}
+					})
+			}
+		})
+}

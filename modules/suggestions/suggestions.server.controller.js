@@ -7,6 +7,7 @@ var path = require('path'),
 	mongoose = require('mongoose'),
 	config = require(path.resolve('./config/config')),
 	Suggestion = mongoose.model('Suggestion'),
+	Organization = mongoose.model('Organization'),
 	Issue = mongoose.model('Issue'),
 	Solution = mongoose.model('Solution'),
 	votes = require('../votes/votes.server.controller'),
@@ -15,10 +16,11 @@ var path = require('path'),
 	transporter = nodemailer.createTransport(config.mailer.options),
 	_ = require('lodash');
 
+// TODO: Use a server side templating language to use a html file for this
 var buildMessage = function (suggestion, req) {
 	var messageString = '';
 	var url = req.protocol + '://' + req.get('host');
-	if(suggestion.type == 'new') {
+	if(!suggestion.parent) {
 		messageString += '<h2> This is a new suggestion' + '</h2>';
 		messageString += '<h3>Title: ' + suggestion.title + '</h3>';
 	} else {
@@ -41,6 +43,7 @@ var buildMessage = function (suggestion, req) {
  * Create a suggestion
  */
 exports.create = function (req, res) {
+	debugger;
 	var suggestion = new Suggestion(req.body);
 	suggestion.user = req.user;
 	suggestion.save(function (err) {
@@ -50,23 +53,22 @@ exports.create = function (req, res) {
 					message: errorHandler.getErrorMessage(err)
 				});
 		} else {
-			Suggestion.populate(suggestion, { path: 'user parent' })
-				.then(function (suggestion) {
-					// console.log(buildMessage(suggestion, req));
-					// console.log(process.env);
-					transporter.sendMail({
-							from: process.env.MAILER_FROM,
-							// to: 'dion@newvote.org.au',
-							to: process.env.MAILER_TO,
-							replyTo: req.user.email,
-							subject: 'UQ Votes Suggestion',
-							html: buildMessage(suggestion, req)
+			Suggestion.populate(suggestion, { path: 'user parent organizations' })
+				.then((suggestion) => {
+					Organization.populate(suggestion.organizations, { path: 'owner' })
+						.then((org) => {
+							transporter.sendMail({
+									from: process.env.MAILER_FROM,
+									to: org.owner.email,
+									subject: 'New suggestion created on your NewVote community!',
+									html: buildMessage(suggestion, req)
+								})
+								.then(function (data) {
+									// console.log('mailer success: ', data);
+								}, function (err) {
+									console.log('mailer failed: ', err);
+								});
 						})
-						.then(function (data) {
-							console.log('mailer success: ', data);
-						}, function (err) {
-							console.log('mailer failed: ', err);
-						});
 				});
 			res.json(suggestion);
 		}
