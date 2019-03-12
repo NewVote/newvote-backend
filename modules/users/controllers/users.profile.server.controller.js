@@ -115,6 +115,22 @@ exports.me = function (req, res) {
  * Get count of all users
  */
 exports.count = function (req, res) {
-	return User.find()
-		.then(users => res.json(users.length));
+	const org = req.query.organization;
+	const orgMatch = org ? { 'organizations.url': org } : {};
+	// do some kind of aggregate query that outputs the count
+	return User.aggregate([
+			{
+				$lookup: {
+					'from': 'organizations',
+					'localField': 'organizations',
+					'foreignField': '_id',
+					'as': 'organizations'
+				}
+			},
+			{ $match: orgMatch }
+	])
+		.exec()
+		.then((users) => {
+			return res.json(users.length);
+		});
 }

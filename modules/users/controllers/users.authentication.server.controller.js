@@ -6,6 +6,7 @@
 var path = require('path'),
 	config = require(path.resolve('./config/config')),
 	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
+	_ = require('lodash'),
 	mongoose = require('mongoose'),
 	jwt = require('jsonwebtoken'),
 	passport = require('passport'),
@@ -359,25 +360,60 @@ exports.removeOAuthProvider = function (req, res, next) {
  * any time a user votes they are considered a member of an org
  **/
 exports.updateOrgs = function (loginData) {
-	debugger;
-	// get all votes for the user
+	// get the actual user from the db
 	User.findOne({ _id: loginData._id })
 		.then(user => {
 			if(user) {
+				// get all the votes for this user
 				Vote.find({ user })
 					.populate('object')
 					.then(votes => {
 						if(votes) {
-							// get a list of orgs from all of the votes (filter)
-							const orgs = votes.map(v => (v.object.organizations ? v.object.organizations._id : null));
+							// get a list of orgs from all of the votes
+							let orgs = votes.reduce((accum, v) => {
+								if(v.object.organizations) {
+									accum.push(v.object.organizations._id);
+								}
+								return accum;
+							}, []);
 							// merge list of orgs into users orgs
-							// orgs.forEach(org => {
-							// 	user.organizations.push(org);
-							// })
-							// user.organizations = user.organizations.concat(orgs);
-							user.update({ $addToSet: { organizations: orgs } });
+							orgs = orgs.concat(user.organizations);
+							// make sure they are all unique
+							orgs = _.uniqBy(orgs, 'generationTime');
+
+							// now add them to the users orgs and save
+							user.organizations = orgs;
+							user.save();
 						}
 					})
 			}
 		})
 }
+
+exports.updateAllOrgs = function () {
+	User.find()
+		.exec()
+		.then(users => {
+			users.forEach(user => {
+				Vote.find({ user: user._id })
+					.populate('object')
+					.then(populatedVotes => {
+
+						let orgs = populatedVotes.reduce((accum, v) => {
+							if(v.object && v.object.organizations) {
+								accum.push(v.object.organizations._id);
+							}
+							return accum;
+						}, []);
+
+						// merge list of orgs into users orgs
+						orgs = orgs.concat(user.organizations);
+						// make sure they are all unique
+						orgs = _.uniqBy(orgs, 'generationTime');
+
+						user.organizations = orgs;
+						user.save();
+					})
+			})
+		})
+}()
