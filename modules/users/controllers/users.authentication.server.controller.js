@@ -416,4 +416,4 @@ exports.updateAllOrgs = function () {
 					})
 			})
 		})
-}()
+}
