@@ -105,6 +105,7 @@ exports.isAllowed = function (req, res, next) {
 
 			// allowed test failed, is this a non GET request? (POST/UPDATE/DELETE)
 			if(req.method.toLowerCase() !== 'get' && user) {
+				debugger;
 				//check for org owner on all non get requests
 				// this requires a DB query so only use it when necesary
 				isOrganizationOwner(req, object)
@@ -114,13 +115,14 @@ exports.isAllowed = function (req, res, next) {
 							return next()
 						}else {
 							// it was not a GET request but they still have no access
-							if(!user.roles.includes('user')) {
+							// check if the issue is that they are not verified
+							if(!user.roles.includes('user') || !user.verified) {
 								// user is logged in but they are missing the user role
 								// this means they must not be verified
 								return res.status(403)
 									.json({
 										message: 'User is not authorized',
-										role: 'user'
+										role: 'user'// used to identify this is a missing role issue
 									});
 							}
 
