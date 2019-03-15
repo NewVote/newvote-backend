@@ -74,22 +74,22 @@ exports.signup = function (req, res) {
 			//we'd have to drop the entire table to change the index field
 			user.username = user.email;
 
-			try {
-				addToMailingList(user)
-					.then(results => {
-						// console.log('Added user to mailchimp');
-					})
-					.catch(err => {
-						console.log('Error saving to mailchimp: ', err);
-					})
-			} catch (err) {
-				console.log('Issue with mailchimp: ', err);
-			}
-
 			// Then save the user
 			// first save generates salt
 			return user.save()
 				.then(user => {
+					try {
+						addToMailingList(user)
+							.then(results => {
+								// console.log('Added user to mailchimp');
+							})
+							.catch(err => {
+								console.log('Error saving to mailchimp: ', err);
+							})
+					} catch (err) {
+						console.log('Issue with mailchimp: ', err);
+					}
+					
 					//generate a verification code for Email
 					User.generateRandomPassphrase()
 						.then(pass => {
