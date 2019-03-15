@@ -28,12 +28,8 @@ var recaptcha = new Recaptcha({
 	verbose: true
 });
 
-try {
-	var mailchimp = new Mailchimp(config.mailchimp.api);
-	const MAILCHIMP_LIST_ID = config.mailchimp.list;
-} catch (err) {
-	console.log('Error while connecting to mailchimp API');
-}
+var mailchimp = new Mailchimp(config.mailchimp.api);
+const MAILCHIMP_LIST_ID = config.mailchimp.list;
 
 var addToMailingList = function (user) {
 	return mailchimp.post(`/lists/${MAILCHIMP_LIST_ID}/members`, {
