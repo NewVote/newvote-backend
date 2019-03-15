@@ -136,13 +136,14 @@ function saveEmailVerificationCode(user, code) {
 }
 
 exports.verify = function (req, res) {
-	var user = req.user;
+	debugger;
+	var reqUser = req.user;
 	var code = req.body.code;
 
 	console.log(`Trying to verify ${code}`);
 
 	//get the actual user because we need the salt
-	User.findById(user._id)
+	User.findById(reqUser._id)
 		.then((user) => {
 			if(!user) {
 				return res.status(400)
@@ -153,8 +154,11 @@ exports.verify = function (req, res) {
 			var verified = user.verify(code);
 			if(verified) {
 				//update user model
-				user.verified = verified;
-				user.roles.push('user');
+				user.verified = true;
+				if(!user.roles.includes('user')){
+					user.roles.push('user');
+				}
+				
 				user.save(function (err) {
 					if(err) {
 						console.log('error saving user: ', err);
