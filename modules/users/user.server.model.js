@@ -86,7 +86,8 @@ var UserSchema = new Schema({
 		type: String
 	},
 	verified: {
-		type: Boolean
+		type: Boolean,
+		default: false
 	},
 	gender: {
 		type: String
@@ -137,9 +138,9 @@ var UserSchema = new Schema({
 	roles: {
 		type: [{
 			type: String,
-			enum: ['user', 'admin', 'endorser']
+			enum: ['guest', 'user', 'admin', 'endorser']
 		}],
-		default: ['user'],
+		default: ['guest'],
 		required: 'Please provide at least one role'
 	},
 	updated: {

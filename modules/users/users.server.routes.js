@@ -11,9 +11,13 @@ module.exports = function (app) {
 	// all other authentication tests are handled on the controller using req.user
 
 	//sms verification
+	app.route('/api/users/sms')
+		.all(jwt({ secret: config.jwtSecret, credentialsRequired: false }))
+		.post(users.sendVerificationCodeViaSms);
+
 	app.route('/api/users/email')
 		.all(jwt({ secret: config.jwtSecret, credentialsRequired: false }))
-		.post(users.sendVerificationCode);
+		.post(users.sendVerificationCodeViaEmail);
 
 	app.route('/api/users/verify')
 		.all(jwt({ secret: config.jwtSecret, credentialsRequired: false }))

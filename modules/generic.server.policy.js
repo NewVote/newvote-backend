@@ -82,6 +82,7 @@ exports.isAllowed = function (req, res, next) {
 
 	// Check for user roles
 	acl.areAnyRolesAllowed(roles, req.route.path, req.method.toLowerCase(), function (err, isAllowed) {
+		// debugger;
 		if(err) {
 			// An authorization error occurred.
 			return res.status(500)
@@ -91,19 +92,48 @@ exports.isAllowed = function (req, res, next) {
 			if(isAllowed) {
 				// Access granted! Invoke next middleware
 				return next();
-			} else if(req.method.toLowerCase() !== 'get' && user) {
+			}
+
+			// no user object no use testing for other errors
+			if(!req.user) {
+			   // no user object
+			   return res.status(401)
+				   .json({
+					   message: 'User is not authenticated'
+				   });
+		   }
+
+			// allowed test failed, is this a non GET request? (POST/UPDATE/DELETE)
+			if(req.method.toLowerCase() !== 'get' && user) {
 				//check for org owner on all non get requests
 				// this requires a DB query so only use it when necesary
 				isOrganizationOwner(req, object)
 					.then(result => {
-						if(result) return next();
+						if(result) {
+							// they own this organization, let them do whatever
+							return next()
+						}else {
+							// it was not a GET request but they still have no access
+							if(!user.roles.includes('user')) {
+								// user is logged in but they are missing the user role
+								// this means they must not be verified
+								return res.status(403)
+									.json({
+										message: 'User is not authorized',
+										role: 'user'
+									});
+							}
+
+							// not a GET + has 'user' role
+							return res.status(403)
+								.json({
+									message: 'User is not authorized'
+								});
+						}
 					})
-			} else if(!req.user) {
-				return res.status(401)
-					.json({
-						message: 'User is not authenticated'
-					});
 			} else {
+				// this is a GET request with a user object that was not allowed
+				// generic auth failure
 				return res.status(403)
 					.json({
 						message: 'User is not authorized'

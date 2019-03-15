@@ -110,8 +110,8 @@ exports.signup = function (req, res) {
 											res.status(400)
 												.send(err);
 										} else {
-											const payload = { _id: user._id, roles: user.roles };
-											const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
+											const payload = { _id: user._id, roles: user.roles, verified: user.verified };
+											const token = jwt.sign(payload, config.jwtSecret, { expiresIn: config.jwtExpiry });
 											res.json({ user: user, token: token });
 										}
 									});
@@ -173,7 +173,7 @@ exports.signin = function (req, res, next) {
 							res.status(400)
 								.send(err);
 						} else {
-							const payload = { _id: user._id, roles: user.roles };
+							const payload = { _id: user._id, roles: user.roles, verified: user.verified };
 							const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
 							res.json({ user: user, token: token });
 						}

@@ -17,15 +17,63 @@ var _ = require('lodash'),
 /**
  * User middleware
  */
-exports.sendVerificationCode = function (req, res) {
+
+exports.sendVerificationCodeViaSms = function (req, res, next) {
+	var user = req.user;
+	var number = req.body.number;
+	var code = User.generateVerificationCode();
+
+	console.log(`sending code ${code} to number ${number}`);
+	var options = {
+		'uri': 'https://api.smsbroadcast.com.au/api-adv.php',
+		'qs': {
+			'username': config.smsBroadcast.username,
+			'password': config.smsBroadcast.password,
+			'to': number,
+			'from': 'NewVote',
+			'message': `Your NewVote verification code is ${code}`
+		},
+		useQueryString: true
+	};
+
+	request.get(options, function (error, response, body) {
+		if(error) {
+			return res.status(400)
+				.send({ message: 'There was a problem sending your verification code: ' + error });
+		}
+
+		if(response.statusCode == 200) {
+			var responseMessage = body.split(':');
+			if(responseMessage[0] == 'OK') {
+				return saveVerificationSmsCode(user, code, number, res);
+			} else if(responseMessage[0] == 'BAD') {
+				return res.status(400)
+					.send({ message: 'There was a problem sending your verification code, please make sure the phone number you have entered is correct.' });
+			} else if(responseMessage[0] == 'ERROR') {
+				console.log('SMS BROADCAST ERROR: ' + responseMessage[1]);
+				return res.status(400)
+					.send({ message: 'There was a problem sending your verification code. There was an internal server error, please try again later.' });
+			} else {
+				console.log('SMS BROADCAST ERROR: ' + responseMessage[1]);
+				return res.status(400)
+					.send({ message: 'Something went wrong: ' + responseMessage[1] });
+			}
+		} else {
+			return res.status(response.statusCode)
+				.send({ message: 'There was a problem contacting the server.' });
+		}
+	});
+}
+
+exports.sendVerificationCodeViaEmail = function (req, res) {
 	// debugger;
 	var user = req.user;
 	var email = user.email;
 	var pass$ = User.generateRandomPassphrase()
 
 	//send code via sms
-	return pass$.then(pass => saveVerificationCode(user, pass))
-		// .then(pass => sendEmail(user, pass, req))
+	return pass$.then(pass => saveEmailVerificationCode(user, pass))
+		// .then(pass => sendEmail(user, pass, req))g
 		.then((data) => {
 			console.log('Succesfully sent a verification e-mail: ', data);
 			return res.status(200)
@@ -40,7 +88,33 @@ exports.sendVerificationCode = function (req, res) {
 		});
 };
 
-function saveVerificationCode(user, code) {
+function saveVerificationSmsCode(user, code, number, res) {
+	return User.findById(user._id)
+		.then((user) => {
+			if(!user) {
+				throw Error('We could not find the user in the database. Please contact administration.');
+			}
+
+			//add hashed code to users model
+			user.verificationCode = user.hashVerificationCode(code);
+			user.mobileNumber = number;
+
+			//update user model
+			return user.save()
+				.then((err) => {
+					return res.json({ 'message': 'success' });
+				})
+				.catch(err => {
+					console.log('error saving user: ', err);
+					return res.status(400)
+						.send({
+							message: err
+						});
+				});
+		});
+}
+
+function saveEmailVerificationCode(user, code) {
 	//get the actual user because we need the salt
 	//because we need the salt
 	//because we need the salt
@@ -63,12 +137,12 @@ function saveVerificationCode(user, code) {
 
 exports.verify = function (req, res) {
 	var user = req.user;
-	var code = req.body.params;
+	var code = req.body.code;
 
 	console.log(`Trying to verify ${code}`);
 
 	//get the actual user because we need the salt
-	User.findById(user.id)
+	User.findById(user._id)
 		.then((user) => {
 			if(!user) {
 				return res.status(400)
@@ -80,6 +154,7 @@ exports.verify = function (req, res) {
 			if(verified) {
 				//update user model
 				user.verified = verified;
+				user.roles.push('user');
 				user.save(function (err) {
 					if(err) {
 						console.log('error saving user: ', err);
