@@ -89,7 +89,7 @@ exports.signup = function (req, res) {
 					} catch (err) {
 						console.log('Issue with mailchimp: ', err);
 					}
-					
+
 					//generate a verification code for Email
 					User.generateRandomPassphrase()
 						.then(pass => {
@@ -101,6 +101,8 @@ exports.signup = function (req, res) {
 									// Remove sensitive data before login
 									user.password = undefined;
 									user.salt = undefined;
+									user.verificationCode = undefined;
+									
 									req.login(user, function (err) {
 										if(err) {
 											res.status(400)
@@ -163,6 +165,7 @@ exports.signin = function (req, res, next) {
 					// Remove sensitive data before login
 					user.password = undefined;
 					user.salt = undefined;
+					user.verificationCode = undefined;
 
 					req.login(user, function (err) {
 						if(err) {

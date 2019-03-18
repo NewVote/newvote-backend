@@ -12,6 +12,7 @@ var _ = require('lodash'),
 	querystring = require('querystring'),
 	nodemailer = require('nodemailer'),
 	transporter = nodemailer.createTransport(config.mailer.options),
+	jwt = require('jsonwebtoken'),
 	request = require('request');
 
 /**
@@ -158,7 +159,7 @@ exports.verify = function (req, res) {
 				if(!user.roles.includes('user')){
 					user.roles.push('user');
 				}
-				
+
 				user.save(function (err) {
 					if(err) {
 						console.log('error saving user: ', err);
@@ -167,7 +168,13 @@ exports.verify = function (req, res) {
 								message: err
 							});
 					} else {
-						return res.json({ 'success': true });
+						user.salt = undefined;
+						user.password = undefined;
+						user.verificationCode = undefined;
+						// send a new token with new verified status
+						const payload = { _id: user._id, roles: user.roles, verified: user.verified };
+						const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
+						return res.json({ user: user, token: token });
 					}
 				});
 			} else {

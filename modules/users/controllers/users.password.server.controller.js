@@ -10,7 +10,7 @@ var path = require('path'),
 	User = mongoose.model('User'),
 	nodemailer = require('nodemailer'),
 	async = require('async'),
-		crypto = require('crypto');
+	crypto = require('crypto');
 
 var smtpTransport = nodemailer.createTransport(config.mailer.options);
 
@@ -31,7 +31,7 @@ exports.forgot = function (req, res, next) {
 			if(req.body.email) {
 				User.findOne({
 					email: req.body.email
-				}, '-salt -password', function (err, user) {
+				}, '-salt -password -verificationCode', function (err, user) {
 					if(!user) {
 						return res.status(400)
 							.send({
@@ -64,10 +64,10 @@ exports.forgot = function (req, res, next) {
 			if(config.secure && config.secure.ssl === true) {
 				httpTransport = 'https://';
 			}
-			res.render(path.resolve('modules/users/server/templates/reset-password-email'), {
+			res.render(path.resolve('modules/users/templates/reset-password-email'), {
 				name: user.email,
 				appName: config.app.title,
-				url: httpTransport + req.headers.host + '/api/auth/reset/' + token
+				url: httpTransport + req.headers.host + '/auth/reset/' + token
 			}, function (err, emailHTML) {
 				done(err, emailHTML, user);
 			});
@@ -83,7 +83,7 @@ exports.forgot = function (req, res, next) {
 			smtpTransport.sendMail(mailOptions, function (err) {
 				if(!err) {
 					res.send({
-						message: 'An email has been sent to the provided email with further instructions.'
+						message: 'An email has been sent to the provided address with further instructions.'
 					});
 				} else {
 					return res.status(400)
@@ -103,24 +103,6 @@ exports.forgot = function (req, res, next) {
 };
 
 /**
- * Reset password GET from email token
- */
-exports.validateResetToken = function (req, res) {
-	User.findOne({
-		resetPasswordToken: req.params.token,
-		resetPasswordExpires: {
-			$gt: Date.now()
-		}
-	}, function (err, user) {
-		if(!user) {
-			return res.redirect('/password/reset/invalid');
-		}
-
-		res.redirect('/password/reset/' + req.params.token);
-	});
-};
-
-/**
  * Reset password POST from email token
  */
 exports.reset = function (req, res, next) {
@@ -131,10 +113,12 @@ exports.reset = function (req, res, next) {
 	async.waterfall([
 
     function (done) {
+			// find a user with matching email + token + expiry date
 			User.findOne({
-				resetPasswordToken: req.params.token,
+				email: passwordDetails.email,
+				resetPasswordToken: passwordDetails.token,
 				resetPasswordExpires: {
-					$gt: Date.now()
+					$gt: Date.now() - 3600000 // 1 hour
 				}
 			}, function (err, user) {
 				if(!err && user) {
@@ -150,19 +134,8 @@ exports.reset = function (req, res, next) {
 										message: errorHandler.getErrorMessage(err)
 									});
 							} else {
-								req.login(user, function (err) {
-									if(err) {
-										res.status(400)
-											.send(err);
-									} else {
-										// Remove sensitive data before return authenticated user
-										user.password = undefined;
-										user.salt = undefined;
-
-										res.json(user);
-
-										done(err, user);
-									}
+								res.send({
+									message: 'Password reset succesfully'
 								});
 							}
 						});
@@ -182,7 +155,7 @@ exports.reset = function (req, res, next) {
     },
     function (user, done) {
 			res.render('modules/users/server/templates/reset-password-confirm-email', {
-				name: user.displayName,
+				name: user.email,
 				appName: config.app.title
 			}, function (err, emailHTML) {
 				done(err, emailHTML, user);

@@ -2,9 +2,9 @@
 
 module.exports = {
 	app: {
-		title: 'UQ Votes',
-		description: 'A democracy app: Building a bridge between you and your student representatives. We are not radical, and we are not undermining representative democracy at UQ. In fact, the opposite is true - we want to make representative democracy more representative.',
-		keywords: 'uqvotes uqu uqunion',
+		title: 'NewVote',
+		description: 'We’re building the bridge between an informed people and their leaders.',
+		keywords: 'newvote',
 		googleAnalyticsTrackingID: process.env.GOOGLE_ANALYTICS_TRACKING_ID || 'GOOGLE_ANALYTICS_TRACKING_ID'
 	},
 	port: process.env.PORT || 3000,
