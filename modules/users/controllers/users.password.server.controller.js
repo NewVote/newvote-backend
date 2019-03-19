@@ -59,15 +59,10 @@ exports.forgot = function (req, res, next) {
 			}
     },
     function (token, user, done) {
-
-			var httpTransport = 'http://';
-			if(config.secure && config.secure.ssl === true) {
-				httpTransport = 'https://';
-			}
 			res.render(path.resolve('modules/users/templates/reset-password-email'), {
 				name: user.email,
 				appName: config.app.title,
-				url: `${httpTransport}${req.headers.host}/auth/forgot/${token}/${user.email}`
+				url: `${req.headers.referer}/${token}/${user.email}`
 			}, function (err, emailHTML) {
 				done(err, emailHTML, user);
 			});
