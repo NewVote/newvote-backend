@@ -10,7 +10,7 @@ var path = require('path'),
 	User = mongoose.model('User'),
 	nodemailer = require('nodemailer'),
 	async = require('async'),
-	crypto = require('crypto');
+		crypto = require('crypto');
 
 var smtpTransport = nodemailer.createTransport(config.mailer.options);
 
@@ -67,7 +67,7 @@ exports.forgot = function (req, res, next) {
 			res.render(path.resolve('modules/users/templates/reset-password-email'), {
 				name: user.email,
 				appName: config.app.title,
-				url: httpTransport + req.headers.host + '/auth/reset/' + token
+				url: `${httpTransport}${req.headers.host}/auth/forgot/${token}/${user.email}`
 			}, function (err, emailHTML) {
 				done(err, emailHTML, user);
 			});
@@ -82,7 +82,7 @@ exports.forgot = function (req, res, next) {
 			};
 			smtpTransport.sendMail(mailOptions, function (err) {
 				if(!err) {
-					res.send({
+					return res.send({
 						message: 'An email has been sent to the provided address with further instructions.'
 					});
 				} else {
@@ -124,8 +124,8 @@ exports.reset = function (req, res, next) {
 				if(!err && user) {
 					if(passwordDetails.newPassword === passwordDetails.verifyPassword) {
 						user.password = passwordDetails.newPassword;
-						user.resetPasswordToken = undefined;
-						user.resetPasswordExpires = undefined;
+						// user.resetPasswordToken = undefined;
+						// user.resetPasswordExpires = undefined;
 
 						user.save(function (err) {
 							if(err) {
@@ -134,9 +134,7 @@ exports.reset = function (req, res, next) {
 										message: errorHandler.getErrorMessage(err)
 									});
 							} else {
-								res.send({
-									message: 'Password reset succesfully'
-								});
+								done(null, user)
 							}
 						});
 					} else {
@@ -154,7 +152,7 @@ exports.reset = function (req, res, next) {
 			});
     },
     function (user, done) {
-			res.render('modules/users/server/templates/reset-password-confirm-email', {
+			res.render('modules/users/templates/reset-password-confirm-email', {
 				name: user.email,
 				appName: config.app.title
 			}, function (err, emailHTML) {
@@ -171,7 +169,13 @@ exports.reset = function (req, res, next) {
 			};
 
 			smtpTransport.sendMail(mailOptions, function (err) {
-				done(err, 'done');
+				if(!err) {
+					return res.send({
+						message: 'Password reset successfully.'
+					});
+				} else {
+					done(err, 'done');
+				}
 			});
     }
   ], function (err) {
