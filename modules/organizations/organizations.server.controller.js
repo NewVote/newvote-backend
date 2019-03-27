@@ -108,6 +108,7 @@ exports.organizationByID = function (req, res, next, id) {
 	Organization.findById(id)
 		.populate('user', 'displayName')
 		.populate('owner', '_id displayName firstName lastName email')
+		.populate('moderators', '_id displayName firstName lastName email')
 		.exec(function (err, organization) {
 			if(err) {
 				return next(err);
@@ -132,5 +133,6 @@ exports.organizationByUrl = function(url) {
 	return Organization.findOne(query)
 		.populate('user', 'displayName')
 		.populate('owner', '_id displayName firstName lastName email')
+		.populate('moderators', '_id displayName firstName lastName email')
 		.exec();
 }

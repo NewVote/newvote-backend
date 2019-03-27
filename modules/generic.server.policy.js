@@ -106,9 +106,9 @@ exports.isAllowed = function (req, res, next) {
 			// allowed test failed, is this a non GET request? (POST/UPDATE/DELETE)
 			if(req.method.toLowerCase() !== 'get' && user) {
 				debugger;
-				//check for org owner on all non get requests
+				//check for org owner or moderator on all non get requests
 				// this requires a DB query so only use it when necesary
-				isOrganizationOwner(req, object)
+				canAccessOrganization(req, object)
 					.then(result => {
 						if(result) {
 							// they own this organization, let them do whatever
@@ -149,8 +149,8 @@ exports.isAllowed = function (req, res, next) {
 // need to find the organization that the user is currently viewing (the url)
 // this is NOT the organization that the content belongs to (not the object.organizations)
 // N.B new content will have no organization
-function isOrganizationOwner(req, object) {
-	// debugger;
+function canAccessOrganization(req, object) {
+	debugger;
 	const orgUrl = req.query.organization;
 	const user = req.user;
 	const method = req.method.toLowerCase();
@@ -160,17 +160,34 @@ function isOrganizationOwner(req, object) {
 	if(method === 'post') {
 		return organizations.organizationByUrl(orgUrl)
 			.then(org => {
-				if(org.owner._id == user._id) {
+				if(
+					(org.owner._id == user._id) ||
+					(org.moderators.some((mod) => mod._id == user._id))
+				) {
 					return true;
 				} else {
 					return false;
 				}
 			});
-	} else if(method === 'put' || method === 'delete') {
-		if(!req.organization) {
-			return Promise.resolve(object.user._id == user._id);
+	} else if(method === 'put') {
+		if(req.organization != null) {
+			// we are updating a community so just check its owner (mods cant edit community)
+			return Promise.resolve(object.owner._id == user._id);
 		} else {
-			return Promise.resolve(object.organizations.owner._id == user._id);
+			// updating other content so need to check organization owner and moderators
+			return Promise.resolve(
+				(object.organizations.owner._id == user._id) ||
+				(object.moderators.some((mod) => mod._id == user._id))
+			);
+		}
+	} else if (method === 'delete') {
+		if(req.organization != null) {
+			return Promise.resolve(object.owner._id == user._id);
+		} else {
+			return Promise.resolve(
+				(object.organizations.owner._id == user._id) ||
+				(object.moderators.some((mod) => mod._id == user._id))
+			);
 		}
 	}
 

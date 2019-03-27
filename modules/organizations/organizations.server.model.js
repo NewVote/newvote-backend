@@ -40,7 +40,11 @@ var OrganizationSchema = new Schema({
 	owner: {
 		type: Schema.ObjectId,
 		ref: 'User'
-	}
+	},
+	moderators: [{
+		type: Schema.ObjectId,
+		ref: 'User'
+	}]
 });
 
 mongoose.model('Organization', OrganizationSchema);
