@@ -161,8 +161,8 @@ function canAccessOrganization(req, object) {
 		return organizations.organizationByUrl(orgUrl)
 			.then(org => {
 				if(
-					(org.owner._id == user._id) ||
-					(org.moderators.some((mod) => mod._id == user._id))
+					(org.owner && org.owner._id == user._id) ||
+					(org.moderators && org.moderators.some((mod) => mod._id == user._id))
 				) {
 					return true;
 				} else {
@@ -176,8 +176,8 @@ function canAccessOrganization(req, object) {
 		} else {
 			// updating other content so need to check organization owner and moderators
 			return Promise.resolve(
-				(object.organizations.owner._id == user._id) ||
-				(object.moderators.some((mod) => mod._id == user._id))
+				(object.organizations.owner && object.organizations.owner._id == user._id) ||
+				(object.organizations.moderators && object.organizations.moderators.some((mod) => mod == user._id))
 			);
 		}
 	} else if (method === 'delete') {
@@ -185,8 +185,8 @@ function canAccessOrganization(req, object) {
 			return Promise.resolve(object.owner._id == user._id);
 		} else {
 			return Promise.resolve(
-				(object.organizations.owner._id == user._id) ||
-				(object.moderators.some((mod) => mod._id == user._id))
+				(object.organizations.owner && object.organizations.owner._id == user._id) ||
+				(object.organizations.moderators && object.organizations.moderators.some((mod) => mod == user._id))
 			);
 		}
 	}

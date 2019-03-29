@@ -8,6 +8,7 @@ var path = require('path'),
 	Organization = mongoose.model('Organization'),
 	votes = require('../votes/votes.server.controller'),
 	Solution = mongoose.model('Solution'),
+	User = mongoose.model('User'),
 	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
 	_ = require('lodash');
 
@@ -16,17 +17,29 @@ var path = require('path'),
  */
 exports.create = function (req, res) {
 	var organization = new Organization(req.body);
+	var userPromise;
 	organization.user = req.user;
-	organization.save(function (err) {
-		if(err) {
-			return res.status(400)
-				.send({
-					message: errorHandler.getErrorMessage(err)
-				});
-		} else {
-			res.json(organization);
-		}
-	});
+
+	// turn moderator emails into users before saving
+	if(req.body.moderators && req.body.moderators.length > 0) {
+		userPromise = User.find({ email: req.body.moderators });
+	} else {
+		userPromise = Promise.resolve([]);
+	}
+
+	userPromise.then((mods) => {
+		organization.moderators = mods;
+		organization.save(function (err) {
+			if(err) {
+				return res.status(400)
+					.send({
+						message: errorHandler.getErrorMessage(err)
+					});
+			} else {
+				res.json(organization);
+			}
+		});
+	})
 };
 
 /**
@@ -40,19 +53,34 @@ exports.read = function (req, res) {
  * Update a organization
  */
 exports.update = function (req, res) {
+	var userPromise;
+	var emails = req.body.moderators;
+	delete req.body.moderators;
+	delete req.body.moderatorsControl;
 	var organization = req.organization;
 	_.extend(organization, req.body);
 
-	organization.save(function (err) {
-		if(err) {
-			return res.status(400)
-				.send({
-					message: errorHandler.getErrorMessage(err)
-				});
-		} else {
-			res.json(organization);
-		}
-	});
+	// turn moderator emails into users before saving
+	if(emails && emails.length > 0) {
+		userPromise = User.find({ email: emails });
+	} else {
+		userPromise = Promise.resolve([]);
+	}
+
+	userPromise.then(mods => {
+		mods = mods.map(m=>m._id);
+		organization._doc.moderators.addToSet(mods);
+		organization.save(function (err) {
+			if(err) {
+				return res.status(400)
+					.send({
+						message: errorHandler.getErrorMessage(err)
+					});
+			} else {
+				res.json(organization);
+			}
+		});
+	})
 };
 
 /**
@@ -123,7 +151,7 @@ exports.organizationByID = function (req, res, next, id) {
 		});
 };
 
-exports.organizationByUrl = function(url) {
+exports.organizationByUrl = function (url) {
 	if(!url) {
 		return null;
 	}
@@ -133,6 +161,6 @@ exports.organizationByUrl = function(url) {
 	return Organization.findOne(query)
 		.populate('user', 'displayName')
 		.populate('owner', '_id displayName firstName lastName email')
-		.populate('moderators', '_id displayName firstName lastName email')
+		.populate('moderators', '_id email')
 		.exec();
 }
