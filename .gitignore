@@ -75,3 +75,4 @@ mongod
 *.sln
 modules/core/client/css/core.css
 modules/core/client/css/core.css
+data wrangling/mongoexport command.txt
