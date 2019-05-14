@@ -109,7 +109,8 @@ function saveVerificationSmsCode(user, code, number, res) {
 					console.log('error saving user: ', err);
 					return res.status(400)
 						.send({
-							message: err
+							message: err,
+							contactAdmin: true
 						});
 				});
 		});
