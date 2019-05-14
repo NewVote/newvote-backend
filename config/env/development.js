@@ -6,6 +6,8 @@ module.exports = {
   db: {
     uri: 'mongodb://localhost:27017/newvote-uqu',
     options: {
+      useCreateIndex: true,
+      useNewUrlParser: true
     //   user: 'newvote-admin',
     //   pass: 'newvote2017'
     },
