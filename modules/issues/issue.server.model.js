@@ -33,6 +33,9 @@ var IssueSchema = new Schema({
 		type: Schema.ObjectId,
 		ref: 'User'
 	},
+	mediaHeading: {
+		type: String
+	},
 	solutionMetaData: {
 		votes: {
 			up: Number,
