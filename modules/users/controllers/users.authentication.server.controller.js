@@ -28,10 +28,11 @@ var recaptcha = new Recaptcha({
 	verbose: true
 });
 
-var mailchimp = new Mailchimp(config.mailchimp.api);
-const MAILCHIMP_LIST_ID = config.mailchimp.list;
-
 var addToMailingList = function (user) {
+
+	var mailchimp = new Mailchimp(config.mailchimp.api);
+	var MAILCHIMP_LIST_ID = config.mailchimp.list;
+	
 	return mailchimp.post(`/lists/${MAILCHIMP_LIST_ID}/members`, {
 		email_address: user.email,
 		status: 'subscribed'
