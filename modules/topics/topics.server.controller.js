@@ -103,6 +103,7 @@ exports.list = function (req, res) {
 					'as': 'organizations'
 				}
 			},
+			{ $unwind: '$organizations' },
 			{ $match: orgMatch },
 			{ $sort: { 'name': 1 } }
 	])
