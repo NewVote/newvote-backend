@@ -23,6 +23,10 @@ var OrganizationSchema = new Schema({
 		type: String,
 		trim: true
 	},
+	longDescription: {
+		type: String,
+		trim: true
+	},
 	url: {
 		type: String,
 		trim: true,
