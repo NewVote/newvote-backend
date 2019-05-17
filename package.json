@@ -15,7 +15,8 @@
         "npm": "6.4.1"
     },
     "scripts": {
-        "start": "node server"
+        "start": "node --optimize_for_size --max_old_space_size=200 --gc_interval=100 server",
+		"start-debug": "node --inspect-brk --optimize_for_size --max_old_space_size=200 --gc_interval=100 server"
     },
     "main": "./server.js",
     "dependencies": {
@@ -67,6 +68,7 @@
         "run-sequence": "^1.1.1",
         "serve-favicon": "^2.5.0",
         "socket.io": "^2.1.1",
+        "throng": "^4.0.0",
         "validator": "^3.41.2"
     },
     "devDependencies": {
