@@ -46,7 +46,3 @@ module.exports.start = function start() {
 		});
 	});
 };
-
-module.exports.throng = function throng() {
-	module.exports.start();
-}
