@@ -2,6 +2,7 @@
 /**
  * Module dependencies.
  */
+require ('newrelic');
 const throng = require('throng');
 const app = require('./config/lib/app');
 
