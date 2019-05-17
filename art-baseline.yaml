@@ -1,0 +1,29 @@
+config:
+  target: 'http://api.newvote.org/api'
+  phases:
+    - duration: 30
+      arrivalRate: 1
+      name: "Warm up phase"
+    - duration: 60
+      arrivalRate: 5
+      rampTo: 10
+      name: "Ramp up phase"
+    - duration: 120
+      arrivalRate: 10
+      name: "Max load phase"
+  defaults:
+    headers:
+      x-my-service-auth: '987401838271002188298567'
+scenarios:
+  - flow:
+    - get:
+        url: "/topics"
+  - flow:
+    - get:
+        url: "/issues"
+  - flow:
+    - get:
+        url: "/solutions"
+  - flow:
+    - get:
+        url: "/proposals"
