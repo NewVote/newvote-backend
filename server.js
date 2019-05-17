@@ -4,7 +4,6 @@
  */
 const throng = require('throng');
 const app = require('./config/lib/app');
-require ('newrelic');
 
 /**
  * Module variables.
