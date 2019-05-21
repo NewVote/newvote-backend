@@ -9,6 +9,7 @@ var path = require('path'),
 	votes = require('../votes/votes.server.controller'),
 	Solution = mongoose.model('Solution'),
 	User = mongoose.model('User'),
+	FutureLeader = mongoose.model('FutureLeader'),
 	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
 	_ = require('lodash');
 
@@ -53,6 +54,7 @@ exports.read = function (req, res) {
  * Update a organization
  */
 exports.update = function (req, res) {
+
 	var userPromise;
 	var emails = req.body.moderators;
 	delete req.body.moderators;
