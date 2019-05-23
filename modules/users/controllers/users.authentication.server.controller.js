@@ -12,6 +12,8 @@ var path = require('path'),
 	passport = require('passport'),
 	User = mongoose.model('User'),
 	Vote = mongoose.model('Vote'),
+	Organization = mongoose.model('Organization'),
+	FutureLeader = mongoose.model('FutureLeader'),
 	nodemailer = require('nodemailer'),
 	transporter = nodemailer.createTransport(config.mailer.options),
 	Mailchimp = require('mailchimp-api-v3'),
@@ -43,6 +45,9 @@ var addToMailingList = function (user) {
  * Signup
  */
 exports.signup = function (req, res) {
+
+	var verificationCode = req.params.verificationCode;
+
 	// For security measurement we remove the roles from the req.body object
 	delete req.body.roles;
 
@@ -65,7 +70,8 @@ exports.signup = function (req, res) {
 				.send({
 					message: 'CAPTCHA verification failed'
 				});
-		} else {
+		}
+		else {
 			//user is not a robot, captcha success, continue with sign up
 
 			// Add missing user fields
@@ -74,6 +80,17 @@ exports.signup = function (req, res) {
 			//we cant just remove username as its the index for the table
 			//we'd have to drop the entire table to change the index field
 			user.username = user.email;
+
+			// If a user has been added as a future leader handle here
+			if (verificationCode) {
+				handleLeaderVerification(user, verificationCode)
+					.then((promises) => {
+						console.log(promises)
+					})
+					.catch((err) => {
+						throw(err)
+					})
+			}
 
 			// Then save the user
 			// first save generates salt
@@ -417,3 +434,60 @@ exports.updateAllOrgs = function () {
 			})
 		})
 }
+
+
+
+function handleLeaderVerification(user, verificationCode) {
+	
+	const { email } = user;
+
+	var findLeader = FutureLeader.findOne({ email });
+	var handleVerification = findLeader.then((leader) => {
+		if (!leader) throw('Email does not match Verification Code');
+		if (leader.verificationCode !== verificationCode) throw('Invalid Verification Code, please check and try again');
+		// verification code does not match users code
+
+		// Verification code matches, find org to update
+		return Organization.findById(leader.organization);
+	});
+	var updateOrganization = handleVerification.then((org) => {
+		if (!org) throw('Could not find Organization');
+
+		org.owner = user._id;
+		org.futureOwner = null;
+
+		return org;
+	});
+
+	// Return all the promise values for handling
+	return Promise.all([findLeader, handleVerification, updateOrganization])
+		.catch((err) => {
+			throw(err);
+		})
+}
+
+// FutureLeader.findOne({ email: email })
+// .then((leader) => {
+
+// 	if (!leader) throw('Email does not match Verification Code');
+// 	if (leader.verificationCode !== verificationCode) throw('Invalid Verification Code, please check and try again');
+// 	// verification code does not match users code
+
+// 	// Verification code matches, find org to update
+// 	return Organization.findById(leader.organization)
+// })
+// .then((org) => {
+
+// 	if (!org) throw('Could not find Organization');
+
+// 	org.owner = user._id;
+// 	org.futureOwner = null;
+
+// 	return org.save();
+// })
+// .catch((err) => {
+// 	return res.status(400)
+// 		.send({
+// 			message: errorHandler.getErrorMessage(err)
+// 		});
+// })
