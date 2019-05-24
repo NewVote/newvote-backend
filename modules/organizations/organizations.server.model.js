@@ -26,7 +26,7 @@ var OrganizationSchema = new Schema({
 	longDescription: {
 		type: String,
 		trim: true
-	}
+	},
 	url: {
 		type: String,
 		trim: true,
