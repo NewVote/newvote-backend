@@ -438,8 +438,8 @@ function handleLeaderVerification(user, verificationCode) {
 
 		organizations.forEach((org) => {
 
-			// if organization has a future owner update otherwise owner
-			if (organizations.futureOwner) {
+			// if organization has a current owner and it matches leader id update
+			if (organizations.futureOwner && (organizations.futureOwner === _id)) {
 				org.owner = user._id;
 				org.futureOwner = null;
 			}
