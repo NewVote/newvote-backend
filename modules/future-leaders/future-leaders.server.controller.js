@@ -28,47 +28,60 @@ exports.update = function (req, res) {
 	}
 
 	// Find if the email exists on either future leaders / users and reject or create new futureLeader
-	const createLeaderPromise = User.find({ email })
+	const createLeaderPromise = User.findOne({ email })
 		.then((user) => {
-			if (user.length > 0) throw('User exists on database');			
-			return FutureLeader.find({ email });
+			if (user) throw('User exists on database');			
+			return FutureLeader.findOne({ email });
 		})
 		.then((leader) => {
-			if (leader.length > 0) throw('Leader already exists on database');
+			// Leader Exists on DB
+			if (leader) {
 
+				// leader may exist but not have org in their organizations
+				const orgIndex = leader.organizations.find((org) => {
+					return org._id === organizationId;
+				})
+
+				if (!orgIndex) {
+					leader.organizations.push(organizationId);
+					return leader.save()
+						.then(doc => doc);
+				}
+
+				return leader;
+			}
+
+			// Leader does not exist
 			const owner = new FutureLeader({ email, organization: organizationId });
 			
 			// Had issues with the doc not saving before promise was resolve for promise.all
 			// included an extra then seems to have fixed
 			return owner
 				.save()
-				.then((doc) => {
-					return doc;
-				});
+				.then((doc) => doc);
 		})
-	const findOrganizationPromise = Organization.findOne({ _id: organizationId })
+
+	const findOrganizationPromise = Organization.findById(organizationId);
 
 	return Promise.all([createLeaderPromise, findOrganizationPromise])
 		.then(promises => {
 			let [leader, organization] = promises;
-			if (!organization) {
-				console.log(organization, 'this is org');
-				throw('No organization')
-			}
-			if (!leader) {
-				console.log(leader, 'this is leader');
-				throw('No leader');
-			}
+			if (!organization) throw('No organization')
+			if (!leader) throw('No leader');
 
-			
-			
+			// If there is an existing future owner, update existing user
+			if (organization.futureOwner) {
+				if (organization.futureOwner._id === leader._id) throw("User is already set to become owner");
+				FutureLeader.findById(organization.futureLeader._id)
+					.then((pastLeader) => {
+						// find organization and remove it from organizations array
+						pastLeader.organizations.id(organization._id).remove();
+						return pastLeader.save();
+					})
+			}
 
 			organization.owner = null;
 			organization.futureOwner = leader._id;
-
-			organization.save(function (err) {
-				if (err) throw(err);
-			});
 
 			// Create and send an email to the user
 			return sendVerificationCodeViaEmail(req, res, leader);
@@ -110,6 +123,10 @@ function saveEmailVerificationCode(user, code) {
 			if(!user) {
 				throw Error('We could not find the user in the database. Please contact administration.');
 			}
+
+			// Future leader may exist so no need to recreate code
+			if (user.verificationCode) return user;
+
 			//add hashed code to users model
 			user.verificationCode = user.hashVerificationCode(code);
 
