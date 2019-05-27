@@ -71,9 +71,10 @@ exports.signup = function (req, res) {
 					message: 'CAPTCHA verification failed'
 				});
 		}
-		else {
-			//user is not a robot, captcha success, continue with sign up
+		else {		
 
+			//user is not a robot, captcha success, continue with sign up
+			let userOrgs;
 			// Add missing user fields
 			user.provider = 'local';
 			//set the username to e-mail to satisfy unique indexes
@@ -83,56 +84,35 @@ exports.signup = function (req, res) {
 
 			// If a user has been added as a future leader handle here
 			if (verificationCode) {
-				handleLeaderVerification(user, verificationCode)
-					.then((promises) => {
-						console.log(promises)
+				return handleLeaderVerification(user, verificationCode)
+					.then((orgs) => {
+						user.organizations = orgs;
+						return user.save().then(doc => doc);
 					})
-					.catch((err) => {
-						throw(err)
+					.then(savedUser => {
+						try {
+							addToMailingList(user);
+						} catch {
+							console.log(error, 'err with mailchimp');
+						}
+						return loginUser(req, res, savedUser);
+					})
+					.catch(err => {
+						return res.status(400)
+							.send({
+								message: errorHandler.getErrorMessage(err)
+							});
 					})
 			}
 
-			// Then save the user
-			// first save generates salt
 			return user.save()
-				.then(user => {
+				.then((doc) => {
 					try {
-						addToMailingList(user)
-							.then(results => {
-								// console.log('Added user to mailchimp');
-							})
-							.catch(err => {
-								console.log('Error saving to mailchimp: ', err);
-							})
-					} catch (err) {
-						console.log('Issue with mailchimp: ', err);
+						addToMailingList(user);
+					} catch {
+						console.log(error, 'err with mailchimp');
 					}
-
-					//generate a verification code for Email
-					User.generateRandomPassphrase()
-						.then(pass => {
-							user.verificationCode = user.hashVerificationCode(pass);
-							user.save()
-								.then(() => {
-									// sendEmail(user, pass, req)
-
-									// Remove sensitive data before login
-									user.password = undefined;
-									user.salt = undefined;
-									user.verificationCode = undefined;
-									
-									req.login(user, function (err) {
-										if(err) {
-											res.status(400)
-												.send(err);
-										} else {
-											const payload = { _id: user._id, roles: user.roles, verified: user.verified };
-											const token = jwt.sign(payload, config.jwtSecret, { expiresIn: config.jwtExpiry });
-											res.json({ user: user, token: token });
-										}
-									});
-								});
-						})
+					return loginUser(req, res, doc);
 				})
 				.catch(err => {
 					return res.status(400)
@@ -441,53 +421,53 @@ function handleLeaderVerification(user, verificationCode) {
 	
 	const { email } = user;
 
-	var findLeader = FutureLeader.findOne({ email });
+	var findLeader = FutureLeader.findOne({ email })
+		.populate('organizations')
+
 	var handleVerification = findLeader.then((leader) => {
 		if (!leader) throw('Email does not match Verification Code');
 		if (leader.verificationCode !== verificationCode) throw('Invalid Verification Code, please check and try again');
 		// verification code does not match users code
 
-		// Verification code matches, find org to update
-		return Organization.findById(leader.organization);
+		// Verification code matches, return leader
+		return leader;
 	});
-	var updateOrganization = handleVerification.then((org) => {
-		if (!org) throw('Could not find Organization');
 
-		org.owner = user._id;
-		org.futureOwner = null;
+	var updateOrganizations = handleVerification.then(({organizations}) => {
+		if (organizations.length === 0) return orgs;
 
-		return org;
+		organizations.forEach((org) => {
+			org.owner = user._id;
+			org.futureOwner = null;
+
+			return org.save();
+		})
+
+		return organizations;
 	});
 
 	// Return all the promise values for handling
-	return Promise.all([findLeader, handleVerification, updateOrganization])
+	return Promise.all([findLeader, handleVerification, updateOrganizations])
+		.then((promises) => {
+			let [leader, ...rest, orgs] = promises;
+			leader.remove();
+			
+			return orgs;
+		})
 		.catch((err) => {
 			throw(err);
 		})
 }
 
-// FutureLeader.findOne({ email: email })
-// .then((leader) => {
-
-// 	if (!leader) throw('Email does not match Verification Code');
-// 	if (leader.verificationCode !== verificationCode) throw('Invalid Verification Code, please check and try again');
-// 	// verification code does not match users code
-
-// 	// Verification code matches, find org to update
-// 	return Organization.findById(leader.organization)
-// })
-// .then((org) => {
-
-// 	if (!org) throw('Could not find Organization');
-
-// 	org.owner = user._id;
-// 	org.futureOwner = null;
-
-// 	return org.save();
-// })
-// .catch((err) => {
-// 	return res.status(400)
-// 		.send({
-// 			message: errorHandler.getErrorMessage(err)
-// 		});
-// })
+function loginUser (req, res, user) {
+	req.login(user, function (err) {
+		if(err) {
+			return res.status(400)
+				.send(err);
+		} else {
+			const payload = { _id: user._id, roles: user.roles, verified: user.verified };
+			const token = jwt.sign(payload, config.jwtSecret, { expiresIn: config.jwtExpiry });
+			return res.json({ user: user, token: token });
+		}
+	});
+}
