@@ -433,17 +433,22 @@ function handleLeaderVerification(user, verificationCode) {
 		return leader;
 	});
 
-	var updateOrganizations = handleVerification.then(({organizations}) => {
+	var updateOrganizations = handleVerification.then(({_id, organizations}) => {
 		if (organizations.length === 0) return orgs;
 
 		organizations.forEach((org) => {
-			org.owner = user._id;
-			org.futureOwner = null;
 
-			return org.save();
+			// if organization has a future owner update otherwise owner
+			if (organizations.futureOwner) {
+				org.owner = user._id;
+				org.futureOwner = null;
+			}
+			
+			return org;
 		})
 
-		return organizations;
+		return organizations.save()
+			.then((doc) => doc);
 	});
 
 	// Return all the promise values for handling
