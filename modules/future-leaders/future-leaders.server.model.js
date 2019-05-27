@@ -35,7 +35,7 @@ owasp.config({
          type: String,
          default: ''
      },
-     organization: [{
+     organizations: [{
         type: Schema.ObjectId,
 		ref: 'Organization',
 		unique: true
