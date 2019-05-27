@@ -59,6 +59,11 @@ exports.update = function (req, res) {
 	var emails = req.body.moderators;
 	delete req.body.moderators;
 	delete req.body.moderatorsControl;
+	// if a user is chosen from existing users then future owner has to be removed
+	if (req.body.owner) {
+		req.body.futureOwner = null;
+	}
+
 	var organization = req.organization;
 	_.extend(organization, req.body);
 
