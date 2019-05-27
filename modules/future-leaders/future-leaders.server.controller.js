@@ -36,10 +36,10 @@ exports.update = function (req, res) {
 		.then((leader) => {
 			// Leader Exists on DB
 			if (leader) {
-
 				// leader may exist but not have org in their organizations
 				const orgIndex = leader.organizations.find((org) => {
-					return org._id === organizationId;
+					// mongoose built in check to compare objectid's
+					return org._id.equals(organizationId);
 				})
 
 				if (!orgIndex) {
@@ -47,12 +47,11 @@ exports.update = function (req, res) {
 					return leader.save()
 						.then(doc => doc);
 				}
-
 				return leader;
 			}
 
 			// Leader does not exist
-			const owner = new FutureLeader({ email, organization: organizationId });
+			const owner = new FutureLeader({ email, organizations: [organizationId] });
 			
 			// Had issues with the doc not saving before promise was resolve for promise.all
 			// included an extra then seems to have fixed
@@ -71,7 +70,8 @@ exports.update = function (req, res) {
 
 			// If there is an existing future owner, update existing user
 			if (organization.futureOwner) {
-				if (organization.futureOwner._id === leader._id) throw("User is already set to become owner");
+				if (organization.futureOwner._id.equals(leader._id)) throw("User is already set to become owner");
+				
 				FutureLeader.findById(organization.futureLeader._id)
 					.then((pastLeader) => {
 						// find organization and remove it from organizations array
@@ -82,6 +82,8 @@ exports.update = function (req, res) {
 
 			organization.owner = null;
 			organization.futureOwner = leader._id;
+
+			organization.save();
 
 			// Create and send an email to the user
 			return sendVerificationCodeViaEmail(req, res, leader);
@@ -103,7 +105,6 @@ var buildMessage = function (user, code, req) {
 	messageString += `<p>To complete your account setup, just click the URL below or copy and paste it into your browser's address bar</p>`;
 	messageString += `<p><a href='${url}'>${url}</a></p>`;
 
-	console.log(messageString, 'this is messageString');
 	return messageString;
 };
 

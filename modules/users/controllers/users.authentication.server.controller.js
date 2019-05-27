@@ -454,7 +454,7 @@ function handleLeaderVerification(user, verificationCode) {
 	// Return all the promise values for handling
 	return Promise.all([findLeader, handleVerification, updateOrganizations])
 		.then((promises) => {
-			let [leader, ...rest, orgs] = promises;
+			let [leader, verification, orgs] = promises;
 			leader.remove();
 			
 			return orgs;
