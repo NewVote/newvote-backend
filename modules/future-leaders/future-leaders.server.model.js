@@ -10,7 +10,8 @@ var mongoose = require('mongoose'),
 	Schema = mongoose.Schema,
 	crypto = require('crypto'),
 	generatePassword = require('generate-password'),
-	owasp = require('owasp-password-strength-test');
+	owasp = require('owasp-password-strength-test'),
+	arrayUniquePlugin = require('mongoose-unique-array');
 
 owasp.config({
 	allowPassphrases: true,
@@ -34,11 +35,11 @@ owasp.config({
          type: String,
          default: ''
      },
-     organization: {
+     organization: [{
         type: Schema.ObjectId,
 		ref: 'Organization',
 		unique: true
-     },
+     }],
      salt: {
 		type: String
 	},
@@ -109,4 +110,5 @@ FutureLeaderSchema.statics.generateRandomPassphrase = function () {
 	});
 };
 
+FutureLeaderSchema.plugin(arrayUniquePlugin);
 mongoose.model('FutureLeader', FutureLeaderSchema);
