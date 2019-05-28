@@ -36,7 +36,7 @@ exports.update = function (req, res) {
 		.then((leader) => {
 			// Leader Exists on DB
 			if (leader) {
-				// leader may exist but not have org in their organizations
+				// leader may exist but may not have org in their organizations
 				const orgIndex = leader.organizations.find((org) => {
 					// mongoose built in check to compare objectid's
 					return org._id.equals(organizationId);
@@ -69,7 +69,8 @@ exports.update = function (req, res) {
 			if (!organization) throw('No organization')
 			if (!leader) throw('No leader');
 
-			// If there is an existing future owner, update existing user
+			// If there is an existing future owner, remove the organization from their organizations list
+			// They will no longer be the future leader
 			if (organization.futureOwner) {
 				if (organization.futureOwner._id.equals(leader._id)) throw("User is already set to become owner");
 				
