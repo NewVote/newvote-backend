@@ -18,9 +18,10 @@ var path = require('path'),
 exports.update = function (req, res) {
 
 	const { organizationId } = req.params
-	const { futureOwner: email } = req.body;
+	const { newLeaderEmail: email } = req.body;
 
 	if (!organizationId || !email) {
+
 		return res.status(400)
 			.send({
 				message: 'Email / ID does not exist on query'
@@ -74,8 +75,12 @@ exports.update = function (req, res) {
 			if (organization.futureOwner) {
 				if (organization.futureOwner._id.equals(leader._id)) throw("User is already set to become owner");
 				
-				FutureLeader.findById(organization.futureLeader._id)
+				FutureLeader.findById(organization.futureOwner._id)
 					.then((pastLeader) => {
+
+						// future Owner cannot be found on the db
+						if (!pastLeader) return false;
+
 						// find organization and remove it from organizations array
 						pastLeader.organizations.id(organization._id).remove();
 						return pastLeader.save();
@@ -142,8 +147,8 @@ function saveEmailVerificationCode(user, code) {
 function sendVerificationCodeViaEmail (req, res, user) {
 	var pass$ = FutureLeader.generateRandomPassphrase()
 
-	if (user.emailDelivered) return res.status(200).send({ message: 'success' });
-	
+	if (user.emailDelivered) return res.status(200).send({ message: 'Leader Successfully Added' });
+
 	//send code via email
 	return pass$.then(pass => saveEmailVerificationCode(user, pass))
 		.then(pass => sendEmail(user, pass, req))

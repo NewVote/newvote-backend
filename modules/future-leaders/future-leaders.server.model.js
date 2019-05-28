@@ -57,8 +57,11 @@ owasp.config({
  // With Future leaders the user does not sign up so have to pre generate the salt for hashing
 
  FutureLeaderSchema.pre('save', function (next) {
-    this.salt = crypto.randomBytes(16)
-        .toString('base64');
+	if (!this.salt) {
+		this.salt = crypto.randomBytes(16)
+        	.toString('base64');
+	}
+
 	next();
 });
 
@@ -76,6 +79,11 @@ FutureLeaderSchema.methods.hashVerificationCode = function (code) {
 		return code;
 	}
 };
+
+FutureLeaderSchema.methods.verify = function (code) {		
+	return this.verificationCode === this.hashVerificationCode(code);
+};
+
 
 /**
  * Generates a random passphrase that passes the owasp test.

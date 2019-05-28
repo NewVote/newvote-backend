@@ -144,6 +144,7 @@ exports.organizationByID = function (req, res, next, id) {
 		.populate('user', 'displayName')
 		.populate('owner', '_id displayName firstName lastName email')
 		.populate('moderators', '_id displayName firstName lastName email')
+		.populate('futureOwner', '_id email')
 		.exec(function (err, organization) {
 			if(err) {
 				return next(err);
