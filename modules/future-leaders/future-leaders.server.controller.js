@@ -65,6 +65,7 @@ exports.update = function (req, res) {
 	return Promise.all([createLeaderPromise, findOrganizationPromise])
 		.then(promises => {
 			let [leader, organization] = promises;
+			
 			if (!organization) throw('No organization')
 			if (!leader) throw('No leader');
 
@@ -140,11 +141,17 @@ function saveEmailVerificationCode(user, code) {
 function sendVerificationCodeViaEmail (req, res, user) {
 	var pass$ = FutureLeader.generateRandomPassphrase()
 
+	if (user.emailDelivered) return res.status(200).send({ message: 'success' });
+	
 	//send code via email
 	return pass$.then(pass => saveEmailVerificationCode(user, pass))
 		.then(pass => sendEmail(user, pass, req))
 		.then((data) => {
 			console.log('Succesfully sent a verification e-mail: ', data);
+
+			user.emailDelivered = true; 
+			user.save();
+
 			return res.status(200)
 				.send({ message: 'success' })
 		})

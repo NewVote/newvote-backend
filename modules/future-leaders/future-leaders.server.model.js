@@ -43,6 +43,10 @@ owasp.config({
      salt: {
 		type: String
 	},
+	emailDelivered: {
+		type: Boolean,
+		default: false
+	}
  })
 
 
