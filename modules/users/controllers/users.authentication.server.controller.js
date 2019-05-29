@@ -17,7 +17,8 @@ var path = require('path'),
 	nodemailer = require('nodemailer'),
 	transporter = nodemailer.createTransport(config.mailer.options),
 	Mailchimp = require('mailchimp-api-v3'),
-	Recaptcha = require('recaptcha-verify');
+	Recaptcha = require('recaptcha-verify'),
+	async = require('async');
 
 // URLs for which user can't be redirected on signin
 var noReturnUrls = [
@@ -73,14 +74,13 @@ exports.signup = function (req, res) {
 				});
 		}
 
-		if(!response.success) {
-			return res.status(400)
-				.send({
-					message: 'CAPTCHA verification failed'
-				});
-		}
+		// if(!response.success) {
+		// 	return res.status(400)
+		// 		.send({
+		// 			message: 'CAPTCHA verification failed'
+		// 		});
+		// }
 		else {		
-			console.log(req.body, 'this is req.body');
 			//user is not a robot, captcha success, continue with sign up
 			// Add missing user fields
 			user.provider = 'local';
@@ -107,7 +107,6 @@ exports.signup = function (req, res) {
 						return loginUser(req, res, savedUser);
 					})
 					.catch(err => {
-						console.log(err, 'this is err');
 						return res.status(400)
 							.send({
 								message: errorHandler.getErrorMessage(err)
@@ -439,7 +438,7 @@ function handleLeaderVerification(user, verificationCode) {
 	
 	const { email } = user;
 
-	FutureLeader.findOne({ email })
+	return FutureLeader.findOne({ email })
 		.populate('organizations')
 		.then((leader) => {
 			if (!leader) throw('Email does not match Verification Code');
@@ -450,35 +449,37 @@ function handleLeaderVerification(user, verificationCode) {
 		.then((leader) => {
 			let { organizations } = leader;
 
+			// leader has no organizations to be assigned to
 			if (organizations.length === 0) {
 				leader.remove();
 				return user.save()
 					.then((doc) => doc);
 			}
 
-			// gather all organizations that leader is assigned to own and assign ownership
-			organizations = organizations
-				.filter((org) => {
-					return org.futureOwner.equals(leader._id);
-				})
-				.forEach((org) => {
+			// need to wait for docs to save otherwise  user will be assigned an empty array
+			async.eachSeries(organizations, function assignOwner (org, done) {
+				if (org.futureOwner && org.futureOwner.equals(leader._id)) {
 					org.owner = user._id;
 					org.futureOwner = null;
-					return org.save();
-				});
-			
-			// Chance that organization the user was signing up to was removed during filter
-			// if they were just a regular user, reassign organization to organizations list
-			organizations = mergeOrganizations(req.body.organizations, user.organizations);
-			user.organizations = organizations;
+				}
+				return org.save()
+					.then(() => done())
+			}, function (err) {
 
-			// Future leader can be removed from database
+				if (err) {
+					throw('Error async saving');
+				}
+				
+				user.organizations = organizations;
+				// Future leader can be removed from database
+				return user.organizations;			
+			})
 			leader.remove();
 			return user.save()
-				.then((doc) => doc);			
+				.then((doc) => doc);	
 		})
 		.catch((err) => {
-			throw(err);
+			throw('Error during verification');
 		})
 }
 
@@ -493,18 +494,4 @@ function loginUser (req, res, user) {
 			return res.json({ user: user, token: token });
 		}
 	});
-}
-
-function mergeOrganizations(signupOrgs, userOrgs) {
-	let organizations = userOrgs.slice();
-	
-	signupOrgs.forEach((org) => {
-		let orgExists = organizations.id(signupOrg[0]._id);
-		
-		if (!orgExists) {
-			return organizations.push(signupOrg);
-		}
-	})
-
-	return organizations;
 }
