@@ -80,7 +80,7 @@ exports.signup = function (req, res) {
 				});
 		}
 		else {		
-
+			console.log(req.body, 'this is req.body');
 			//user is not a robot, captcha success, continue with sign up
 			// Add missing user fields
 			user.provider = 'local';
@@ -92,35 +92,6 @@ exports.signup = function (req, res) {
 			// If a user has been added as a future leader handle here
 			if (verificationCode) {
 				return handleLeaderVerification(user, verificationCode)
-					.then((leader) => {
-						const { organizations } = leader;
-
-						// Filter organizations and assign to user object
-						user.organizations = organizations.filter((org) => {
-							if (!org || !org.futureOwner) return false;
-							return org.futureOwner.equals(leader._id);
-						});
-
-						// Future leader can be removed from database
-						leader.remove();
-						return user.save().then(doc => doc);
-					})
-					.then((user) => {
-						// handle organization updates after user has been saved
-						if (user.organizations.length === 0) return user;
-
-						user.organizations.forEach((org) => {
-							if (org.futureOwner) {
-								org.owner = user._id;
-								org.futureOwner = null;
-
-								org.save();
-							}
-						})
-
-						return user.save()
-							.then((doc) => doc);
-					})
 					.then(savedUser => {
 						try {
 							addToMailingList(savedUser)
@@ -468,13 +439,43 @@ function handleLeaderVerification(user, verificationCode) {
 	
 	const { email } = user;
 
-	return FutureLeader.findOne({ email })
+	FutureLeader.findOne({ email })
 		.populate('organizations')
 		.then((leader) => {
 			if (!leader) throw('Email does not match Verification Code');
 			if (!leader.verify(verificationCode)) throw('Invalid Verification Code, please check and try again');
 
 			return leader;
+		})
+		.then((leader) => {
+			let { organizations } = leader;
+
+			if (organizations.length === 0) {
+				leader.remove();
+				return user.save()
+					.then((doc) => doc);
+			}
+
+			// gather all organizations that leader is assigned to own and assign ownership
+			organizations = organizations
+				.filter((org) => {
+					return org.futureOwner.equals(leader._id);
+				})
+				.forEach((org) => {
+					org.owner = user._id;
+					org.futureOwner = null;
+					return org.save();
+				});
+			
+			// Chance that organization the user was signing up to was removed during filter
+			// if they were just a regular user, reassign organization to organizations list
+			organizations = mergeOrganizations(req.body.organizations, user.organizations);
+			user.organizations = organizations;
+
+			// Future leader can be removed from database
+			leader.remove();
+			return user.save()
+				.then((doc) => doc);			
 		})
 		.catch((err) => {
 			throw(err);
@@ -492,4 +493,18 @@ function loginUser (req, res, user) {
 			return res.json({ user: user, token: token });
 		}
 	});
+}
+
+function mergeOrganizations(signupOrgs, userOrgs) {
+	let organizations = userOrgs.slice();
+	
+	signupOrgs.forEach((org) => {
+		let orgExists = organizations.id(signupOrg[0]._id);
+		
+		if (!orgExists) {
+			return organizations.push(signupOrg);
+		}
+	})
+
+	return organizations;
 }
