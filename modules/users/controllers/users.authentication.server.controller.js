@@ -93,7 +93,6 @@ exports.signup = function (req, res) {
 			if (verificationCode) {
 				return handleLeaderVerification(user, verificationCode)
 					.then(savedUser => {
-						console.log(savedUser, 'this is savedUser');
 						try {
 							addToMailingList(savedUser)
 								.then(results => {
@@ -108,7 +107,6 @@ exports.signup = function (req, res) {
 						return loginUser(req, res, savedUser);
 					})
 					.catch(err => {
-						console.log(err, 'this is err on on catch handleLeaderVerification')
 						return res.status(400)
 							.send({
 								message: errorHandler.getErrorMessage(err)
@@ -455,38 +453,31 @@ function handleLeaderVerification(user, verificationCode) {
 			if (organizations.length === 0) {
 				leader.remove();
 				return user.save()
-					.then((doc) => doc);
 			}
 
-			// need to wait for docs to save otherwise  user will be assigned an empty array
-			return async.eachSeries(organizations, function assignOwner (org) {
+			organizations.forEach((org) => {
 				if (org.futureOwner && org.futureOwner.equals(leader._id)) {
 					org.owner = user._id;
 					org.futureOwner = null;
+					return org.save()
 				}
-				return org.save()
-					.then((doc) => doc);
+				return org;
 			})
-			.then(() => {
-				
-				user.organizations = organizations;
-				// Future leader can be removed from database
-				console.log(user, 'this is user');
-				leader.remove();
-				return user.save()
-					.then(doc => doc);	
-			})
+
+			user.organizations = organizations;
+			// Future leader can be removed from database
+			leader.remove();
+			return user.save();
 		})
 		.catch((err) => {
+			console.log(err, 'this is err');
 			throw('Error during verification');
 		})
 }
 
 function loginUser (req, res, user) {
-	console.log(user, 'this is user on login')
 	return req.login(user, function (err) {
 		if(err) {
-			console.log(err, 'err on loginUser');
 			return res.status(400)
 				.send(err);
 		} else {
