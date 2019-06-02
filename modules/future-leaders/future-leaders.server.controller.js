@@ -28,72 +28,58 @@ exports.update = function (req, res) {
 			})
 	}
 
-	// Find if the email exists on either future leaders / users and reject or create new futureLeader
-	const createLeaderPromise = User.findOne({ email })
+	const findUserPromise = User.findOne({ email })
 		.then((user) => {
 			if (user) throw('User exists on database');			
-			return FutureLeader.findOne({ email });
+			return false;
 		})
-		.then((leader) => {
-			// Leader Exists on DB
-			if (leader) {
-				// leader may exist but may not have org in their organizations
-				const orgIndex = leader.organizations.find((org) => {
-					// mongoose built in check to compare objectid's
-					return org._id.equals(organizationId);
-				})
 
-				if (!orgIndex) {
-					leader.organizations.push(organizationId);
-					return leader.save()
-						.then(doc => doc);
+	const doesNewLeaderExist = FutureLeader.findOne({ email })
+		.then((leader) => {
+			// if leader exists then future leader is on the database
+				// if leader does exist we want to return leader
+				if (leader) {
+					return leader;
 				}
-				return leader;
+
+				// if leader does not exist create a new leader
+				const owner = new FutureLeader({ email });
+				return owner;				
+		})
+
+
+	const doesOrganizationExistOnFutureLeader = FutureLeader.findOne({ organizations: organizationId })
+		.then((currentFutureLeader) => {
+			if (!currentFutureLeader) return false;
+				
+			if (currentFutureLeader.email === email) {
+				throw('User is already set to become owner.')
 			}
 
-			// Leader does not exist
-			const owner = new FutureLeader({ email, organizations: [organizationId] });
-			
-			// Had issues with the doc not saving before promise was resolve for promise.all
-			// included an extra then seems to have fixed
-			return owner
-				.save()
-				.then((doc) => doc);
+			currentFutureLeader.organizations.pull(organizationId);
+			return currentFutureLeader.save();		
 		})
 
 	const findOrganizationPromise = Organization.findById(organizationId);
 
-	return Promise.all([createLeaderPromise, findOrganizationPromise])
+	return Promise.all([findUserPromise, doesNewLeaderExist, doesOrganizationExistOnFutureLeader, findOrganizationPromise])
 		.then(promises => {
-			let [leader, organization] = promises;
+			let [user, leader, currentFutureLeader, organization] = promises;
 			
 			if (!organization) throw('No organization')
 			if (!leader) throw('No leader');
-
-			// If there is an existing future owner, remove the organization from their organizations list
-			// They will no longer be the future leader
-			if (organization.futureOwner) {
-				if (organization.futureOwner._id.equals(leader._id)) throw("User is already set to become owner");
-				
-				FutureLeader.findById(organization.futureOwner._id)
-					.then((pastLeader) => {
-
-						// future Owner cannot be found on the db
-						if (!pastLeader) return false;
-
-						// find organization and remove it from organizations array
-						pastLeader.organizations.id(organization._id).remove();
-						return pastLeader.save();
-					})
-			}
 
 			organization.owner = null;
 			organization.futureOwner = leader._id;
 
 			organization.save();
 
-			// Create and send an email to the user
-			return sendVerificationCodeViaEmail(req, res, leader);
+			leader.organizations.push(organization._id);
+			return leader.save()	
+		})
+		.then((savedLeader) => {
+			// After user is saved create and send an email to the user
+			return sendVerificationCodeViaEmail(req, res, savedLeader);
 		})
 		.catch((err) => {
 			console.log(err, 'this is err');

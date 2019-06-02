@@ -38,7 +38,7 @@ owasp.config({
      organizations: [{
         type: Schema.ObjectId,
 		ref: 'Organization',
-		unique: true
+		sparse: true
      }],
      salt: {
 		type: String
