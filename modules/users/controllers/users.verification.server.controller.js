@@ -13,7 +13,8 @@ var _ = require('lodash'),
 	nodemailer = require('nodemailer'),
 	transporter = nodemailer.createTransport(config.mailer.options),
 	jwt = require('jsonwebtoken'),
-	request = require('request');
+	request = require('request'),
+	sms = require('../../shared/sms/sms.controller');
 
 /**
  * User middleware
@@ -36,6 +37,16 @@ exports.sendVerificationCodeViaSms = function (req, res, next) {
 		},
 		useQueryString: true
 	};
+
+	if (number.includes('+')) {
+		return sms.sendMessage(number, code)
+			.then((response) => {
+				console.log(response, 'this is response');
+			})
+			.catch((err) => {
+				console.log(err, 'this is err');
+			})
+	}	
 
 	request.get(options, function (error, response, body) {
 		if(error) {

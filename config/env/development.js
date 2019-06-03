@@ -88,7 +88,7 @@ module.exports = {
       username: process.env.SMS_USERNAME || '',
       password: process.env.SMS_PASSWORD || ''
   },
-  smsInternation: {
+  smsInternational: {
     username: process.env.SMS_INT_USERNAME || '',
     password: process.env.SMS_INT_PASSWORD || ''
   },
