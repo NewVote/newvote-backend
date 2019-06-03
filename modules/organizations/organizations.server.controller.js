@@ -4,6 +4,7 @@
  * Module dependencies.
  */
 var path = require('path'),
+	config = require(path.resolve('./config/config')),
 	mongoose = require('mongoose'),
 	Organization = mongoose.model('Organization'),
 	votes = require('../votes/votes.server.controller'),
@@ -11,7 +12,9 @@ var path = require('path'),
 	User = mongoose.model('User'),
 	FutureLeader = mongoose.model('FutureLeader'),
 	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
-	_ = require('lodash');
+	_ = require('lodash'),
+	nodemailer = require('nodemailer'),
+	transporter = nodemailer.createTransport(config.mailer.options);
 
 /**
  * Create a organization
@@ -21,26 +24,57 @@ exports.create = function (req, res) {
 	var userPromise;
 	organization.user = req.user;
 
-	// turn moderator emails into users before saving
-	if(req.body.moderators && req.body.moderators.length > 0) {
-		userPromise = User.find({ email: req.body.moderators });
+	let email;
+	const { moderators } = req.body;
+
+	if (req.body.owner) {
+		email = req.body.owner.email;
 	} else {
-		userPromise = Promise.resolve([]);
+		email = req.body.newLeaderEmail;
 	}
 
-	userPromise.then((mods) => {
-		organization.moderators = mods;
-		organization.save(function (err) {
-			if(err) {
-				return res.status(400)
+	return findUserAndOrganization(email, moderators)
+		.then((promises) => {
+			let [user, futureLeader, moderators] = promises;
+
+			if (user) {
+				organization.owner = user;
+				// can't see anywhere else where this happens, so push org to user orgs
+				user.organizations.push(organization.id);
+				// if there is a user, need to make sure that future leader does not exist
+				// otherwise future leader will be created and email sent
+				futureLeader = null;
+				user.save();
+			}
+
+			if (moderators) {
+				organization.moderators = moderators;
+			}
+
+			if (futureLeader) {
+				organization.futureOwner = futureLeader;
+				futureLeader.organizations.push(organization.id);
+				futureLeader.save();
+			}
+
+			return organization.save();
+		})
+		.then((savedOrganization) => {
+			if (!savedOrganization) throw('Error saving leader');
+
+			if (savedOrganization.futureOwner) {
+				sendVerificationCodeViaEmail(req, savedOrganization.futureOwner);
+			}
+			// After user is saved create and send an email to the user
+			return res.json(organization);
+		})
+		.catch((err) => {
+			console.log(err, 'this is err');
+			return res.status(400)
 					.send({
 						message: errorHandler.getErrorMessage(err)
 					});
-			} else {
-				res.json(organization);
-			}
-		});
-	})
+		})
 };
 
 /**
@@ -172,3 +206,98 @@ exports.organizationByUrl = function (url) {
 		.populate('moderators', '_id email')
 		.exec();
 }
+
+
+function findUserAndOrganization (email, moderators) {
+
+	const findUserPromise = User.findOne({ email })
+		.then((user) => {
+			if (!user) return false;			
+			return user;
+		})
+
+	const doesNewLeaderExist = FutureLeader.findOne({ email })
+		.then((leader) => {
+			// if leader exists then future leader is on the database
+				// if leader does exist we want to return leader
+				if (leader) {
+					return leader;
+				}
+
+				// if leader does not exist create a new leader
+				const owner = new FutureLeader({ email });
+				return owner;				
+		})
+
+	const findModerators = User.find({ email: moderators });
+
+	return Promise.all([findUserPromise, doesNewLeaderExist, findModerators])
+}
+
+var buildMessage = function (code, req) {
+	var messageString = '';
+	var url = req.protocol + '://' + req.get('host') + 'auth/signup/' + code;
+
+	messageString += `<h3> You have been invited to join NewVote </h3>`;
+	messageString += `<p>To complete your account setup, just click the URL below or copy and paste it into your browser's address bar</p>`;
+	messageString += `<p><a href='${url}'>${url}</a></p>`;
+
+	return messageString;
+};
+
+var sendEmail = function (user, pass, req) {
+	return transporter.sendMail({
+		from: process.env.MAILER_FROM,
+		to: user.email,
+		subject: 'NewVote UQU Verification',
+		html: buildMessage(pass, req)
+	})
+}
+
+function saveEmailVerificationCode(user, code) {
+
+	return FutureLeader.findById(user._id)
+		.then((user) => {
+
+			if(!user) {
+				throw Error('We could not find the user in the database. Please contact administration.');
+			}
+
+			// Future leader may exist so no need to recreate code
+			if (user.verificationCode) return user;
+
+			//add hashed code to users model
+			user.verificationCode = user.hashVerificationCode(code);
+
+			//update user model
+			return user.save();			
+        })
+		.then(() => code)
+}
+
+function sendVerificationCodeViaEmail (req, user) {
+	var pass$ = FutureLeader.generateRandomPassphrase()
+
+	if (user.emailDelivered) {
+		console.log('email was delivered');
+		// return true
+		return true;
+	}
+
+	//send code via email
+	return pass$.then(pass => saveEmailVerificationCode(user, pass))
+		.then(pass => sendEmail(user, pass, req))
+		.then((data) => {
+			console.log('Succesfully sent a verification e-mail: ', data);
+
+			user.emailDelivered = true; 
+			user.save();
+
+			return true;
+		})
+		.catch((err) => {
+			console.log('error sending verification email: ', err);
+			throw('There was a problem while sending your verification e-mail, please try again later.')
+		});
+};
+
