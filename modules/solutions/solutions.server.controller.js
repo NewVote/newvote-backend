@@ -33,10 +33,12 @@ exports.create = function (req, res) {
  * Show the current solution
  */
 exports.read = function (req, res) {
+	let showDeleted = req.query.showDeleted || null;
 	votes.attachVotes([req.solution], req.user, req.query.regions)
 		.then(function (solutionArr) {
 			proposals.attachProposals(solutionArr, req.user, req.query.regions)
 				.then(solutions => {
+					solutions = filterSoftDeleteProposals(solutions, showDeleted);
 					const updatedSolution = solutions[0];
 					res.json(updatedSolution);
 				})
