@@ -174,7 +174,9 @@ exports.proposalByID = function (req, res, next, id) {
 exports.attachProposals = function (objects, user, regions) {
 	// debugger;
 	const promises = objects.map((obj => {
-		return Proposal.find({ solutions: obj._id }).populate('solutions')
+		return Proposal
+			.find({ solutions: obj._id })
+			.populate('solutions')
 			.then(props => {
 				return votes.attachVotes(props, user, regions)
 					.then(props => {
