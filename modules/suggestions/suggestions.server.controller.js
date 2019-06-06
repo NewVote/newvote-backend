@@ -137,11 +137,17 @@ exports.delete = function (req, res) {
 exports.list = function (req, res) {
 	let search = req.query.search || null;
 	let org = req.query.organization || null;
+	let showDeleted = req.query.showDeleted || null;
 
 	let orgMatch = org ? { 'organizations.url': org } : {};
 	let searchMatch = search ? { $text: { $search: search } } : {};
 
+	let showNonDeletedItemsMatch = { $or: [{ 'softDeleted': false }, { 'softDeleted': { $exists: false } }] };
+	let showAllItemsMatch = {};
+	let softDeleteMatch = showDeleted ? showAllItemsMatch : showNonDeletedItemsMatch;
+
 	Suggestion.aggregate([
+			{ $match: softDeleteMatch },
 			{ $match: searchMatch },
 			{
 				$lookup: {

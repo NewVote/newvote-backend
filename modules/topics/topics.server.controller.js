@@ -83,11 +83,17 @@ exports.list = function (req, res) {
 	let query = {};
 	let org = req.query.organization || null;
 	let search = req.query.search || null;
+	let showDeleted = req.query.showDeleted || null;
 
-	let orgMatch = org ? { 'organizations.url' : org } : {};
+	let orgMatch = org ? { 'organizations.url': org } : {};
 	let searchMatch = search ? { $text: { $search: search } } : {};
 
+	let showNonDeletedItemsMatch = { $or: [{ 'softDeleted': false }, { 'softDeleted': { $exists: false } }] };
+	let showAllItemsMatch = {};
+	let softDeleteMatch = showDeleted ? showAllItemsMatch : showNonDeletedItemsMatch;
+
 	Topic.aggregate([
+			{ $match: softDeleteMatch },
 			{ $match: searchMatch },
 			{
 				$lookup: {
@@ -97,6 +103,7 @@ exports.list = function (req, res) {
 					'as': 'organizations'
 				}
 			},
+			{ $unwind: '$organizations' },
 			{ $match: orgMatch },
 			{ $sort: { 'name': 1 } }
 	])

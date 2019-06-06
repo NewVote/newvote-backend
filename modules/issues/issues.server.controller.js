@@ -95,14 +95,19 @@ exports.list = function (req, res) {
 	var topicId = req.query.topicId || null;
 	let org = req.query.organization || null;
 	let search = req.query.search || null;
+	let showDeleted = req.query.showDeleted || null;
 
 	let orgMatch = org ? { 'organizations.url': org } : {};
 	let topicMatch = topicId ? { 'topics': mongoose.Types.ObjectId(topicId) } : {};
 	let searchMatch = search ? { $text: { $search: search } } : {};
 
+	let showNonDeletedItemsMatch = { $or: [{ 'softDeleted': false }, { 'softDeleted': { $exists: false } }] };
+	let showAllItemsMatch = {};
+	let softDeleteMatch = showDeleted ? showAllItemsMatch : showNonDeletedItemsMatch;
 	// debugger;
 
 	Issue.aggregate([
+			{ $match: softDeleteMatch },
 			{ $match: searchMatch },
 			{ $match: topicMatch },
 			{

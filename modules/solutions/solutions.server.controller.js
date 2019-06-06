@@ -33,10 +33,12 @@ exports.create = function (req, res) {
  * Show the current solution
  */
 exports.read = function (req, res) {
+	let showDeleted = req.query.showDeleted || null;
 	votes.attachVotes([req.solution], req.user, req.query.regions)
 		.then(function (solutionArr) {
 			proposals.attachProposals(solutionArr, req.user, req.query.regions)
 				.then(solutions => {
+					solutions = filterSoftDeleteProposals(solutions, showDeleted);
 					const updatedSolution = solutions[0];
 					res.json(updatedSolution);
 				})
@@ -96,12 +98,18 @@ exports.list = function (req, res) {
 	let issueId = req.query.issueId || null;
 	let search = req.query.search || null;
 	let org = req.query.organization || null;
+	let showDeleted = req.query.showDeleted || null;
 
 	let orgMatch = org ? { 'organizations.url': org } : {};
 	let issueMatch = issueId ? { 'issues': mongoose.Types.ObjectId(issueId) } : {};
 	let searchMatch = search ? { $text: { $search: search } } : {};
 
+	let showNonDeletedItemsMatch = { $or: [{ 'softDeleted': false }, { 'softDeleted': { $exists: false } }] };
+	let showAllItemsMatch = {};
+	let softDeleteMatch = showDeleted ? showAllItemsMatch : showNonDeletedItemsMatch;
+
 	Solution.aggregate([
+			{ $match: softDeleteMatch },
 			{ $match: searchMatch },
 			{ $match: issueMatch },
 			{
@@ -135,7 +143,7 @@ exports.list = function (req, res) {
 						proposals.attachProposals(solutions, req.user, req.query.regions)
 							.then(solutions => {
 								// debugger;
-								res.json(solutions);
+								res.json(filterSoftDeleteProposals(solutions, showDeleted))
 							})
 					})
 					.catch(function (err) {
@@ -178,3 +186,18 @@ exports.solutionByID = function (req, res, next, id) {
 			next();
 		});
 };
+
+function filterSoftDeleteProposals (solutions, showDeleted) {
+	
+	if (showDeleted) return solutions;
+
+	return solutions.map((solution) => {
+
+			solution.proposals = solution.proposals
+				.filter((proposal) => {
+					return proposal.softDeleted === false;
+				});
+			
+			return solution;
+		});
+}

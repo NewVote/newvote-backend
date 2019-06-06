@@ -50,9 +50,13 @@ var IssueSchema = new Schema({
 		type: Schema.ObjectId,
 		ref: 'Topic'
 	}],
-	organizations:  {
+	organizations:  [{
 		type: Schema.ObjectId,
 		ref: 'Organization'
+	}],
+	softDeleted: {
+		type: Boolean,
+		default: false
 	}
 });
 

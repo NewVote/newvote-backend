@@ -38,6 +38,10 @@ var TopicSchema = new Schema({
 	organizations: {
 		type: Schema.ObjectId,
 		ref: 'Organization'
+	},
+	softDeleted: {
+		type: Boolean,
+		default: false
 	}
 });
 
