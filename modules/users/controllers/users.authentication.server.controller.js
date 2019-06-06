@@ -35,7 +35,7 @@ var addToMailingList = function (user) {
 
 	var mailchimp = new Mailchimp(config.mailchimp.api);
 	var MAILCHIMP_LIST_ID = config.mailchimp.list;
-	
+
 	return mailchimp.post(`/lists/${MAILCHIMP_LIST_ID}/members`, {
 		email_address: user.email,
 		status: 'subscribed'
@@ -50,13 +50,13 @@ exports.signup = function (req, res) {
 	const { recaptchaResponse, email, password } = req.body;
 	const verificationCode = req.params.verificationCode;
 
-	if (!email || !password ) {
+	if(!email || !password) {
 		return res.status(400)
-				.send({
-					message: 'Email / Password Missing'
-				});
+			.send({
+				message: 'Email / Password Missing'
+			});
 	}
-	
+
 	// For security measurement we remove the roles from the req.body object
 	delete req.body.roles;
 
@@ -80,7 +80,7 @@ exports.signup = function (req, res) {
 		// 			message: 'CAPTCHA verification failed'
 		// 		});
 		// }
-		else {		
+		else {
 			//user is not a robot, captcha success, continue with sign up
 			// Add missing user fields
 			user.provider = 'local';
@@ -90,7 +90,7 @@ exports.signup = function (req, res) {
 			user.username = user.email;
 
 			// If a user has been added as a future leader handle here
-			if (verificationCode) {
+			if(verificationCode) {
 				return handleLeaderVerification(user, verificationCode)
 					.then(savedUser => {
 						try {
@@ -127,7 +127,7 @@ exports.signup = function (req, res) {
 					} catch (err) {
 						console.log('Issue with mailchimp: ', err);
 					}
-					
+
 					return loginUser(req, res, doc);
 				})
 				.catch(err => {
@@ -432,17 +432,15 @@ exports.updateAllOrgs = function () {
 		})
 }
 
-
-
 function handleLeaderVerification(user, verificationCode) {
-	
+
 	const { email } = user;
 
 	return FutureLeader.findOne({ email })
 		.populate('organizations')
 		.then((leader) => {
-			if (!leader) throw('Email does not match Verification Code');
-			if (!leader.verify(verificationCode)) throw('Invalid Verification Code, please check and try again');
+			if(!leader) throw ('Email does not match Verification Code');
+			if(!leader.verify(verificationCode)) throw ('Invalid Verification Code, please check and try again');
 
 			return leader;
 		})
@@ -450,13 +448,13 @@ function handleLeaderVerification(user, verificationCode) {
 			let { organizations } = leader;
 
 			// leader has no organizations to be assigned to
-			if (organizations.length === 0) {
+			if(organizations.length === 0) {
 				leader.remove();
 				return user.save()
 			}
 
 			organizations.forEach((org) => {
-				if (org.futureOwner && org.futureOwner.equals(leader._id)) {
+				if(org.futureOwner && org.futureOwner.equals(leader._id)) {
 					org.owner = user._id;
 					org.futureOwner = null;
 					return org.save()
@@ -471,11 +469,11 @@ function handleLeaderVerification(user, verificationCode) {
 		})
 		.catch((err) => {
 			console.log(err, 'this is err');
-			throw('Error during verification');
+			throw ('Error during verification');
 		})
 }
 
-function loginUser (req, res, user) {
+function loginUser(req, res, user) {
 	return req.login(user, function (err) {
 		if(err) {
 			return res.status(400)

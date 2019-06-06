@@ -69,13 +69,15 @@ exports.invokeRolesPolicies = function () {
  * Check If Articles Policy Allows
  */
 exports.isAllowed = function (req, res, next) {
+	console.log('testing isAllowed');
+	debugger;
 	var roles = (req.user) ? req.user.roles : ['guest'];
 	var user = req.user;
 
 	// debugger;
 
 	// If an article is being processed and the current user created it then allow any manipulation
-	var object = req.article || req.vote || req.issue || req.solution || req.proposal || req.organization || req.endorsement || req.topic || req.media || req.suggestion;
+	var object = req.vote || req.issue || req.solution || req.proposal || req.organization || req.endorsement || req.topic || req.media || req.suggestion;
 	if(object && req.user && object.user && object.user.id === req.user.id) {
 		return next();
 	}
@@ -102,7 +104,6 @@ exports.isAllowed = function (req, res, next) {
 					   message: 'User is not authenticated'
 				   });
 		   }
-
 			// allowed test failed, is this a non GET request? (POST/UPDATE/DELETE)
 			if(req.method.toLowerCase() !== 'get' && user) {
 				debugger;

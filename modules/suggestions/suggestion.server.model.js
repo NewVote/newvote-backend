@@ -60,10 +60,10 @@ var SuggestionSchema = new Schema({
 			ref: 'Vote'
 		}
 	},
-	organizations: [{
+	organizations: {
 		type: Schema.ObjectId,
 		ref: 'Organization'
-	}],
+	},
 	softDeleted: {
 		type: Boolean,
 		default: false

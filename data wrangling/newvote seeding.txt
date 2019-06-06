@@ -1,0 +1,20 @@
+use newvote-staging.rar to seed your DB
+You will need to decompress the rar and run this command in the parent directory
+mongorestore -h localhost -d newvote-uqu newvote-staging
+
+User accounts:
+admin@test.com
+owner@test.com
+moderator@test.com
+user@test.com
+
+password: test123456
+
+communities:
+com1
+com2
+
+Note: you will want to modify your HOSTS file so that you can access the site at a regular URL
+I have a line like this:
+127.0.0.1 com1.localhost.newvote.org com2.localhost.newvote.org
+

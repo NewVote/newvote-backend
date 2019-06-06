@@ -163,8 +163,7 @@ var UserSchema = new Schema({
 	// for tracking org memberships
 	organizations: [{
 		type: Schema.ObjectId,
-		ref: 'Organization',
-		unique: true
+		ref: 'Organization'
 	}]
 });
 
