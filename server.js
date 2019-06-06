@@ -1,7 +1,20 @@
 'use strict';
-
 /**
  * Module dependencies.
  */
-var app = require('./config/lib/app');
-var server = app.start();
+require ('newrelic');
+const throng = require('throng');
+const app = require('./config/lib/app');
+
+/**
+ * Module variables.
+ */
+const WORKERS = process.env.WEB_CONCURRENCY || 1;
+
+/**
+ * Start the app
+ */
+throng({
+	workers: WORKERS,
+	lifetime: Infinity
+}, app.start);

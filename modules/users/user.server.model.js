@@ -66,7 +66,8 @@ var UserSchema = new Schema({
 		lowercase: true,
 		trim: true,
 		default: '',
-		index: true
+		index: true,
+		required: true
 	},
 	postalCode: {
 		type: String,
@@ -81,6 +82,7 @@ var UserSchema = new Schema({
 	},
 	username: {
 		type: String,
+		required: true
 	},
 	mobileNumber: {
 		type: String
@@ -112,7 +114,8 @@ var UserSchema = new Schema({
 	},
 	password: {
 		type: String,
-		default: ''
+		default: '',
+		required: true
 	},
 	verificationCode: {
 		type: String,
