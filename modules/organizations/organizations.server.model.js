@@ -49,6 +49,10 @@ var OrganizationSchema = new Schema({
 		type: Schema.ObjectId,
 		ref: 'User'
 	},
+	futureOwner: {
+		type: Schema.ObjectId,
+		ref: 'FutureLeader'
+	},
 	moderators: [{
 		type: Schema.ObjectId,
 		ref: 'User'

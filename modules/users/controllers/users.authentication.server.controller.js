@@ -12,10 +12,13 @@ var path = require('path'),
 	passport = require('passport'),
 	User = mongoose.model('User'),
 	Vote = mongoose.model('Vote'),
+	Organization = mongoose.model('Organization'),
+	FutureLeader = mongoose.model('FutureLeader'),
 	nodemailer = require('nodemailer'),
 	transporter = nodemailer.createTransport(config.mailer.options),
 	Mailchimp = require('mailchimp-api-v3'),
-	Recaptcha = require('recaptcha-verify');
+	Recaptcha = require('recaptcha-verify'),
+	async = require('async');
 
 // URLs for which user can't be redirected on signin
 var noReturnUrls = [
@@ -43,13 +46,24 @@ var addToMailingList = function (user) {
  * Signup
  */
 exports.signup = function (req, res) {
+
+	const { recaptchaResponse, email, password } = req.body;
+	const verificationCode = req.params.verificationCode;
+
+	if (!email || !password ) {
+		return res.status(400)
+				.send({
+					message: 'Email / Password Missing'
+				});
+	}
+	
 	// For security measurement we remove the roles from the req.body object
 	delete req.body.roles;
 
 	// Init Variables
 	var user = new User(req.body);
 	var message = null;
-	var recaptchaResponse = req.body.recaptchaResponse;
+	// var recaptchaResponse = req.body.recaptchaResponse;
 
 	//ensure captcha code is valid or return with an error
 	recaptcha.checkResponse(recaptchaResponse, function (err, response) {
@@ -60,14 +74,14 @@ exports.signup = function (req, res) {
 				});
 		}
 
-		if(!response.success) {
-			return res.status(400)
-				.send({
-					message: 'CAPTCHA verification failed'
-				});
-		} else {
+		// if(!response.success) {
+		// 	return res.status(400)
+		// 		.send({
+		// 			message: 'CAPTCHA verification failed'
+		// 		});
+		// }
+		else {		
 			//user is not a robot, captcha success, continue with sign up
-
 			// Add missing user fields
 			user.provider = 'local';
 			//set the username to e-mail to satisfy unique indexes
@@ -75,12 +89,35 @@ exports.signup = function (req, res) {
 			//we'd have to drop the entire table to change the index field
 			user.username = user.email;
 
-			// Then save the user
-			// first save generates salt
+			// If a user has been added as a future leader handle here
+			if (verificationCode) {
+				return handleLeaderVerification(user, verificationCode)
+					.then(savedUser => {
+						try {
+							addToMailingList(savedUser)
+								.then(results => {
+									// console.log('Added user to mailchimp');
+								})
+								.catch(err => {
+									console.log('Error saving to mailchimp: ', err);
+								})
+						} catch (err) {
+							console.log('Issue with mailchimp: ', err);
+						}
+						return loginUser(req, res, savedUser);
+					})
+					.catch(err => {
+						return res.status(400)
+							.send({
+								message: errorHandler.getErrorMessage(err)
+							});
+					})
+			}
+
 			return user.save()
-				.then(user => {
+				.then((doc) => {
 					try {
-						addToMailingList(user)
+						addToMailingList(doc)
 							.then(results => {
 								// console.log('Added user to mailchimp');
 							})
@@ -90,34 +127,11 @@ exports.signup = function (req, res) {
 					} catch (err) {
 						console.log('Issue with mailchimp: ', err);
 					}
-
-					//generate a verification code for Email
-					User.generateRandomPassphrase()
-						.then(pass => {
-							user.verificationCode = user.hashVerificationCode(pass);
-							user.save()
-								.then(() => {
-									// sendEmail(user, pass, req)
-
-									// Remove sensitive data before login
-									user.password = undefined;
-									user.salt = undefined;
-									user.verificationCode = undefined;
-									
-									req.login(user, function (err) {
-										if(err) {
-											res.status(400)
-												.send(err);
-										} else {
-											const payload = { _id: user._id, roles: user.roles, verified: user.verified };
-											const token = jwt.sign(payload, config.jwtSecret, { expiresIn: config.jwtExpiry });
-											res.json({ user: user, token: token });
-										}
-									});
-								});
-						})
+					
+					return loginUser(req, res, doc);
 				})
 				.catch(err => {
+					console.log(err, 'this is err');
 					return res.status(400)
 						.send({
 							message: errorHandler.getErrorMessage(err)
@@ -416,4 +430,60 @@ exports.updateAllOrgs = function () {
 					})
 			})
 		})
+}
+
+
+
+function handleLeaderVerification(user, verificationCode) {
+	
+	const { email } = user;
+
+	return FutureLeader.findOne({ email })
+		.populate('organizations')
+		.then((leader) => {
+			if (!leader) throw('Email does not match Verification Code');
+			if (!leader.verify(verificationCode)) throw('Invalid Verification Code, please check and try again');
+
+			return leader;
+		})
+		.then((leader) => {
+			let { organizations } = leader;
+
+			// leader has no organizations to be assigned to
+			if (organizations.length === 0) {
+				leader.remove();
+				return user.save()
+			}
+
+			organizations.forEach((org) => {
+				if (org.futureOwner && org.futureOwner.equals(leader._id)) {
+					org.owner = user._id;
+					org.futureOwner = null;
+					return org.save()
+				}
+				return org;
+			})
+
+			user.organizations = organizations;
+			// Future leader can be removed from database
+			leader.remove();
+			return user.save();
+		})
+		.catch((err) => {
+			console.log(err, 'this is err');
+			throw('Error during verification');
+		})
+}
+
+function loginUser (req, res, user) {
+	return req.login(user, function (err) {
+		if(err) {
+			return res.status(400)
+				.send(err);
+		} else {
+			const payload = { _id: user._id, roles: user.roles, verified: user.verified };
+			const token = jwt.sign(payload, config.jwtSecret, { expiresIn: config.jwtExpiry });
+			return res.json({ user: user, token: token });
+		}
+	});
 }

@@ -153,6 +153,7 @@ function canAccessOrganization(req, object) {
 	debugger;
 	const orgUrl = req.query.organization;
 	const user = req.user;
+
 	const method = req.method.toLowerCase();
 
 	// when creating there is no org for the object yet
@@ -171,8 +172,12 @@ function canAccessOrganization(req, object) {
 			});
 	} else if(method === 'put') {
 		if(req.organization != null) {
+
+			if (object.owner === null && !user.roles.includes('admin')) {
+				Promise.reject();
+			}
 			// we are updating a community so just check its owner (mods cant edit community)
-			return Promise.resolve(object.owner._id == user._id);
+			return Promise.resolve(user.roles.includes('admin') || object.owner._id == user._id);
 		} else {
 			// updating other content so need to check organization owner and moderators
 			return Promise.resolve(

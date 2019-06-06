@@ -8,6 +8,7 @@ var path = require('path'),
 	policy = require('./generic.server.policy'),
 	topics = require('./topics/topics.server.controller'),
 	organizations = require('./organizations/organizations.server.controller'),
+	futureLeaders = require('./future-leaders/future-leaders.server.controller'),
 	issues = require('./issues/issues.server.controller'),
 	solutions = require('./solutions/solutions.server.controller'),
 	proposals = require('./proposals/proposals.server.controller'),
@@ -95,6 +96,10 @@ module.exports = function (app) {
 		.get(organizations.read)
 		.put(organizations.update)
 		.delete(organizations.delete);
+
+	app.route('/api/organizations/owner/:organizationId')
+		.all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+		.put(futureLeaders.update)
 
 	app.route('/api/issues/:issueId')
 		.all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
