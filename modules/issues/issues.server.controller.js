@@ -57,8 +57,10 @@ exports.update = function (req, res) {
 	// issue.title = req.body.title;
 	// issue.content = req.body.content;
 
+	
 	issue.save(function (err) {
 		if(err) {
+			console.log(err, 'this is err on update issue');
 			return res.status(400)
 				.send({
 					message: errorHandler.getErrorMessage(err)
@@ -119,6 +121,7 @@ exports.list = function (req, res) {
 				}
 			},
 			{ $match: orgMatch },
+			{ $unwind: '$organizations' },
 			{
 				$lookup: {
 					'from': 'topics',
