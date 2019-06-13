@@ -83,7 +83,7 @@ module.exports.initMiddleware = function (app) {
 	// Enable jsonp
 	app.enable('jsonp callback');
 
-	// app.use(allowCrossDomain);
+	app.use(allowCrossDomain);
 
 	// Should be placed before express.static
 	app.use(compress({
