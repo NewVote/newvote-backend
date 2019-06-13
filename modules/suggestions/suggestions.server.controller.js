@@ -158,6 +158,7 @@ exports.list = function (req, res) {
 				}
 			},
 			{ $match: orgMatch },
+			{ $unwind: '$organizations' },
 			{ $sort: { 'created': -1 } }
 	])
 		.exec(function (err, suggestions) {

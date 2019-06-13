@@ -121,6 +121,7 @@ exports.list = function (req, res) {
 				}
 			},
 			{ $match: orgMatch },
+			{ $unwind: '$organizations' },
 			{
 				$lookup: {
 					'from': 'issues',
