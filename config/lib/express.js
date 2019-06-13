@@ -70,28 +70,14 @@ module.exports.initMiddleware = function (app) {
 	// Enable jsonp
 	app.enable('jsonp callback');
 
-
-
-// var allowCrossDomain = function (req, res, next) {
-// 	res.header('Access-Control-Allow-Origin', '*.newvote.org');
-// 	res.header('Access-Control-Allow-Credentials', true);
-// 	res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-// 	res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With, x-xsrf-token');
-// 
-// 	// intercept OPTIONS method
-// 	if('OPTIONS' == req.method) {
-// 		res.send(200);
-// 	} else {
-// 		next();
-// 	}
-// };
-
 	let corsOptions = {
 		origin: /newvote.org$/,
 		allowedHeaders: ['Content-Type, Authorization, Content-Length, X-Requested-With, x-xsrf-token'],
 		credentials: true
 	}
 	app.use(cors(corsOptions));
+	// enable pre-flight
+	app.options('*', cors())
 
 	// Should be placed before express.static
 	app.use(compress({
