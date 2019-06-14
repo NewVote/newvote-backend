@@ -67,10 +67,10 @@ exports.signup = function (req, res) {
 
 	//ensure captcha code is valid or return with an error
 	recaptcha.checkResponse(recaptchaResponse, function (err, response) {
-		if(err) {
+		if(err || !response.success) {
 			return res.status(400)
 				.send({
-					message: errorHandler.getErrorMessage(err)
+					message: 'Recaptcha verification failed.'
 				});
 		}
 
