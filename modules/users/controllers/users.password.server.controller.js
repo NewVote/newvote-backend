@@ -10,7 +10,13 @@ var path = require('path'),
 	User = mongoose.model('User'),
 	nodemailer = require('nodemailer'),
 	async = require('async'),
-		crypto = require('crypto');
+	Recaptcha = require('recaptcha-verify'),
+	crypto = require('crypto');
+
+var recaptcha = new Recaptcha({
+	secret: config.reCaptcha.secret,
+	verbose: true
+});
 
 var smtpTransport = nodemailer.createTransport(config.mailer.options);
 
@@ -19,6 +25,20 @@ var smtpTransport = nodemailer.createTransport(config.mailer.options);
  */
 exports.forgot = function (req, res, next) {
 	async.waterfall([
+	// check recaptcha is valid and present
+	function (done) {
+			const { recaptchaResponse } = req.body;
+			recaptcha.checkResponse(recaptchaResponse, function (err, response) {
+				if(err) {
+					return res.status(400)
+						.send({
+							message: errorHandler.getErrorMessage(err)
+						});
+				} else {
+					done()
+				}
+			})
+	},
     // Generate random token
     function (done) {
 			crypto.randomBytes(20, function (err, buffer) {
