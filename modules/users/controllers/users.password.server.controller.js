@@ -29,10 +29,11 @@ exports.forgot = function (req, res, next) {
 	function (done) {
 			const { recaptchaResponse } = req.body;
 			recaptcha.checkResponse(recaptchaResponse, function (err, response) {
-				if(err) {
+				debugger;
+				if(err || !response.success) {
 					return res.status(400)
 						.send({
-							message: errorHandler.getErrorMessage(err)
+							message: 'Recaptcha verification failed.'
 						});
 				} else {
 					done()
