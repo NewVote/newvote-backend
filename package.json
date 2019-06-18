@@ -17,7 +17,7 @@
     "scripts": {
         "start": "node --optimize_for_size --max_old_space_size=200 --gc_interval=100 server",
         "start-debug": "node --inspect-brk --optimize_for_size --max_old_space_size=200 --gc_interval=100 server",
-        "test": "mocha"
+        "test": "mocha ./test/**/*.js"
     },
     "main": "./server.js",
     "dependencies": {
