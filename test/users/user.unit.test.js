@@ -9,7 +9,7 @@ let should = chai.should();
 
 describe('User', () => {
     beforeEach((done) => {
-        User.remove({}, (err) => {
+        User.deleteMany({}, (err) => {
             done();
         })
     })
@@ -32,7 +32,7 @@ describe('Save', function () {
     });
 
     after(function (done) {
-        User.remove({}, (err) => {
+        User.deleteMany({}, (err) => {
             done();
         });
     })

@@ -17,5 +17,3 @@ module.exports = server;
 // var userFromSeedConfig = config.seedDB.options.seedUser;
 // var adminFromSeedConfig = config.seedDB.options.seedAdmin;
 
-chai.use(chaiHttp);
-
