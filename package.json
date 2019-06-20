@@ -21,6 +21,7 @@
     },
     "main": "./server.js",
     "dependencies": {
+        "@hapi/joi": "^15.0.3",
         "acl": "~0.4.4",
         "async": "^1.5.2",
         "body-parser": "^1.18.3",
