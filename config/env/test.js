@@ -31,6 +31,13 @@ module.exports = {
       }
     }
   },
+  reCaptcha: {
+    secret: '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
+  },
+  mailchimp: {
+	  api: process.env.MAILCHIMP_API_KEY || 'MAILCHIMP_API_KEY',
+	  list: process.env.MAILCHIMP_LIST_ID || 'MAILCHIMP_LIST_ID'
+  },
   port: process.env.PORT || 3001,
   app: {
     title: defaultEnvConfig.app.title + ' - Test Environment'
