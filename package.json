@@ -21,11 +21,11 @@
     },
     "main": "./server.js",
     "dependencies": {
-        "@hapi/joi": "^15.0.3",
         "acl": "~0.4.4",
         "async": "^1.5.2",
         "body-parser": "^1.18.3",
         "bower": "^1.4.1",
+        "celebrate": "^10.0.1",
         "cfenv": "~1.0.0",
         "chai": "^4.2.0",
         "chai-http": "^4.3.0",
