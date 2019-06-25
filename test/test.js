@@ -13,7 +13,3 @@ var server = require('../config/lib/express').init();
 server.listen(3000);
 
 module.exports = server;
-
-// var userFromSeedConfig = config.seedDB.options.seedUser;
-// var adminFromSeedConfig = config.seedDB.options.seedAdmin;
-
