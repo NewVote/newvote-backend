@@ -19,7 +19,12 @@ var path = require('path'),
 	regions = require('./regions/regions.server.controller'),
 	countries = require('./countries/countries.server.controller'),
 	passport = require('passport'),
-	jwt = require('express-jwt');
+	jwt = require('express-jwt'),
+	celebrateWrap = require('celebrate'),
+	validators = require('./organizations/organization.validation.js');
+
+	const { schema } = validators;
+	const { errors, celebrate } = celebrateWrap;
 
 // jwt module simply puts the user object into req.user if the token is valid
 // otherwise it just does nothing and the policy module handles the rest
@@ -29,9 +34,12 @@ console.log(config.jwtSecret)
 module.exports = function (app) {
 	// Articles collection routes
 	app.route('/api/organizations')
+		.all(celebrate(schema))
 		.all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
-		.get(organizations.list)
-		.post(organizations.create);
+		.post(organizations.create)
+		.get(organizations.list);
+
+		
 
 	app.route('/api/topics')
 		.all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
