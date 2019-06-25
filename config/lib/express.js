@@ -21,7 +21,10 @@ var config = require('../config'),
 	path = require('path'),
 	csrf = require('csurf'),
 	cors = require('cors'),
-	jwt = require('express-jwt');
+	jwt = require('express-jwt'),
+	celebrateWrap = require('celebrate');
+
+	const { celebrate, errors } = celebrateWrap;
 
 /**
  * Initialize local variables
@@ -113,6 +116,7 @@ module.exports.initMiddleware = function (app) {
 	app.use(cookieParser());
 	app.use(flash());
 
+	
 	// set up csurf
 	// app.use(csrf({
 	// 	cookie: {
@@ -134,6 +138,8 @@ module.exports.initMiddleware = function (app) {
 	if(process.env.NODE_ENV === 'production') {
 		app.use('/', httpsRedirect());
 	}
+
+
 };
 
 /**
@@ -236,6 +242,14 @@ module.exports.initModulesServerRoutes = function (app) {
  * Configure error handling
  */
 module.exports.initErrorRoutes = function (app) {
+
+	// populate with general error handler or pass joi errors to next
+	app.use(function (err, req, res, next) {
+		next(err);
+	})
+
+	app.use(errors());
+
 	app.use(function (err, req, res, next) {
 		// If the error object doesn't exists
 		if(!err) {
@@ -243,11 +257,13 @@ module.exports.initErrorRoutes = function (app) {
 		}
 
 		// Log it
-		console.error(err.stack);
+		console.error(err.stack, );
 
 		// Redirect to error page
 		res.redirect('/server-error');
 	});
+
+	
 };
 
 /**
@@ -300,7 +316,7 @@ module.exports.init = function (db) {
 	this.initErrorRoutes(app);
 
 	// Configure Socket.io
-	app = this.configureSocketIO(app, db);
+	// app = this.configureSocketIO(app, db);
 
 	return app;
 };

@@ -39,8 +39,6 @@ module.exports = function (app) {
 		.post(organizations.create)
 		.get(organizations.list);
 
-		
-
 	app.route('/api/topics')
 		.all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
 		.get(topics.list)
