@@ -13,7 +13,7 @@ const schema = {
         issues: Joi.array(),
         solutions: Joi.array(),
         proposals: Joi.array(),
-        votes: Joi.object(),,
+        votes: Joi.object(),
         organizations: Joi.objectId(),
     })
 }

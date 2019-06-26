@@ -30,7 +30,7 @@ const schema = {
         created: Joi.date(),
         organizations: Joi.array(),
         resetPasswordToken: Joi.string(),
-        resetPasswordExpires: Joi.date()
+        resetPasswordExpires: Joi.date(),
     })
 }
 

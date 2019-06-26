@@ -13,6 +13,7 @@ const schema = {
         owner: Joi.objectId(),
         futureOwner: Joi.objectId(),
         moderators: Joi.array(),
+        newLeaderEmail: Joi.string().email(),
     })
 }
 
