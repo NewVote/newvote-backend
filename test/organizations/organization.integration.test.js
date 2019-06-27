@@ -1,16 +1,17 @@
 process.env.NODE_ENV = 'test';
 
-let chai = require('chai');
-let chaiHttp = require('chai-http');
-let server = require('../test.js');
-let _ = require('lodash');
+const chai = require('chai');
+const chaiHttp = require('chai-http');
+const server = require('../test.js');
+const _ = require('lodash');
+const dummy = require('mongoose-dummy');
 
-let mongoose = require('mongoose');
-let Organization = mongoose.model('Organization');
-let User = mongoose.model('User');
+const mongoose = require('mongoose');
+const Organization = mongoose.model('Organization');
+const User = mongoose.model('User');
 
 chai.use(chaiHttp);
-let recaptchaKey = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI';
+const recaptchaKey = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI';
 
 const users = {
     user: 'test_user@test.com',
@@ -48,6 +49,13 @@ const userSignup = function () {
             })
             .then((res)=> res)
             .catch((err) => err);
+}
+
+const generateOrg = function (model, ignoredFields) {
+    return dummy(model, {
+        ignore: ignoredFields ? ignoredFields : '',
+        returnDate: true
+    })
 }
 
 describe('/api/organizations GET routes', async function () {
@@ -225,8 +233,10 @@ describe('/api/organizations/:organizationId PUT', async function () {
     afterEach(async function () {
         return Organization.findOne({ _id: orgId })
             .then((doc) => {
+
+                if (doc.imageUrl === orgImageUrl) return false;
                 doc.imageUrl = orgImageUrl;
-                return doc;
+                return doc.save()
             })
     })
 
@@ -277,10 +287,10 @@ describe('/api/organizations/:organizationId PUT', async function () {
         const login = await userLogin(request, admin);
         const authToken = login.body.token;
 
-         // Get a copy of the original organization
-         const oldOrg = await Organization.findOne({ _id: orgId });
-         const alteredOrg =  _.assign({}, oldOrg, { imageUrl: 'changed.jpg' });
+        // Get a copy of the original organization
+        const oldOrg = await Organization.findOne({ _id: orgId });
 
+        let alteredOrg =  _.merge(oldOrg, { imageUrl: 'changed.jpg' });
         const res = await chai.request(server)
             .put(`/api/organizations/${orgId}`)
             .set({ authorization: `Bearer ${authToken}` })
@@ -298,32 +308,89 @@ describe('/api/organizations/:organizationId PUT', async function () {
     })
 })
 
-// describe('/api/organizations/:organizationId DELETE', async function () {
-    
-//     it('unauthenticated user cannot request organizations', function (done) {
-//         chai.request(server)
-//             .get('/api/organizations')
-//             .end(function (err, res) {
-//                 res.should.have.status(401);
-//                 res.body.should.be.an('object');
-//                 res.body.should.have.property('message');
-//                 done();
-//             })
-//     })
-    
-//     it('admin can request  organizations', async function () {
-//         const request = chai.request(server).keepOpen();
-//         const login = await userLogin(request, user);
-//         const authToken = login.body.token;
+describe('/api/organizations/:organizationId DELETE', async function () {
 
-//         chai.request(server)
-//             .get('/api/organizations')
-//             .set({ authorization: `Bearer ${authToken}` })
-//             .then(function (res) {
-//                 res.should.have.status(200);
-//                 res.body.should.be.a('array');
-//                 request.close();
-//             })
-//             .catch((err) => err);
-//         })
-// })
+    let originalOrg;
+    // for routes that require authentication
+    const request = chai.request(server).keepOpen();
+
+    before(async function () {
+        // Cannot resave org - so generate a new org which will be deleted
+        let newOrg = new Organization(generateOrg(Organization));
+        originalOrg = _.cloneDeep(newOrg);
+        newOrg.save()
+    })
+
+    // Reset the original organization after each test
+    afterEach(async function () {
+        await Organization.findOne({ _id: originalOrg._id })
+            .then((doc) => {
+                if (doc) return false;
+                // If doc is deleted replace so not to break future tests
+                let newOrg = new Organization(generateOrg(Organization));
+                originalOrg = doc;
+                return newOrg.save()
+            })
+    })
+
+    after(async function () {
+        request.close();
+        // If organization persists remove it
+        if (originalOrg && originalOrg._id) {
+            Organization.findOneAndRemove({ _id: originalOrg._id })
+        }
+    })
+    
+    it('unauthenticated user cannot delete Organization', async function () {
+        console.log(originalOrg, 'this is org');
+        const res = await chai.request(server)
+            .delete(`/api/organizations/${originalOrg._id}`)
+
+        res.should.have.status(401);
+        res.body.should.be.an('object');
+        res.body.should.have.property('message');
+
+        // Second test to make sure DB has not been updated
+        const orgExists = await Organization.findOne({ _id: originalOrg._id });
+        orgExists.should.exist;
+        orgExists.should.be.an('object');
+        return orgExists.should.have.property('url')
+    });
+    
+    it('authenticated user cannot delete Organization', async function () {
+        const login = await userLogin(request, user);
+        const authToken = login.body.token;
+        
+        const res = await chai.request(server)
+            .delete(`/api/organizations/${originalOrg._id}`)
+            .set({ authorization: `Bearer ${authToken}` })
+
+
+        res.should.have.status(403);
+        res.body.should.be.an('object');
+        res.body.should.have.property('message');
+
+        // Second test to make sure DB has not been updated
+        const orgExists = await Organization.findOne({ _id: originalOrg._id });
+        orgExists.should.exist;
+        orgExists.should.be.an('object');
+        return orgExists.should.have.property('url')
+    });
+
+    it('admin can delete Organization', async function () {
+        const login = await userLogin(request, admin);
+        const authToken = login.body.token;
+        
+        const res = await chai.request(server)
+            .delete(`/api/organizations/${originalOrg._id}`)
+            .set({ authorization: `Bearer ${authToken}` })
+
+
+        res.should.have.status(200);
+        // Second test to make sure DB has not been updated
+        return Organization.findOne({ _id: originalOrg._id })
+            .then((doc) => {
+                return (doc === null).should.be.true;
+            })
+    });
+})
