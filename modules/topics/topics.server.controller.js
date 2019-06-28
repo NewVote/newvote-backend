@@ -93,8 +93,8 @@ exports.list = function (req, res) {
 	let softDeleteMatch = showDeleted ? showAllItemsMatch : showNonDeletedItemsMatch;
 
 	Topic.aggregate([
-			{ $match: softDeleteMatch },
 			{ $match: searchMatch },
+			{ $match: softDeleteMatch },
 			{
 				$lookup: {
 					'from': 'organizations',
