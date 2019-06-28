@@ -2,6 +2,9 @@ const { Joi } = require('celebrate');
 Joi.objectId = require('joi-objectid')(Joi);
 
 const schema = {
+    params: {
+        organizationId: Joi.objectId()
+    },
     body: Joi.object().keys({
         name: Joi.string().required(),
         description: Joi.string(),

@@ -52,21 +52,21 @@ exports.read = function (req, res) {
  * Update a issue
  */
 exports.update = function (req, res) {
+	// __v causes version conflicts during tests, so remove from client side request
+	delete req.body.__v;
 	var issue = req.issue;
 	_.extend(issue, req.body);
 	// issue.title = req.body.title;
 	// issue.content = req.body.content;
 
-	issue.save(function (err) {
-		if(err) {
-			return res.status(400)
-				.send({
-					message: errorHandler.getErrorMessage(err)
-				});
-		} else {
-			res.json(issue);
-		}
-	});
+		issue.save()
+			.then((savedIssue) => res.json(savedIssue))
+			.catch((err) => {
+				return res.status(400)
+					.send({
+						message: errorHandler.getErrorMessage(err)
+					});
+			});
 };
 
 /**

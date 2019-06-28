@@ -20,6 +20,7 @@ var path = require('path'),
  * Create a organization
  */
 exports.create = function (req, res) {
+
 	var organization = new Organization(req.body);
 	var userPromise;
 	organization.user = req.user;
@@ -68,13 +69,7 @@ exports.create = function (req, res) {
 			// After user is saved create and send an email to the user
 			return res.json(organization);
 		})
-		.catch((err) => {
-			console.log(err, 'this is err');
-			return res.status(400)
-					.send({
-						message: errorHandler.getErrorMessage(err)
-					});
-		})
+		.catch((err) => err);
 };
 
 /**
@@ -88,7 +83,6 @@ exports.read = function (req, res) {
  * Update a organization
  */
 exports.update = function (req, res) {
-
 	var userPromise;
 	var emails = req.body.moderators;
 	delete req.body.moderators;
@@ -98,7 +92,7 @@ exports.update = function (req, res) {
 		req.body.futureOwner = null;
 	}
 
-	var organization = req.organization;
+	var organization = req.organization; 
 	_.extend(organization, req.body);
 
 	// turn moderator emails into users before saving
@@ -107,7 +101,6 @@ exports.update = function (req, res) {
 	} else {
 		userPromise = Promise.resolve([]);
 	}
-
 	userPromise.then(mods => {
 		mods = mods.map(m=>m._id);
 		organization._doc.moderators.addToSet(mods);
@@ -118,7 +111,7 @@ exports.update = function (req, res) {
 						message: errorHandler.getErrorMessage(err)
 					});
 			} else {
-				res.json(organization);
+				res.status(200).json(organization);
 			}
 		});
 	})
@@ -147,7 +140,6 @@ exports.delete = function (req, res) {
  */
 exports.list = function (req, res) {
 	let query = req.query.url ? { url: req.query.url } : {};
-
 	Organization.find(query)
 		.sort('-created')
 		.exec(function (err, organizations) {
@@ -156,9 +148,9 @@ exports.list = function (req, res) {
 					.send({
 						message: errorHandler.getErrorMessage(err)
 					});
-			} else {
-				res.json(organizations);
-			}
+			} 
+
+			return res.json(organizations);
 		});
 };
 
@@ -166,7 +158,6 @@ exports.list = function (req, res) {
  * Organization middleware
  */
 exports.organizationByID = function (req, res, next, id) {
-
 	if(!mongoose.Types.ObjectId.isValid(id)) {
 		return res.status(400)
 			.send({
@@ -180,9 +171,8 @@ exports.organizationByID = function (req, res, next, id) {
 		.populate('moderators', '_id displayName firstName lastName email')
 		.populate('futureOwner', '_id email')
 		.exec(function (err, organization) {
-			if(err) {
-				return next(err);
-			} else if(!organization) {
+			if(err) return next(err);
+			if(!organization) {
 				return res.status(404)
 					.send({
 						message: 'No organization with that identifier has been found'
@@ -194,6 +184,7 @@ exports.organizationByID = function (req, res, next, id) {
 };
 
 exports.organizationByUrl = function (url) {
+	
 	if(!url) {
 		return null;
 	}
@@ -278,11 +269,7 @@ function saveEmailVerificationCode(user, code) {
 function sendVerificationCodeViaEmail (req, user) {
 	var pass$ = FutureLeader.generateRandomPassphrase()
 
-	if (user.emailDelivered) {
-		console.log('email was delivered');
-		// return true
-		return true;
-	}
+	if (user.emailDelivered) return true;
 
 	//send code via email
 	return pass$.then(pass => saveEmailVerificationCode(user, pass))

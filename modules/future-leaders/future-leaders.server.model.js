@@ -25,28 +25,28 @@ owasp.config({
  */
 
  var FutureLeaderSchema = new Schema({
-     email: {
-         type: String,
-         trim: true,
-         unique: true,
-         required: 'Email must be provided.'
-     },
-     verificationCode: {
-         type: String,
-         default: ''
-     },
-     organizations: [{
-        type: Schema.ObjectId,
-		ref: 'Organization',
-		sparse: true
-     }],
-     salt: {
-		type: String
-	},
-	emailDelivered: {
-		type: Boolean,
-		default: false
-	}
+ 	email: {
+ 		type: String,
+ 		trim: true,
+ 		unique: true,
+ 		required: 'Email must be provided.'
+ 	},
+ 	verificationCode: {
+ 		type: String,
+ 		default: ''
+ 	},
+ 	organizations: [{
+ 		type: Schema.ObjectId,
+ 		ref: 'Organization',
+ 		sparse: true
+ 	}],
+ 	salt: {
+ 		type: String
+ 	},
+ 	emailDelivered: {
+ 		type: Boolean,
+ 		default: false
+ 	}
  })
 
 
