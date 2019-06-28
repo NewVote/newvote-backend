@@ -245,23 +245,27 @@ module.exports.initErrorRoutes = function (app) {
 
 	// populate with general error handler or pass joi errors to next
 	app.use(function (err, req, res, next) {
-		next(err);
+		if (err.joi) {
+			return next(err);
+		}
+		
+		return res.status(500).json({ message: 'Server error' })
 	})
 
 	app.use(errors());
 
-	app.use(function (err, req, res, next) {
-		// If the error object doesn't exists
-		if(!err) {
-			return next();
-		}
+	// app.use(function (err, req, res, next) {
+	// 	// If the error object doesn't exists
+	// 	if(!err) {
+	// 		return next();
+	// 	}
 
-		// Log it
-		console.error(err.stack, );
+	// 	// Log it
+	// 	console.error(err.stack);
 
-		// Redirect to error page
-		res.redirect('/server-error');
-	});
+	// 	// Redirect to error page
+	// 	res.redirect('/server-error');
+	// });
 
 	
 };

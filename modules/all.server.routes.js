@@ -34,10 +34,10 @@ console.log(config.jwtSecret)
 module.exports = function (app) {
 	// Articles collection routes
 	app.route('/api/organizations')
-		.all(celebrate(schema))
 		.all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
-		.post(organizations.create)
-		.get(organizations.list);
+		.get(organizations.list)
+		.post(celebrate(schema))
+		.post(organizations.create);
 
 	app.route('/api/topics')
 		.all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
