@@ -332,7 +332,6 @@ describe('/api/topics/:topicId DELETE', async function () {
     })
     
     it('unauthenticated user cannot delete Topic', async function () {
-        console.log(originalTopic, 'this is org');
         const res = await chai.request(server)
             .delete(`/api/topics/${originalTopic._id}`)
 

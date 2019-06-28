@@ -50,6 +50,7 @@ exports.read = function (req, res) {
  * Update a proposal
  */
 exports.update = function (req, res) {
+	delete req.body.__v;
 	var proposal = req.proposal;
 	_.extend(proposal, req.body);
 	// proposal.title = req.body.title;

@@ -145,7 +145,7 @@ describe('/api/proposals/:proposalId GET', async function () {
     const request = chai.request(server).keepOpen();
     
 
-    // Get initial solution id for requests 
+    // Get initial proposal id for requests 
     before(async function () {
         proposalId = newProposal._id;
         const iss = new Proposal(newProposal);
@@ -157,7 +157,7 @@ describe('/api/proposals/:proposalId GET', async function () {
         return await Proposal.findByIdAndDelete(proposalId);
     })
 
-    it('unauthenticated user cannot request single solution', async function () {
+    it('unauthenticated user cannot request single proposal', async function () {
         const res = await chai.request(server)
             .get(`/api/proposals/${proposalId}`)
         
@@ -166,7 +166,7 @@ describe('/api/proposals/:proposalId GET', async function () {
         return res.body.should.have.property('message');
     })
     
-    it('unverfied user can request single solution', async function () {
+    it('unverfied user can request single proposal', async function () {
         const login = await userLogin(request, unverified);
         const authToken = login.body.token;
 
@@ -180,7 +180,7 @@ describe('/api/proposals/:proposalId GET', async function () {
         return res.body.title.should.equal(newProposal.title);
     })
 
-    it('user can request single solution', async function () {
+    it('user can request single proposal', async function () {
         const login = await userLogin(request, user);
         const authToken = login.body.token;
 
@@ -195,7 +195,7 @@ describe('/api/proposals/:proposalId GET', async function () {
     })
 
     
-    it('admin can request single solution', async function () {
+    it('admin can request single proposal', async function () {
         const login = await userLogin(request, admin);
         const authToken = login.body.token;
 
@@ -222,7 +222,7 @@ describe('/api/proposals/:proposalId PUT', async function () {
         return Proposal.create(newProposal);
     })
 
-    // Reset the original solution after each test
+    // Reset the original proposal after each test
     afterEach(async function () {
         return await Proposal.findOne({ _id: proposalId })
             .then((doc) => {
@@ -306,7 +306,7 @@ describe('/api/proposals/:proposalId DELETE', async function () {
     const request = chai.request(server).keepOpen();
 
     before(async function () {
-        // Cannot resave solution - so generate a new solution which will be deleted
+        // Cannot resave proposal - so generate a new proposal which will be deleted
         let newProposal = new Proposal(generateDoc(Proposal));
         originalProposal = _.cloneDeep(newProposal);
         newProposal.save()
@@ -329,7 +329,7 @@ describe('/api/proposals/:proposalId DELETE', async function () {
 
     after(async function () {
         request.close();
-        // If solution persists remove it
+        // If proposal persists remove it
         if (originalProposal && originalProposal._id) {
             return Proposal.findOneAndRemove({ _id: originalProposal._id });
         }

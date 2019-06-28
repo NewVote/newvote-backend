@@ -14,7 +14,7 @@ var server = require('../config/lib/express').init();
 const { Seeder } = require('mongo-seeding');
 
 const seedConfig = {
-    database: 'mongodb://localhost:27017/newvote-test',
+    database: config.db.uri,
     dropDatabase: true
 }
 
@@ -29,11 +29,11 @@ const collections = seeder.readCollectionsFromPath(
 );
 
 seeder.import(collections)
-    .then(res => {
-        console.log(res, 'this is res');
+    .then(() => {
+        console.log('Success')
     })
     .catch((err) => {
-        console.log(err, 'this is err');
+        console.log(err, 'Import Failed');
     })
 
 server.listen(3000);
