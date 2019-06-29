@@ -20,9 +20,9 @@ var _ = require('lodash'),
  */
 
 exports.sendVerificationCodeViaSms = function (req, res, next) {
-	var user = req.user;
-	var number = req.body.number;
-	var code = User.generateVerificationCode();
+	const { user } = req
+	const { number } = req.body;
+	const code = User.generateVerificationCode();
 
 	console.log(`sending code ${code} to number ${number}`);
 	var options = {
@@ -137,52 +137,37 @@ function saveEmailVerificationCode(user, code) {
 }
 
 exports.verify = function (req, res) {
-	debugger;
-	var reqUser = req.user;
-	var code = req.body.code;
+	const reqUser = req.user;
+	const { code } = req.body
 
 	console.log(`Trying to verify ${code}`);
 
 	//get the actual user because we need the salt
 	User.findById(reqUser._id)
 		.then((user) => {
-			if(!user) {
-				return res.status(400)
-					.send({ message: 'We could not find the user in the database. Please contact administration.' });
-			}
+			if (!user) throw('We could not find the user in the database. Please contact administration.')
 
 			//add hashed code to users model
-			var verified = user.verify(code);
-			if(verified) {
-				//update user model
-				user.verified = true;
-				if(!user.roles.includes('user')){
-					user.roles.push('user');
-				}
+			const verified = user.verify(code);
 
-				user.save(function (err) {
-					if(err) {
-						console.log('error saving user: ', err);
-						return res.status(400)
-							.send({
-								message: err
-							});
-					} else {
-						user.salt = undefined;
-						user.password = undefined;
-						user.verificationCode = undefined;
-						// send a new token with new verified status
-						const payload = { _id: user._id, roles: user.roles, verified: user.verified };
-						const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
-						return res.json({ user: user, token: token });
-					}
-				});
-			} else {
-				return res.status(400)
-					.send({
-						message: 'Verification code was incorrect.'
-					});
+			if (!verified) throw('Verification code was incorrect.')
+			
+			//update user model
+			user.verified = true;
+			if(!user.roles.includes('user')){
+				user.roles.push('user');
 			}
+			
+			return user.save()
+		})
+		.then((user) => {
+			user.salt = undefined;
+			user.password = undefined;
+			user.verificationCode = undefined;
+			// send a new token with new verified status
+			const payload = { _id: user._id, roles: user.roles, verified: user.verified };
+			const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
+			return res.json({ user: user, token: token });
 		})
 		.catch((err) => {
 			console.log('error finding user: ', err);

@@ -16,11 +16,14 @@ var path = require('path'),
 exports.create = function (req, res) {
 	var vote = new Vote(req.body);
 	vote.user = req.user;
+
 	vote.save()
 		.then((vote) => {
 			return res.json(vote);
 		})
-		.catch((err) => { throw(err) });
+		.catch((err) => { 
+			throw(err) 
+		});
 };
 
 exports.updateOrCreate = function (req, res) {
@@ -42,18 +45,6 @@ exports.updateOrCreate = function (req, res) {
 					message: errorHandler.getErrorMessage(err)
 				});
 		})
-		// .exec(function (err, vote) {
-		// 	if (err) {
-		// 		return res.status(400)
-		// 			.send({
-		// 				message: errorHandler.getErrorMessage(err)
-		// 			});
-		// 	} else if (!vote) {
-		// 		return exports.create(req, res);
-		// 	}
-		// 	req.vote = vote;
-		// 	return exports.update(req, res);
-		// });
 };
 
 /**
@@ -71,7 +62,6 @@ exports.update = function (req, res) {
 	_.extend(vote, req.body);
 	// vote.title = req.body.title;
 	// vote.content = req.body.content;
-
 	vote.save()
 		.then((vote) => {
 			return res.json(vote);
