@@ -16,37 +16,44 @@ var path = require('path'),
 exports.create = function (req, res) {
 	var vote = new Vote(req.body);
 	vote.user = req.user;
-	vote.save(function (err) {
-		if (err) {
-			return res.status(400)
-				.send({
-					message: errorHandler.getErrorMessage(err)
-				});
-		} else {
-			res.json(vote);
-		}
-	});
+	vote.save()
+		.then((vote) => {
+			return res.json(vote);
+		})
+		.catch((err) => { throw(err) });
 };
 
 exports.updateOrCreate = function (req, res) {
 	var user = req.user;
 	var object = req.body.object;
+	
 	Vote.findOne({
 			user: user,
 			object: object
 		})
-		.exec(function (err, vote) {
-			if (err) {
-				return res.status(400)
-					.send({
-						message: errorHandler.getErrorMessage(err)
-					});
-			} else if (!vote) {
-				return exports.create(req, res);
-			}
+		.then((vote) => {
+			if (!vote) return exports.create(req, res);
 			req.vote = vote;
 			return exports.update(req, res);
-		});
+		})
+		.catch((err) => {
+			return res.status(400)
+				.send({
+					message: errorHandler.getErrorMessage(err)
+				});
+		})
+		// .exec(function (err, vote) {
+		// 	if (err) {
+		// 		return res.status(400)
+		// 			.send({
+		// 				message: errorHandler.getErrorMessage(err)
+		// 			});
+		// 	} else if (!vote) {
+		// 		return exports.create(req, res);
+		// 	}
+		// 	req.vote = vote;
+		// 	return exports.update(req, res);
+		// });
 };
 
 /**
@@ -65,16 +72,16 @@ exports.update = function (req, res) {
 	// vote.title = req.body.title;
 	// vote.content = req.body.content;
 
-	vote.save(function (err) {
-		if (err) {
+	vote.save()
+		.then((vote) => {
+			return res.json(vote);
+		})
+		.catch((err) => { 
 			return res.status(400)
 				.send({
 					message: errorHandler.getErrorMessage(err)
 				});
-		} else {
-			res.json(vote);
-		}
-	});
+		 });
 };
 
 /**
@@ -134,7 +141,6 @@ exports.list = function (req, res) {
  * Vote middleware
  */
 exports.voteByID = function (req, res, next, id) {
-
 	if (!mongoose.Types.ObjectId.isValid(id)) {
 		return res.status(400)
 			.send({
