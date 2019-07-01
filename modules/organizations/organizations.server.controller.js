@@ -88,7 +88,6 @@ exports.read = function (req, res) {
  * Update a organization
  */
 exports.update = function (req, res) {
-
 	var userPromise;
 	var emails = req.body.moderators;
 	delete req.body.moderators;
@@ -147,9 +146,18 @@ exports.delete = function (req, res) {
  */
 exports.list = function (req, res) {
 	let query = req.query.url ? { url: req.query.url } : {};
+	let showDeleted = req.query.showDeleted || null;
 
-	Organization.find(query)
-		.sort('-created')
+	let showNonDeletedItemsMatch = { $or: [{ 'softDeleted': false }, { 'softDeleted': { $exists: false } }] };
+	let showAllItemsMatch = {};
+	let softDeleteMatch = showDeleted ? showAllItemsMatch : showNonDeletedItemsMatch;
+
+
+	Organization.aggregate([
+		{ $match: query },
+		{ $match: softDeleteMatch },
+		{ $sort: { 'name': 1 } }
+	])
 		.exec(function (err, organizations) {
 			if(err) {
 				return res.status(400)

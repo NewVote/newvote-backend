@@ -56,7 +56,11 @@ var OrganizationSchema = new Schema({
 	moderators: [{
 		type: Schema.ObjectId,
 		ref: 'User'
-	}]
+	}],
+	softDeleted: {
+		type: Boolean,
+		default: false
+	}
 });
 
 mongoose.model('Organization', OrganizationSchema);
