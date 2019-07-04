@@ -107,8 +107,8 @@ exports.list = function (req, res) {
 	// debugger;
 
 	Issue.aggregate([
-			{ $match: softDeleteMatch },
 			{ $match: searchMatch },
+			{ $match: softDeleteMatch },
 			{ $match: topicMatch },
 			{
 				$lookup: {

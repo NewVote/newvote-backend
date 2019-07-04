@@ -51,14 +51,14 @@ exports.create = function (req, res) {
 
 	const getSuggestion = Suggestion
 		.populate(suggestion, { path: 'user parent organizations' })
-	
+
 	const getOrganization = getSuggestion.then((suggestion) => {
 		// if organization has no owner then begin exit out of promise chain
 		if (!suggestion.organizations || !suggestion.organizations.owner) return false;
 		return Organization
 				.populate(suggestion.organizations, { path: 'owner' })
 	})
-		
+
 	return Promise.all([getSuggestion, getOrganization])
 		.then((promises) => {
 			const [suggestionPromise, orgPromise] = promises;
@@ -153,14 +153,16 @@ exports.list = function (req, res) {
 	let softDeleteMatch = showDeleted ? showAllItemsMatch : showNonDeletedItemsMatch;
 
 	Suggestion.aggregate([
-		{ $match: softDeleteMatch },
+
 		{ $match: searchMatch },
+		{ $match: softDeleteMatch },
 		{
 			$lookup: {
 				'from': 'organizations',
 				'localField': 'organizations',
 				'foreignField': '_id',
 				'as': 'organizations'
+
 			}
 		},
 		{ $match: orgMatch },
@@ -169,7 +171,7 @@ exports.list = function (req, res) {
 	])
 	.exec(function (err, suggestions) {
 		if(err) throw(err);
-		
+
 		votes.attachVotes(suggestions, req.user, req.query.regions)
 			.then((suggestions) => res.json(suggestions))
 			.catch((err) => {throw(err)});

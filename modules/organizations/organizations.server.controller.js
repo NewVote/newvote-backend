@@ -92,7 +92,7 @@ exports.update = function (req, res) {
 		req.body.futureOwner = null;
 	}
 
-	var organization = req.organization; 
+	var organization = req.organization;
 	_.extend(organization, req.body);
 
 	// turn moderator emails into users before saving
@@ -140,15 +140,25 @@ exports.delete = function (req, res) {
  */
 exports.list = function (req, res) {
 	let query = req.query.url ? { url: req.query.url } : {};
-	Organization.find(query)
-		.sort('-created')
+	let showDeleted = req.query.showDeleted || null;
+
+	let showNonDeletedItemsMatch = { $or: [{ 'softDeleted': false }, { 'softDeleted': { $exists: false } }] };
+	let showAllItemsMatch = {};
+	let softDeleteMatch = showDeleted ? showAllItemsMatch : showNonDeletedItemsMatch;
+
+
+	Organization.aggregate([
+		{ $match: query },
+		{ $match: softDeleteMatch },
+		{ $sort: { 'name': 1 } }
+	])
 		.exec(function (err, organizations) {
 			if(err) {
 				return res.status(400)
 					.send({
 						message: errorHandler.getErrorMessage(err)
 					});
-			} 
+			}
 
 			return res.json(organizations);
 		});
@@ -184,7 +194,7 @@ exports.organizationByID = function (req, res, next, id) {
 };
 
 exports.organizationByUrl = function (url) {
-	
+
 	if(!url) {
 		return null;
 	}
@@ -203,7 +213,7 @@ function findUserAndOrganization (email, moderators) {
 
 	const findUserPromise = User.findOne({ email })
 		.then((user) => {
-			if (!user) return false;			
+			if (!user) return false;
 			return user;
 		})
 
@@ -217,7 +227,7 @@ function findUserAndOrganization (email, moderators) {
 
 				// if leader does not exist create a new leader
 				const owner = new FutureLeader({ email });
-				return owner;				
+				return owner;
 		})
 
 	const findModerators = User.find({ email: moderators });
@@ -261,7 +271,7 @@ function saveEmailVerificationCode(user, code) {
 			user.verificationCode = user.hashVerificationCode(code);
 
 			//update user model
-			return user.save();			
+			return user.save();
         })
 		.then(() => code)
 }
@@ -277,7 +287,7 @@ function sendVerificationCodeViaEmail (req, user) {
 		.then((data) => {
 			console.log('Succesfully sent a verification e-mail: ', data);
 
-			user.emailDelivered = true; 
+			user.emailDelivered = true;
 			user.save();
 
 			return true;
@@ -287,4 +297,3 @@ function sendVerificationCodeViaEmail (req, user) {
 			throw('There was a problem while sending your verification e-mail, please try again later.')
 		});
 };
-

@@ -95,7 +95,6 @@ exports.list = function (req, res) {
 	Topic.aggregate([
 			{ $match: searchMatch },
 			{ $match: softDeleteMatch },
-
 			{
 				$lookup: {
 					'from': 'organizations',
