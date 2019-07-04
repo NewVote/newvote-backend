@@ -1,0 +1,127 @@
+[{
+        "_id": {
+            "$oid": "5d10a6771e649017c48d4119"
+        },
+        "firstName": "",
+        "lastName": "",
+        "email": "test@test.com",
+        "verified": true,
+        "password": "93itnvGSAIAIWSbnPIws9s6TrILEzm9gxfKEWTE4VxrdxcRIN71IENv0OTCVccWe5U5mcZrZ/qf2guQ0z5NvZA==",
+        "verificationCode": "",
+        "profileImageURL": "modules/users/client/img/profile/default.png",
+        "roles": ["user", "admin"],
+        "organizations": [{
+            "$oid": "5d1227ee48b54f0d38323882"
+        }],
+        "created": {
+            "$date": {
+                "$numberLong": "1561372279184"
+            }
+        },
+        "provider": "local",
+        "username": "test@test.com",
+        "salt": "OPDnCtE8BRk4rbNW5PdkLQ==",
+        "__v": {
+            "$numberInt": "1"
+        }
+    }, {
+        "_id": {
+            "$oid": "5d12161f5502ec4ab8c14290"
+        },
+        "firstName": "",
+        "lastName": "",
+        "email": "test_user@test.com",
+        "verified": true,
+        "password": "AYv/Wn1FCs/vQQ26iD27XN7mhGR8oPR+z3R/vik8QGATvAMD7YQ4RzYt6dbLeVcfUSZANTdguiz5v8GBKHtM4g==",
+        "verificationCode": "",
+        "profileImageURL": "modules/users/client/img/profile/default.png",
+        "roles": ["user"],
+        "organizations": [{
+            "$oid": "5d1227ee48b54f0d38323882"
+        }],
+        "created": {
+            "$date": {
+                "$numberLong": "1561466399102"
+            }
+        },
+        "provider": "local",
+        "username": "test_user@test.com",
+        "salt": "A4F8Iitt8TaIzBpgEo5jKw==",
+        "__v": {
+            "$numberInt": "1"
+        }
+    }, {
+        "_id": {
+            "$oid": "5d1216825502ec4ab8c14292"
+        },
+        "firstName": "",
+        "lastName": "",
+        "email": "test_admin@test.com",
+        "verified": true,
+        "password": "4UNfL/kEZG0WNZnFZ3Z4rJ8nFleEimX4PY9CuHgO7DiCsVhopgDRprjaIPGoxXzfXxSN/WQ3IndB8f/WXZirHg==",
+        "verificationCode": "",
+        "profileImageURL": "modules/users/client/img/profile/default.png",
+        "roles": ["user", "admin"],
+        "organizations": [],
+        "created": {
+            "$date": {
+                "$numberLong": "1561466498049"
+            }
+        },
+        "provider": "local",
+        "username": "test_admin@test.com",
+        "salt": "deLu1kAXUAAZLqrunTAciw==",
+        "__v": {
+            "$numberInt": "0"
+        }
+    }, {
+        "_id": {
+            "$oid": "5d12168d5502ec4ab8c14293"
+        },
+        "firstName": "",
+        "lastName": "",
+        "email": "test_endorser@test.com",
+        "verified": true,
+        "password": "3sPfWVDrehxt65R9apUrcArJdDi/S1CIiSj/+ckGkOuu59xzVEXXCt9GJhyUCCjgOvi9JZefgDmTDbiUW14vJA==",
+        "verificationCode": "",
+        "profileImageURL": "modules/users/client/img/profile/default.png",
+        "roles": ["user", "endorser"],
+        "organizations": [],
+        "created": {
+            "$date": {
+                "$numberLong": "1561466509483"
+            }
+        },
+        "provider": "local",
+        "username": "test_endorser@test.com",
+        "salt": "vUVCJJwrItTAo0OI4/8sWw==",
+        "__v": {
+            "$numberInt": "0"
+        }
+    }, {
+        "_id": {
+            "$oid": "5d1217185502ec4ab8c14294"
+        },
+        "firstName": "",
+        "lastName": "",
+        "email": "test_unverified@test.com",
+        "verified": false,
+        "password": "z/xJCAyfBHyZiX18RFBaW1tJ6MucZAyNmfDyKIeaeSbH9Hhw4jh7BitSpR6P+HTrErmLwudX3NgCnefFwu19tA==",
+        "verificationCode": "",
+        "profileImageURL": "modules/users/client/img/profile/default.png",
+        "roles": ["guest"],
+        "organizations": [],
+        "created": {
+            "$date": {
+                "$numberLong": "1561466648681"
+            }
+        },
+        "provider": "local",
+        "username": "test_unverified@test.com",
+        "salt": "j8xPNseJi582wAaQYo6Vfg==",
+        "__v": {
+            "$numberInt": "0"
+        }
+    }
+
+]

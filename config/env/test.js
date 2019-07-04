@@ -4,7 +4,7 @@ var defaultEnvConfig = require('./default');
 
 module.exports = {
   db: {
-    uri: process.env.MONGOHQ_URL || process.env.MONGOLAB_URI || 'mongodb://' + (process.env.DB_1_PORT_27017_TCP_ADDR || 'localhost') + '/mean-test',
+    uri: process.env.MONGOHQ_URL || process.env.MONGOLAB_URI || 'mongodb://' + (process.env.DB_1_PORT_27017_TCP_ADDR || 'localhost') + '/newvote-test',
     options: {
       user: '',
       pass: ''
@@ -30,6 +30,13 @@ module.exports = {
         }
       }
     }
+  },
+  reCaptcha: {
+    secret: '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'
+  },
+  mailchimp: {
+	  api: process.env.MAILCHIMP_API_KEY || 'MAILCHIMP_API_KEY',
+	  list: process.env.MAILCHIMP_LIST_ID || 'MAILCHIMP_LIST_ID'
   },
   port: process.env.PORT || 3001,
   app: {

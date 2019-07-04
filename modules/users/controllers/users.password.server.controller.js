@@ -29,7 +29,6 @@ exports.forgot = function (req, res, next) {
 	function (done) {
 			const { recaptchaResponse } = req.body;
 			recaptcha.checkResponse(recaptchaResponse, function (err, response) {
-				debugger;
 				if(err || !response.success) {
 					return res.status(400)
 						.send({

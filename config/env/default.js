@@ -32,6 +32,9 @@ module.exports = {
 	logo: 'public/img/brand/logo.png',
 	social: 'public/img/brand/social.png',
 	favicon: 'public/img/brand/favicon.png',
+	reCaptcha: {
+		secret: process.env.RECAPTCHA_SECRET || ''
+	},
 	uploads: {
 		profileUpload: {
 			dest: './public/img/profile/uploads/', // Profile upload destination path

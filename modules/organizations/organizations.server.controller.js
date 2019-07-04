@@ -20,6 +20,7 @@ var path = require('path'),
  * Create a organization
  */
 exports.create = function (req, res) {
+
 	var organization = new Organization(req.body);
 	var userPromise;
 	organization.user = req.user;
@@ -68,13 +69,7 @@ exports.create = function (req, res) {
 			// After user is saved create and send an email to the user
 			return res.json(organization);
 		})
-		.catch((err) => {
-			console.log(err, 'this is err');
-			return res.status(400)
-					.send({
-						message: errorHandler.getErrorMessage(err)
-					});
-		})
+		.catch((err) => err);
 };
 
 /**
@@ -106,7 +101,6 @@ exports.update = function (req, res) {
 	} else {
 		userPromise = Promise.resolve([]);
 	}
-
 	userPromise.then(mods => {
 		mods = mods.map(m=>m._id);
 		organization._doc.moderators.addToSet(mods);
@@ -117,7 +111,7 @@ exports.update = function (req, res) {
 						message: errorHandler.getErrorMessage(err)
 					});
 			} else {
-				res.json(organization);
+				res.status(200).json(organization);
 			}
 		});
 	})
@@ -164,9 +158,9 @@ exports.list = function (req, res) {
 					.send({
 						message: errorHandler.getErrorMessage(err)
 					});
-			} else {
-				res.json(organizations);
 			}
+
+			return res.json(organizations);
 		});
 };
 
@@ -174,7 +168,6 @@ exports.list = function (req, res) {
  * Organization middleware
  */
 exports.organizationByID = function (req, res, next, id) {
-
 	if(!mongoose.Types.ObjectId.isValid(id)) {
 		return res.status(400)
 			.send({
@@ -188,9 +181,8 @@ exports.organizationByID = function (req, res, next, id) {
 		.populate('moderators', '_id displayName firstName lastName email')
 		.populate('futureOwner', '_id email')
 		.exec(function (err, organization) {
-			if(err) {
-				return next(err);
-			} else if(!organization) {
+			if(err) return next(err);
+			if(!organization) {
 				return res.status(404)
 					.send({
 						message: 'No organization with that identifier has been found'
@@ -202,6 +194,7 @@ exports.organizationByID = function (req, res, next, id) {
 };
 
 exports.organizationByUrl = function (url) {
+
 	if(!url) {
 		return null;
 	}
@@ -220,7 +213,7 @@ function findUserAndOrganization (email, moderators) {
 
 	const findUserPromise = User.findOne({ email })
 		.then((user) => {
-			if (!user) return false;			
+			if (!user) return false;
 			return user;
 		})
 
@@ -234,7 +227,7 @@ function findUserAndOrganization (email, moderators) {
 
 				// if leader does not exist create a new leader
 				const owner = new FutureLeader({ email });
-				return owner;				
+				return owner;
 		})
 
 	const findModerators = User.find({ email: moderators });
@@ -278,7 +271,7 @@ function saveEmailVerificationCode(user, code) {
 			user.verificationCode = user.hashVerificationCode(code);
 
 			//update user model
-			return user.save();			
+			return user.save();
         })
 		.then(() => code)
 }
@@ -286,11 +279,7 @@ function saveEmailVerificationCode(user, code) {
 function sendVerificationCodeViaEmail (req, user) {
 	var pass$ = FutureLeader.generateRandomPassphrase()
 
-	if (user.emailDelivered) {
-		console.log('email was delivered');
-		// return true
-		return true;
-	}
+	if (user.emailDelivered) return true;
 
 	//send code via email
 	return pass$.then(pass => saveEmailVerificationCode(user, pass))
@@ -298,7 +287,7 @@ function sendVerificationCodeViaEmail (req, user) {
 		.then((data) => {
 			console.log('Succesfully sent a verification e-mail: ', data);
 
-			user.emailDelivered = true; 
+			user.emailDelivered = true;
 			user.save();
 
 			return true;
@@ -308,4 +297,3 @@ function sendVerificationCodeViaEmail (req, user) {
 			throw('There was a problem while sending your verification e-mail, please try again later.')
 		});
 };
-

@@ -30,13 +30,13 @@ var EndorsementSchema = new Schema({
 		default: '',
 		trim: true
 	},
-	organisationName: {
+	organizationName: {
 		type: String
 	},
-	organisationWebsite: {
+	organizationWebsite: {
 		type: String
 	},
-	organisationImageURL: {
+	organizationImageURL: {
 		type: String,
 		default: ''
 	},

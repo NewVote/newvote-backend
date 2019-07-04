@@ -55,21 +55,20 @@ exports.read = function (req, res) {
  * Update a solution
  */
 exports.update = function (req, res) {
+	delete req.body.__v;
 	var solution = req.solution;
 	_.extend(solution, req.body);
 	// solution.title = req.body.title;
 	// solution.content = req.body.content;
 
-	solution.save(function (err) {
-		if(err) {
+	solution.save()
+		.then((issue) => res.json(issue))
+		.catch((err) => {
 			return res.status(400)
 				.send({
 					message: errorHandler.getErrorMessage(err)
 				});
-		} else {
-			res.json(solution);
-		}
-	});
+		})
 };
 
 /**

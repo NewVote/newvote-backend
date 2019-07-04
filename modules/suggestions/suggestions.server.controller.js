@@ -43,36 +43,42 @@ var buildMessage = function (suggestion, req) {
  * Create a suggestion
  */
 exports.create = function (req, res) {
-	debugger;
 	var suggestion = new Suggestion(req.body);
 	suggestion.user = req.user;
-	suggestion.save(function (err) {
-		if(err) {
-			return res.status(400)
-				.send({
-					message: errorHandler.getErrorMessage(err)
-				});
-		} else {
-			Suggestion.populate(suggestion, { path: 'user parent organizations' })
-				.then((suggestion) => {
-					Organization.populate(suggestion.organizations, { path: 'owner' })
-						.then((org) => {
-							transporter.sendMail({
-									from: process.env.MAILER_FROM,
-									to: org.owner.email,
-									subject: 'New suggestion created on your NewVote community!',
-									html: buildMessage(suggestion, req)
-								})
-								.then(function (data) {
-									// console.log('mailer success: ', data);
-								}, function (err) {
-									console.log('mailer failed: ', err);
-								});
-						})
-				});
-			res.json(suggestion);
-		}
+	suggestion.save((err) => {
+		if (err) throw(err);
 	});
+
+	const getSuggestion = Suggestion
+		.populate(suggestion, { path: 'user parent organizations' })
+
+	const getOrganization = getSuggestion.then((suggestion) => {
+		// if organization has no owner then begin exit out of promise chain
+		if (!suggestion.organizations || !suggestion.organizations.owner) return false;
+		return Organization
+				.populate(suggestion.organizations, { path: 'owner' })
+	})
+
+	return Promise.all([getSuggestion, getOrganization])
+		.then((promises) => {
+			const [suggestionPromise, orgPromise] = promises;
+			if (!orgPromise || !suggestionPromise) return false;
+
+			return transporter.sendMail({
+				from: process.env.MAILER_FROM,
+				to: org.owner.email,
+				subject: 'New suggestion created on your NewVote community!',
+				html: buildMessage(suggestion, req)
+			})
+		})
+		.then(function (data) {
+			// console.log('mailer success: ', data);
+			return res.status(200).json(suggestion);
+		})
+		.catch((err) => {
+			console.log('mailer failed: ', err);
+
+		});
 };
 
 /**
@@ -147,46 +153,35 @@ exports.list = function (req, res) {
 	let softDeleteMatch = showDeleted ? showAllItemsMatch : showNonDeletedItemsMatch;
 
 	Suggestion.aggregate([
-			{ $match: searchMatch },
-			{ $match: softDeleteMatch },
-			{
-				$lookup: {
-					'from': 'organizations',
-					'localField': 'organizations',
-					'foreignField': '_id',
-					'as': 'organizations'
-				}
-			},
-			{ $match: orgMatch },
-			{ $unwind: '$organizations' },
-			{ $sort: { 'created': -1 } }
-	])
-		.exec(function (err, suggestions) {
-			if(err) {
-				return res.status(400)
-					.send({
-						message: errorHandler.getErrorMessage(err)
-					});
-			} else {
-				votes.attachVotes(suggestions, req.user, req.query.regions)
-					.then(function (suggestions) {
-						res.json(suggestions);
-					})
-					.catch(function (err) {
-						res.status(500)
-							.send({
-								message: errorHandler.getErrorMessage(err)
-							});
-					});
+
+		{ $match: searchMatch },
+		{ $match: softDeleteMatch },
+		{
+			$lookup: {
+				'from': 'organizations',
+				'localField': 'organizations',
+				'foreignField': '_id',
+				'as': 'organizations'
+
 			}
-		});
+		},
+		{ $match: orgMatch },
+		{ $unwind: '$organizations' },
+		{ $sort: { 'created': -1 } }
+	])
+	.exec(function (err, suggestions) {
+		if(err) throw(err);
+
+		votes.attachVotes(suggestions, req.user, req.query.regions)
+			.then((suggestions) => res.json(suggestions))
+			.catch((err) => {throw(err)});
+	})
 };
 
 /**
  * Suggestion middleware
  */
 exports.suggestionByID = function (req, res, next, id) {
-
 	if(!mongoose.Types.ObjectId.isValid(id)) {
 		return res.status(400)
 			.send({
