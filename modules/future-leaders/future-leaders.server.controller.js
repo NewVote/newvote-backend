@@ -92,7 +92,7 @@ exports.update = function (req, res) {
 
 var buildMessage = function (user, code, req) {
 	var messageString = '';
-	var url = req.protocol + '://' + req.get('host') + 'auth/signup/' + code;
+	var url = req.protocol + '://' + req.get('host') + '/auth/signup/' + code;
 
 	messageString += `<h3> You have been invited to join NewVote </h3>`;
 	messageString += `<p>To complete your account setup, just click the URL below or copy and paste it into your browser's address bar</p>`;
