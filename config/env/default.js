@@ -25,6 +25,8 @@ module.exports = {
 	sessionSecret: process.env.SESSION_SECRET || 'MEAN',
 	jwtSecret: process.env.JWT_SECRET || 'JWTISBETTERTHANSESSION',
 	jwtExpiry: '30d',
+	jwtIssuer: 'https://rapid.aaf.edu.au',
+	jwtAudience: 'https://newvote.org',
 	// sessionKey is set to the generic sessionId key used by PHP applications
 	// for obsecurity reasons
 	sessionKey: 'sessionId',

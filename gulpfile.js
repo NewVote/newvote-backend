@@ -78,7 +78,7 @@ gulp.task('server-debug', function (done) {
 	console.log('starting server-debug task.');
 	if(node) node.kill();
 
-	node = spawn('node', ['--inspect=9229', '--inspect', 'server.js'], { stdio: 'inherit' })
+	node = spawn('node', ['--inspect-brk', 'server.js'], { stdio: 'inherit' })
 	node.on('close', function (code) {
 		console.log(`Got code ${code}`);
 		if(code === 8) {

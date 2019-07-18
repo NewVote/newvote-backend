@@ -10,27 +10,24 @@ var path = require('path'),
 	JWTStrategy = passportJWT.Strategy,
 	ExtractJWT = passportJWT.ExtractJwt,
 	User = require('mongoose')
-	.model('User');
+		.model('User'),
+	users = require('../users.server.controller');
 
 module.exports = function () {
-	// Use local strategy
-	passport.use(new JWTStrategy({
-			jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(),
-			secretOrKey: config.jwtSecret
-		},
-		function (jwtPayload, done) {
-			// debugger;
-			User.findOne({ _id: jwtPayload._id })
-				.then(user => {
-					return done(null, user);
-				})
-				.catch(error => {
-					// no token or user found so just make a guest user
-					const user = { roles: ['guest'] };
-					return done(null, user);
-				})
-		}, function(err) {
-			console.log(err);
+	var options = {
+		jwtFromRequest: ExtractJWT.fromBodyField('assertion'),
+		secretOrKey: config.jwtSecret,
+		issuer: config.jwtIssuer,
+		audience: config.jwtAudience,
+		passReqToCallback: true
+	}
+	passport.use(new JWTStrategy(options,
+		function (req, jwtPayload, done) {
+			debugger;
+			var profile = jwtPayload['https://aaf.edu.au/attributes']
+			profile.jwt = req.body.assertion
+
+			users.saveRapidProfile(req, profile, done);
 		}
 	));
 };

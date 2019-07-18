@@ -17,6 +17,7 @@ module.exports = {
     privateKey: './config/local-sslcerts/key.pem',
     certificate: './config/local-sslcerts/cert.pem'
   },
+  jwtIssuer: 'https://rapid.test.aaf.edu.au',  
   log: {
     // logging with Morgan - https://github.com/expressjs/morgan
     // Can specify one of 'combined', 'common', 'dev', 'short', 'tiny'

@@ -50,7 +50,7 @@ exports.signup = function (req, res) {
 	const { recaptchaResponse, email, password } = req.body;
 	const verificationCode = req.params.verificationCode;
 
-	if(!email || !password) {
+	if (!email || !password) {
 		return res.status(400)
 			.send({
 				message: 'Email / Password Missing'
@@ -67,7 +67,7 @@ exports.signup = function (req, res) {
 
 	//ensure captcha code is valid or return with an error
 	recaptcha.checkResponse(recaptchaResponse, function (err, response) {
-		if(err || !response.success) {
+		if (err || !response.success) {
 			return res.status(400)
 				.send({
 					message: 'Recaptcha verification failed.'
@@ -90,7 +90,7 @@ exports.signup = function (req, res) {
 			user.username = user.email;
 
 			// If a user has been added as a future leader handle here
-			if(verificationCode) {
+			if (verificationCode) {
 				return handleLeaderVerification(user, verificationCode)
 					.then(savedUser => {
 						try {
@@ -167,7 +167,7 @@ var sendEmail = function (user, pass, req) {
  */
 exports.signin = function (req, res, next) {
 	passport.authenticate('local', { session: false }, function (err, user, info) {
-		if(err || !user) {
+		if (err || !user) {
 			res.status(400)
 				.send(info);
 		} else {
@@ -183,7 +183,7 @@ exports.signin = function (req, res, next) {
 					user.verificationCode = undefined;
 
 					req.login(user, function (err) {
-						if(err) {
+						if (err) {
 							res.status(400)
 								.send(err);
 						} else {
@@ -212,7 +212,7 @@ exports.oauthCall = function (strategy, scope) {
 	return function (req, res, next) {
 		// Set redirection path on session.
 		// Do not redirect to a signin or signup page
-		if(noReturnUrls.indexOf(req.query.redirect_to) === -1) {
+		if (noReturnUrls.indexOf(req.query.redirect_to) === -1) {
 			req.session.redirect_to = req.query.redirect_to;
 		}
 		// Authenticate
@@ -225,22 +225,28 @@ exports.oauthCall = function (strategy, scope) {
  */
 exports.oauthCallback = function (strategy) {
 	return function (req, res, next) {
-		// Pop redirect URL from session
-		var sessionRedirectURL = req.session.redirect_to;
-		delete req.session.redirect_to;
+		console.log('oauthcallback called')
+		try {
+			var sessionRedirectURL = req.session.redirect_to;
+			delete req.session.redirect_to;
+		} catch (e) {
+			// quietly now
+		}
 
 		passport.authenticate(strategy, function (err, user, redirectURL) {
-			if(err) {
-				return res.redirect('/authentication/signin?err=' + encodeURIComponent(errorHandler.getErrorMessage(err)));
+			if (err) {
+				return res.redirect('/auth/login?err=' + encodeURIComponent(errorHandler.getErrorMessage(err)));
 			}
-			if(!user) {
-				return res.redirect('/authentication/signin');
+			if (!user) {
+				return res.redirect('/auth/login');
 			}
 			req.login(user, function (err) {
-				if(err) {
-					return res.redirect('/authentication/signin');
+				if (err) {
+					return res.redirect('/auth/login');
 				}
-				res.locals.oauthLoginSuccess = true;
+
+				res.cookie('user', JSON.stringify(user))
+				res.cookie('jwt', req.body.assertion)
 				return res.redirect(sessionRedirectURL || '/');
 			});
 		})(req, res, next);
@@ -248,10 +254,51 @@ exports.oauthCallback = function (strategy) {
 };
 
 /**
+ * Helper function to create or update a user after AAF Rapid SSO auth
+ */
+exports.saveRapidProfile = function (req, profile, done) {
+	User.findOne({ email: profile.mail }, '-salt -password -verificationCode', function (err, user) {
+		if (err) {
+			return done(err);
+		} else {
+			if (!user) {
+				var possibleUsername = profile.cn || profile.displayname || profile.givenname + profile.surname ||((profile.mail) ? profile.mail.split('@')[0] : '');
+
+				User.findUniqueUsername(possibleUsername, null, function (availableUsername) {
+					user = new User({
+						firstName: profile.givenname,
+						lastName: profile.surname,
+						username: profile.mail,
+						displayName: profile.displayname,
+						email: profile.mail,
+						provider: 'aaf',
+						ita: profile.ita
+					});
+
+					// And save the user
+					user.save(function (err) {
+						return done(err, user);
+					});
+				});
+			} else {
+				// user exists update ITA and return user
+				if(user.ita === profile.ita){
+					return(new Error('ITA Match please login again'))
+				}
+				user.ita = profile.ita
+				user.save().then(user => {
+					return done(err, user);
+				})				
+			}
+		}
+	});
+}
+
+/**
  * Helper function to save or update a OAuth user profile
  */
 exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
-	if(!req.user) {
+	if (!req.user) {
 		// Define a search query fields
 		var searchMainProviderIdentifierField = 'providerData.' + providerUserProfile.providerIdentifierField;
 		var searchAdditionalProviderIdentifierField = 'additionalProvidersData.' + providerUserProfile.provider + '.' + providerUserProfile.providerIdentifierField;
@@ -271,10 +318,10 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
 		};
 
 		User.findOne(searchQuery, function (err, user) {
-			if(err) {
+			if (err) {
 				return done(err);
 			} else {
-				if(!user) {
+				if (!user) {
 					var possibleUsername = providerUserProfile.username || ((providerUserProfile.email) ? providerUserProfile.email.split('@')[0] : '');
 
 					User.findUniqueUsername(possibleUsername, null, function (availableUsername) {
@@ -304,9 +351,9 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
 		var user = req.user;
 
 		// Check if user exists, is not signed in using this provider, and doesn't have that provider data already configured
-		if(user.provider !== providerUserProfile.provider && (!user.additionalProvidersData || !user.additionalProvidersData[providerUserProfile.provider])) {
+		if (user.provider !== providerUserProfile.provider && (!user.additionalProvidersData || !user.additionalProvidersData[providerUserProfile.provider])) {
 			// Add the provider data to the additional provider data field
-			if(!user.additionalProvidersData) {
+			if (!user.additionalProvidersData) {
 				user.additionalProvidersData = {};
 			}
 
@@ -332,18 +379,18 @@ exports.removeOAuthProvider = function (req, res, next) {
 	var user = req.user;
 	var provider = req.query.provider;
 
-	if(!user) {
+	if (!user) {
 		return res.status(401)
 			.json({
 				message: 'User is not authenticated'
 			});
-	} else if(!provider) {
+	} else if (!provider) {
 		return res.status(400)
 			.send();
 	}
 
 	// Delete the additional provider
-	if(user.additionalProvidersData[provider]) {
+	if (user.additionalProvidersData[provider]) {
 		delete user.additionalProvidersData[provider];
 
 		// Then tell mongoose that we've updated the additionalProvidersData field
@@ -351,14 +398,14 @@ exports.removeOAuthProvider = function (req, res, next) {
 	}
 
 	user.save(function (err) {
-		if(err) {
+		if (err) {
 			return res.status(400)
 				.send({
 					message: errorHandler.getErrorMessage(err)
 				});
 		} else {
 			req.login(user, function (err) {
-				if(err) {
+				if (err) {
 					return res.status(400)
 						.send(err);
 				} else {
@@ -377,15 +424,15 @@ exports.updateOrgs = function (loginData) {
 	// get the actual user from the db
 	User.findOne({ _id: loginData._id })
 		.then(user => {
-			if(user) {
+			if (user) {
 				// get all the votes for this user
 				Vote.find({ user })
 					.populate('object')
 					.then(votes => {
-						if(votes) {
+						if (votes) {
 							// get a list of orgs from all of the votes
 							let orgs = votes.reduce((accum, v) => {
-								if(v.object.organizations) {
+								if (v.object.organizations) {
 									accum.push(v.object.organizations._id);
 								}
 								return accum;
@@ -414,7 +461,7 @@ exports.updateAllOrgs = function () {
 					.then(populatedVotes => {
 
 						let orgs = populatedVotes.reduce((accum, v) => {
-							if(v.object && v.object.organizations) {
+							if (v.object && v.object.organizations) {
 								accum.push(v.object.organizations._id);
 							}
 							return accum;
@@ -439,8 +486,8 @@ function handleLeaderVerification(user, verificationCode) {
 	return FutureLeader.findOne({ email })
 		.populate('organizations')
 		.then((leader) => {
-			if(!leader) throw ('Email does not match Verification Code');
-			if(!leader.verify(verificationCode)) throw ('Invalid Verification Code, please check and try again');
+			if (!leader) throw ('Email does not match Verification Code');
+			if (!leader.verify(verificationCode)) throw ('Invalid Verification Code, please check and try again');
 
 			return leader;
 		})
@@ -448,13 +495,13 @@ function handleLeaderVerification(user, verificationCode) {
 			let { organizations } = leader;
 
 			// leader has no organizations to be assigned to
-			if(organizations.length === 0) {
+			if (organizations.length === 0) {
 				leader.remove();
 				return user.save()
 			}
 
 			organizations.forEach((org) => {
-				if(org.futureOwner && org.futureOwner.equals(leader._id)) {
+				if (org.futureOwner && org.futureOwner.equals(leader._id)) {
 					org.owner = user._id;
 					org.futureOwner = null;
 					return org.save()
@@ -475,7 +522,7 @@ function handleLeaderVerification(user, verificationCode) {
 
 function loginUser(req, res, user) {
 	return req.login(user, function (err) {
-		if(err) {
+		if (err) {
 			return res.status(400)
 				.send(err);
 		} else {
