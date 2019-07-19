@@ -225,7 +225,7 @@ exports.oauthCall = function (strategy, scope) {
  */
 exports.oauthCallback = function (strategy) {
 	return function (req, res, next) {
-		console.log('oauthcallback called')
+		// debugger;
 		try {
 			var sessionRedirectURL = req.session.redirect_to;
 			delete req.session.redirect_to;
@@ -234,20 +234,37 @@ exports.oauthCallback = function (strategy) {
 		}
 
 		passport.authenticate(strategy, function (err, user, redirectURL) {
+			//   https://rapid.test.aaf.edu.au/jwt/authnrequest/research/4txVkEDrvjAH6PxxlCKZGg
+			// need to generate url from org in request cookie here
+			// debugger;
+			var org = req.cookies.org || 'uq'
+			if (config.node_env === 'development') {
+				var host = `http://${org}.localhost.newvote.org:4200`
+			} else {
+				var host = `https://${org}.newvote.org`
+			}
+
 			if (err) {
-				return res.redirect('/auth/login?err=' + encodeURIComponent(errorHandler.getErrorMessage(err)));
+				return res.redirect(host + '/auth/login?err=' + encodeURIComponent(errorHandler.getErrorMessage(err)));
 			}
 			if (!user) {
-				return res.redirect('/auth/login');
+				return res.redirect(host + '/auth/login');
 			}
 			req.login(user, function (err) {
 				if (err) {
-					return res.redirect('/auth/login');
+					return res.redirect(host + '/auth/login');
 				}
-
-				res.cookie('user', JSON.stringify(user))
-				res.cookie('jwt', req.body.assertion)
-				return res.redirect(sessionRedirectURL || '/');
+				const payload = { _id: user._id, roles: user.roles, verified: user.verified };
+				const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
+				var creds = { user, token }
+				var opts = {
+					domain: 'newvote.org',
+					httpOnly: false,
+					secure: false
+				}
+				res.cookie('credentials', JSON.stringify(creds), opts)
+				var redirect = sessionRedirectURL ? host + sessionRedirectURL : host + '/'
+				return res.redirect(302, redirect);
 			});
 		})(req, res, next);
 	};
@@ -262,7 +279,7 @@ exports.saveRapidProfile = function (req, profile, done) {
 			return done(err);
 		} else {
 			if (!user) {
-				var possibleUsername = profile.cn || profile.displayname || profile.givenname + profile.surname ||((profile.mail) ? profile.mail.split('@')[0] : '');
+				var possibleUsername = profile.cn || profile.displayname || profile.givenname + profile.surname || ((profile.mail) ? profile.mail.split('@')[0] : '');
 
 				User.findUniqueUsername(possibleUsername, null, function (availableUsername) {
 					user = new User({
@@ -272,7 +289,9 @@ exports.saveRapidProfile = function (req, profile, done) {
 						displayName: profile.displayname,
 						email: profile.mail,
 						provider: 'aaf',
-						ita: profile.ita
+						ita: profile.ita,
+						roles: ['user'],
+						verified: true
 					});
 
 					// And save the user
@@ -282,13 +301,14 @@ exports.saveRapidProfile = function (req, profile, done) {
 				});
 			} else {
 				// user exists update ITA and return user
-				if(user.ita === profile.ita){
-					return(new Error('ITA Match please login again'))
+				if (user.jti && user.jti === profile.jti) {
+					return done(new Error('ITA Match please login again'))
 				}
-				user.ita = profile.ita
-				user.save().then(user => {
-					return done(err, user);
-				})				
+				user.jti = profile.jti
+				user.save()
+					.then(user => {
+						return done(err, user);
+					})
 			}
 		}
 	});

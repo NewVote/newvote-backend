@@ -135,7 +135,7 @@ var UserSchema = new Schema({
 	salt: {
 		type: String
 	},
-	ita: {
+	jti: {
 		type: String
 	},
 	profileImageURL: {

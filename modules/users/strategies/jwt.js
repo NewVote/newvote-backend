@@ -23,9 +23,9 @@ module.exports = function () {
 	}
 	passport.use(new JWTStrategy(options,
 		function (req, jwtPayload, done) {
-			debugger;
 			var profile = jwtPayload['https://aaf.edu.au/attributes']
 			profile.jwt = req.body.assertion
+			profile.jti = jwtPayload.jti
 
 			users.saveRapidProfile(req, profile, done);
 		}

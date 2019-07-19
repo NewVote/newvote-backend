@@ -69,13 +69,8 @@ exports.invokeRolesPolicies = function () {
  * Check If Articles Policy Allows
  */
 exports.isAllowed = function (req, res, next) {
-	console.log('testing isAllowed');
-	debugger;
-	console.log('do we have a user? ', (req.user ? true : false));
 	var roles = (req.user) ? req.user.roles : ['guest'];
-	console.log('user role: ', roles);
 	var user = req.user;
-	console.log('user object: ', user);
 
 	// If an article is being processed and the current user created it then allow any manipulation
 	var object = req.vote || req.issue || req.solution || req.proposal || req.organization || req.endorsement || req.topic || req.media || req.suggestion;
@@ -85,7 +80,6 @@ exports.isAllowed = function (req, res, next) {
 
 	// Check for user roles
 	acl.areAnyRolesAllowed(roles, req.route.path, req.method.toLowerCase(), function (err, isAllowed) {
-		console.log('passed isAllowed test: ', isAllowed);
 		if(err) {
 			// An authorization error occurred.
 			return res.status(500)

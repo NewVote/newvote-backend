@@ -8,6 +8,7 @@ module.exports = {
 		googleAnalyticsTrackingID: process.env.GOOGLE_ANALYTICS_TRACKING_ID || 'GOOGLE_ANALYTICS_TRACKING_ID'
 	},
 	port: process.env.PORT || 3000,
+	node_env: process.env.NODE_ENVIRONMENT || 'development',
 	templateEngine: 'ejs',
 	// Session Cookie settings
 	sessionCookie: {

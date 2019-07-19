@@ -28,9 +28,6 @@ var path = require('path'),
 
 // jwt module simply puts the user object into req.user if the token is valid
 // otherwise it just does nothing and the policy module handles the rest
-
-console.log(config.jwtSecret)
-
 module.exports = function (app) {
 	// Articles collection routes
 	app.route('/api/organizations')
