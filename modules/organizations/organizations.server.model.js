@@ -60,7 +60,23 @@ var OrganizationSchema = new Schema({
 	softDeleted: {
 		type: Boolean,
 		default: false
-	}
+	},
+	authType: {
+		type: Number,
+		default: 0,
+		required: true
+	},
+	authUrl: {
+		type: String,
+		trim: true,
+		required: function () {
+			if(this.authType === 0) {
+				return false;
+			}else {
+				return true;
+			}
+		}
+	},
 });
 
 mongoose.model('Organization', OrganizationSchema);

@@ -17,6 +17,19 @@ module.exports = {
     privateKey: './config/local-sslcerts/key.pem',
     certificate: './config/local-sslcerts/cert.pem'
   },
+  // Session Cookie settings
+  sessionCookie: {
+	  // session expiration is set by default to 24 hours
+	  maxAge: 720 * (60 * 60 * 1000),
+	  // httpOnly flag makes sure the cookie is only accessed
+	  // through the HTTP protocol and not JS/browser
+	  httpOnly: false,
+	  // secure cookie should be turned to true to provide additional
+	  // layer of security so that the cookie is set only when working
+	  // in HTTPS mode.
+	  secure: false
+  },
+  jwtIssuer: 'https://rapid.test.aaf.edu.au',
   log: {
     // logging with Morgan - https://github.com/expressjs/morgan
     // Can specify one of 'combined', 'common', 'dev', 'short', 'tiny'

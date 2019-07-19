@@ -8,6 +8,7 @@ module.exports = {
 		googleAnalyticsTrackingID: process.env.GOOGLE_ANALYTICS_TRACKING_ID || 'GOOGLE_ANALYTICS_TRACKING_ID'
 	},
 	port: process.env.PORT || 3000,
+	node_env: process.env.NODE_ENVIRONMENT || 'development',
 	templateEngine: 'ejs',
 	// Session Cookie settings
 	sessionCookie: {
@@ -25,6 +26,8 @@ module.exports = {
 	sessionSecret: process.env.SESSION_SECRET || 'MEAN',
 	jwtSecret: process.env.JWT_SECRET || 'JWTISBETTERTHANSESSION',
 	jwtExpiry: '30d',
+	jwtIssuer: 'https://rapid.aaf.edu.au',
+	jwtAudience: 'https://newvote.org',
 	// sessionKey is set to the generic sessionId key used by PHP applications
 	// for obsecurity reasons
 	sessionKey: 'sessionId',

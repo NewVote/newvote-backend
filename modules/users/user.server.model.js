@@ -115,7 +115,13 @@ var UserSchema = new Schema({
 	password: {
 		type: String,
 		default: '',
-		required: true
+		required: function () {
+			if(this.provider === 'local') {
+				return true;
+			}else {
+				return false;
+			}
+		}
 	},
 	verificationCode: {
 		type: String,
@@ -127,6 +133,9 @@ var UserSchema = new Schema({
 		}
 	},
 	salt: {
+		type: String
+	},
+	jti: {
 		type: String
 	},
 	profileImageURL: {
