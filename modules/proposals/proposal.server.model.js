@@ -26,7 +26,7 @@ var ProposalSchema = new Schema({
 	},
 	imageUrl: {
 		type: String,
-		default: '',
+		default: 'assets/action-default.png',
 		trim: true
 	},
 	user: {

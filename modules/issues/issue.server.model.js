@@ -26,8 +26,8 @@ var IssueSchema = new Schema({
 	},
 	imageUrl: {
 		type: String,
-		default: '',
-		trim: true
+		default: 'assets/issue-default.png',
+		trim: true,
 	},
 	user: {
 		type: Schema.ObjectId,

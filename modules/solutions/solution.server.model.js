@@ -26,7 +26,7 @@ var SolutionSchema = new Schema({
 	},
 	imageUrl: {
 		type: String,
-		default: '',
+		default: 'assets/solution-default.png',
 		trim: true
 	},
 	user: {

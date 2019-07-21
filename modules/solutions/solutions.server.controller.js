@@ -15,6 +15,12 @@ var path = require('path'),
  * Create a solution
  */
 exports.create = function (req, res) {
+
+	// if the string is empty revert to default on model
+	if (!req.body.imageUrl) {
+		delete req.body.imageUrl;
+	}
+	
 	var solution = new Solution(req.body);
 	solution.user = req.user;
 	solution.save(function (err) {

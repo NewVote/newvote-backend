@@ -15,6 +15,11 @@ var path = require('path'),
  * Create a proposal
  */
 exports.create = function (req, res) {
+	// if the string is empty revert to default on model
+	if (!req.body.imageUrl) {
+		delete req.body.imageUrl;
+	}
+
 	var proposal = new Proposal(req.body);
 	proposal.user = req.user;
 	proposal.save(function (err) {

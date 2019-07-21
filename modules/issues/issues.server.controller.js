@@ -16,6 +16,12 @@ var path = require('path'),
  * Create a issue
  */
 exports.create = function (req, res) {
+
+	// if the string is empty revert to default on model
+	if (!req.body.imageUrl) {
+		delete req.body.imageUrl;
+	}
+
 	var issue = new Issue(req.body);
 	issue.user = req.user;
 	issue.save(function (err) {
