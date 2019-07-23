@@ -7,6 +7,7 @@ const schema = {
     },
     body: Joi.object().keys({
         name: Joi.string().required(),
+        organizationName: Joi.string().required(),
         description: Joi.string(),
         longDescription: Joi.string(),
         url: Joi.string().required(),
