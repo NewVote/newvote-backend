@@ -74,12 +74,6 @@ exports.signup = function (req, res) {
 				});
 		}
 
-		// if(!response.success) {
-		// 	return res.status(400)
-		// 		.send({
-		// 			message: 'CAPTCHA verification failed'
-		// 		});
-		// }
 		else {
 			//user is not a robot, captcha success, continue with sign up
 			// Add missing user fields
@@ -291,7 +285,8 @@ exports.saveRapidProfile = function (req, profile, done) {
 						provider: 'aaf',
 						ita: profile.ita,
 						roles: ['user'],
-						verified: true
+						verified: true,
+						organizations: [req.organization]
 					});
 
 					// And save the user
@@ -353,7 +348,8 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
 							email: providerUserProfile.email,
 							profileImageURL: providerUserProfile.profileImageURL,
 							provider: providerUserProfile.provider,
-							providerData: providerUserProfile.providerData
+							providerData: providerUserProfile.providerData,
+							organizations: [req.organization]
 						});
 
 						// And save the user

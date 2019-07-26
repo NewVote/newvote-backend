@@ -208,6 +208,18 @@ exports.organizationByUrl = function (url) {
 		.exec();
 }
 
+exports.getOrganization = function (req, res) {
+	const { url } = req.query;
+	return Organization.findOne({url})
+		.then((org) => {
+			if (!org) throw('Organization does not exist');
+			if (!req.organization) req.organization = org;
+
+			return res.json(org);
+		})
+		.catch((err) => res.status(400).send({ message: errorHandler.getErrorMessage(err) }));
+}
+
 
 function findUserAndOrganization (email, moderators) {
 
