@@ -61,7 +61,7 @@ exports.create = function (req, res) {
 			return organization.save();
 		})
 		.then((savedOrganization) => {
-			if (!savedOrganization) throw('Error saving leader');
+			if (!savedOrganization) throw ('Error saving leader');
 
 			if (savedOrganization.futureOwner) {
 				sendVerificationCodeViaEmail(req, savedOrganization.futureOwner);
@@ -96,16 +96,16 @@ exports.update = function (req, res) {
 	_.extend(organization, req.body);
 
 	// turn moderator emails into users before saving
-	if(emails && emails.length > 0) {
+	if (emails && emails.length > 0) {
 		userPromise = User.find({ email: emails });
 	} else {
 		userPromise = Promise.resolve([]);
 	}
 	userPromise.then(mods => {
-		mods = mods.map(m=>m._id);
+		mods = mods.map(m => m._id);
 		organization._doc.moderators.addToSet(mods);
 		organization.save(function (err) {
-			if(err) {
+			if (err) {
 				return res.status(400)
 					.send({
 						message: errorHandler.getErrorMessage(err)
@@ -124,7 +124,7 @@ exports.delete = function (req, res) {
 	var organization = req.organization;
 
 	organization.remove(function (err) {
-		if(err) {
+		if (err) {
 			return res.status(400)
 				.send({
 					message: errorHandler.getErrorMessage(err)
@@ -153,7 +153,7 @@ exports.list = function (req, res) {
 		{ $sort: { 'name': 1 } }
 	])
 		.exec(function (err, organizations) {
-			if(err) {
+			if (err) {
 				return res.status(400)
 					.send({
 						message: errorHandler.getErrorMessage(err)
@@ -168,7 +168,7 @@ exports.list = function (req, res) {
  * Organization middleware
  */
 exports.organizationByID = function (req, res, next, id) {
-	if(!mongoose.Types.ObjectId.isValid(id)) {
+	if (!mongoose.Types.ObjectId.isValid(id)) {
 		return res.status(400)
 			.send({
 				message: 'Organization is invalid'
@@ -181,8 +181,8 @@ exports.organizationByID = function (req, res, next, id) {
 		.populate('moderators', '_id displayName firstName lastName email')
 		.populate('futureOwner', '_id email')
 		.exec(function (err, organization) {
-			if(err) return next(err);
-			if(!organization) {
+			if (err) return next(err);
+			if (!organization) {
 				return res.status(404)
 					.send({
 						message: 'No organization with that identifier has been found'
@@ -195,7 +195,7 @@ exports.organizationByID = function (req, res, next, id) {
 
 exports.organizationByUrl = function (url) {
 
-	if(!url) {
+	if (!url) {
 		return null;
 	}
 
@@ -210,9 +210,9 @@ exports.organizationByUrl = function (url) {
 
 exports.getOrganization = function (req, res) {
 	const { url } = req.query;
-	return Organization.findOne({url})
+	return Organization.findOne({ url })
 		.then((org) => {
-			if (!org) throw('Organization does not exist');
+			if (!org) throw ('Organization does not exist');
 			if (!req.organization) req.organization = org;
 
 			return res.json(org);
@@ -221,7 +221,7 @@ exports.getOrganization = function (req, res) {
 }
 
 
-function findUserAndOrganization (email, moderators) {
+function findUserAndOrganization(email, moderators) {
 
 	const findUserPromise = User.findOne({ email })
 		.then((user) => {
@@ -232,14 +232,14 @@ function findUserAndOrganization (email, moderators) {
 	const doesNewLeaderExist = FutureLeader.findOne({ email })
 		.then((leader) => {
 			// if leader exists then future leader is on the database
-				// if leader does exist we want to return leader
-				if (leader) {
-					return leader;
-				}
+			// if leader does exist we want to return leader
+			if (leader) {
+				return leader;
+			}
 
-				// if leader does not exist create a new leader
-				const owner = new FutureLeader({ email });
-				return owner;
+			// if leader does not exist create a new leader
+			const owner = new FutureLeader({ email });
+			return owner;
 		})
 
 	const findModerators = User.find({ email: moderators });
@@ -272,7 +272,7 @@ function saveEmailVerificationCode(user, code) {
 	return FutureLeader.findById(user._id)
 		.then((user) => {
 
-			if(!user) {
+			if (!user) {
 				throw Error('We could not find the user in the database. Please contact administration.');
 			}
 
@@ -284,11 +284,11 @@ function saveEmailVerificationCode(user, code) {
 
 			//update user model
 			return user.save();
-        })
+		})
 		.then(() => code)
 }
 
-function sendVerificationCodeViaEmail (req, user) {
+function sendVerificationCodeViaEmail(req, user) {
 	var pass$ = FutureLeader.generateRandomPassphrase()
 
 	if (user.emailDelivered) return true;
@@ -306,6 +306,6 @@ function sendVerificationCodeViaEmail (req, user) {
 		})
 		.catch((err) => {
 			console.log('error sending verification email: ', err);
-			throw('There was a problem while sending your verification e-mail, please try again later.')
+			throw ('There was a problem while sending your verification e-mail, please try again later.')
 		});
 };
