@@ -19,6 +19,10 @@ var OrganizationSchema = new Schema({
 		trim: true,
 		required: 'Name cannot be blank'
 	},
+	organizationName: {
+		type: String,
+		trim: true
+	},
 	description: {
 		type: String,
 		trim: true
