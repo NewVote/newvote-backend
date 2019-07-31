@@ -18,6 +18,7 @@ const schema = {
         futureOwner: Joi.objectId(),
         moderators: Joi.array(),
         newLeaderEmail: Joi.string().email(),
+        privateOrg: Joi.boolean()
     })
 }
 
