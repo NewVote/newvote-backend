@@ -15,6 +15,35 @@ var _ = require('lodash'),
 /**
  * Update user details
  */
+
+exports.patch = function (req, res) {
+	var user = req.user;
+
+	if (!user) {
+		return res.status(400)
+			.send({
+				message: 'User is not signed in'
+			});
+	}
+
+	User.findById(user._id)
+		.then((userDoc) => {
+			if (!userDoc) throw('User does not exist');
+			userDoc.completedTour = true;
+			return userDoc.save();
+		})
+		.then(() => {
+			res.status(200)
+				.send({ message: 'Tour Complete'});
+		})
+		.catch((err) => {
+			return res.status(404)
+				.send({
+					message: errorHandler.getErrorMessage(err)
+				});
+		});
+};
+
 exports.update = function (req, res) {
 	// Init Variables
 	var user = req.user;
