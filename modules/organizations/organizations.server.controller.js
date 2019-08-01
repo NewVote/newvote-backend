@@ -140,16 +140,20 @@ exports.delete = function (req, res) {
  */
 exports.list = function (req, res) {
 	let query = req.query.url ? { url: req.query.url } : {};
-	let showDeleted = req.query.showDeleted || null;
+	let showDeleted = req.query.showDeleted || 'null';
+	
+	let showPrivateOrgs = req.query.showPrivate || 'false';
+	let showNonPrivates = { $or: [{ 'privateOrg': false }, { 'privateOrg': { $exists: false } }] };
+	let privateMatch = showPrivateOrgs === 'true' ? {} : showNonPrivates;
 
 	let showNonDeletedItemsMatch = { $or: [{ 'softDeleted': false }, { 'softDeleted': { $exists: false } }] };
 	let showAllItemsMatch = {};
 	let softDeleteMatch = showDeleted ? showAllItemsMatch : showNonDeletedItemsMatch;
 
-
 	Organization.aggregate([
 		{ $match: query },
 		{ $match: softDeleteMatch },
+		{ $match: privateMatch },
 		{ $sort: { 'name': 1 } }
 	])
 		.exec(function (err, organizations) {
@@ -168,29 +172,52 @@ exports.list = function (req, res) {
  * Organization middleware
  */
 exports.organizationByID = function (req, res, next, id) {
-	if(!mongoose.Types.ObjectId.isValid(id)) {
-		return res.status(400)
-			.send({
-				message: 'Organization is invalid'
-			});
+	// Check whether an id is either an mongodb ObjectId or a url
+	if(mongoose.Types.ObjectId.isValid(id)) {
+		return Organization.findById(id)
+			.populate('user', 'displayName')
+			.populate('owner', '_id displayName firstName lastName email')
+			.populate('moderators', '_id displayName firstName lastName email')
+			.populate('futureOwner', '_id email')
+			.then((organization) => {
+				if (!organization) throw('No organization with that identifier has been found');
+				req.organization = organization;
+				next();
+			})
+			.catch((err) => res.status(404).send({ message: errorHandler.getErrorMessage(err) }));
 	}
-
-	Organization.findById(id)
+	// check whether organization is a string it's a string url
+	return Organization.findOne({ url: id })
 		.populate('user', 'displayName')
 		.populate('owner', '_id displayName firstName lastName email')
 		.populate('moderators', '_id displayName firstName lastName email')
 		.populate('futureOwner', '_id email')
-		.exec(function (err, organization) {
-			if(err) return next(err);
-			if(!organization) {
-				return res.status(404)
-					.send({
-						message: 'No organization with that identifier has been found'
-					});
-			}
+		.then((organization) => {
+			if (!organization) throw('No organization with that identifier has been found');
 			req.organization = organization;
 			next();
-		});
+		})
+		.catch((err) => {
+			return res.status(404).send({ message: errorHandler.getErrorMessage(err)
+		})});
+
+		// .exec(function (err, organization) {
+		// 	if(err) return next(err);
+		// 	if(!organization) {
+		// 		return res.status(404)
+		// 			.send({
+		// 				message: 'No organization with that identifier has been found'
+		// 			});
+		// 	}
+		// 	req.organization = organization;
+		// 	next();
+		// });
+
+		// return res.status(400)
+		// 	.send({
+		// 		message: 'Organization is invalid'
+		// 	});
+
 };
 
 exports.organizationByUrl = function (url) {

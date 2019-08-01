@@ -81,6 +81,11 @@ var OrganizationSchema = new Schema({
 			}
 		}
 	},
+	privateOrg: {
+		type: Boolean,
+		required: true,
+		default: false
+	}
 });
 
 mongoose.model('Organization', OrganizationSchema);
