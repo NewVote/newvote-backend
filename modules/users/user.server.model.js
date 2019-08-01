@@ -173,7 +173,11 @@ var UserSchema = new Schema({
 	organizations: [{
 		type: Schema.ObjectId,
 		ref: 'Organization'
-	}]
+	}],
+	completedTour: {
+		type: Boolean,
+		default: false
+	}
 });
 
 /**

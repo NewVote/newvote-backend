@@ -31,6 +31,7 @@ const schema = {
         organizations: Joi.array(),
         resetPasswordToken: Joi.string(),
         resetPasswordExpires: Joi.date(),
+        completedTour: Joi.Boolean(),
     })
 }
 
