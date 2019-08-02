@@ -274,14 +274,17 @@ exports.oauthCallback = function (strategy) {
  * Helper function to create or update a user after AAF Rapid SSO auth
  */
 exports.saveRapidProfile = function (req, profile, done) {
+	console.log('looking up user: ', profile.mail);
 	User.findOne({ email: profile.mail }, '-salt -password -verificationCode', function (err, user) {
 		if (err) {
 			return done(err);
 		} else {
 			if (!user) {
+				console.log('no user, creating new account')
 				var possibleUsername = profile.cn || profile.displayname || profile.givenname + profile.surname || ((profile.mail) ? profile.mail.split('@')[0] : '');
 
 				User.findUniqueUsername(possibleUsername, null, function (availableUsername) {
+					console.log('generated username: ', availableUsername)
 					user = new User({
 						firstName: profile.givenname,
 						lastName: profile.surname,
@@ -300,6 +303,7 @@ exports.saveRapidProfile = function (req, profile, done) {
 					});
 				});
 			} else {
+				console.log('found existing user')
 				// user exists update ITA and return user
 				if (user.jti && user.jti === profile.jti) {
 					return done(new Error('ITA Match please login again'))
