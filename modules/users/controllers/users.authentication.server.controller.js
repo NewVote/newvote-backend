@@ -248,7 +248,7 @@ exports.oauthCallback = function (strategy) {
 				return res.redirect(host + '/auth/login?err=' + encodeURIComponent(errorHandler.getErrorMessage(err)));
 			}
 			if (!user) {
-				return res.redirect(host + '/auth/login');
+				return res.redirect(host + '/auth/login?err="NO_USER"');
 			}
 			req.login(user, function (err) {
 				if (err) {
