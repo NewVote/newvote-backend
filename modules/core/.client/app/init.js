@@ -19,7 +19,7 @@ var app = angular.module(ApplicationConfiguration.applicationModuleName);
 app.config(['ngQuillConfigProvider', function (ngQuillConfigProvider) {
 	ngQuillConfigProvider.set();
 }]);
-// debugger;
+// ;
 app.config(['TourConfigProvider', function (TourConfigProvider) {
 	TourConfigProvider.enableNavigationInterceptors();
 	TourConfigProvider.set('backdrop', true);

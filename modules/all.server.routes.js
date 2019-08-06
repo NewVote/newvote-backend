@@ -29,6 +29,34 @@ var path = require('path'),
 // jwt module simply puts the user object into req.user if the token is valid
 // otherwise it just does nothing and the policy module handles the rest
 module.exports = function (app) {
+
+	app.all('*', (req, res, next) => {
+		const { organization:cookieOrg } = req.cookies
+		let { referer:url } = req.headers;
+		url = url.replace(/(^\w+:|^)\/\//, '');
+		const splitUrl = url.split('.');
+		const orgUrl = splitUrl[0];
+
+		if (!cookieOrg) {
+			return organizations.organizationByUrl(orgUrl)
+				.then((organization) => {
+					res.cookie('organization', JSON.stringify(organization), { domain: 'newvote.org', secure: false });
+					next();
+				});
+		}
+
+		const organization = JSON.parse(cookieOrg);
+		if (organization.url === orgUrl) return next();
+
+		// cookie does not match current url
+		return organizations.organizationByUrl(orgUrl)
+			.then((organization) => {
+				res.cookie('organization', JSON.stringify(organization), { domain: 'newvote.org', secure: false });
+				next();	
+			});	
+	});
+
+
 	// Articles collection routes
 	app.route('/api/organizations')
 		.all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)

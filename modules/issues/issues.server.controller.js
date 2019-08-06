@@ -40,7 +40,7 @@ exports.create = function (req, res) {
  * Show the current issue
  */
 exports.read = function (req, res) {
-	// debugger;
+	// ;
 	IssuesController.attachMetaData([req.issue], req.user)
 		.then(function (issueArr) {
 			const updatedIssue = issueArr[0];
@@ -99,7 +99,7 @@ exports.delete = function (req, res) {
 exports.list = function (req, res) {
 	let query = {};
 	var topicId = req.query.topicId || null;
-	let org = req.query.organization || null;
+	let org = JSON.parse(req.cookies.organization).url || null;
 	let search = req.query.search || null;
 	let showDeleted = req.query.showDeleted || null;
 
@@ -110,7 +110,7 @@ exports.list = function (req, res) {
 	let showNonDeletedItemsMatch = { $or: [{ 'softDeleted': false }, { 'softDeleted': { $exists: false } }] };
 	let showAllItemsMatch = {};
 	let softDeleteMatch = showDeleted ? showAllItemsMatch : showNonDeletedItemsMatch;
-	// debugger;
+	// ;
 
 	Issue.aggregate([
 			{ $match: searchMatch },
