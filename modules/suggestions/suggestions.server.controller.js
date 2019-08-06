@@ -61,12 +61,13 @@ exports.create = function (req, res) {
 
 	return Promise.all([getSuggestion, getOrganization])
 		.then((promises) => {
+			debugger;
 			const [suggestionPromise, orgPromise] = promises;
 			if (!orgPromise || !suggestionPromise) return false;
 
 			return transporter.sendMail({
 				from: process.env.MAILER_FROM,
-				to: org.owner.email,
+				to: orgPromise.owner.email,
 				subject: 'New suggestion created on your NewVote community!',
 				html: buildMessage(suggestion, req)
 			})
