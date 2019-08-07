@@ -11,7 +11,7 @@ var path = require('path'),
 	Solution = mongoose.model('Solution'),
 	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
 	_ = require('lodash'),
-	seedData = require('./seed/seed');
+	seed = require('./seed/seed');
 
 /**
  * Create a issue
@@ -258,9 +258,12 @@ exports.attachMetaData = function (issues, user) {
 };
 
 exports.seedData = function (organizationId, topicId) {
-	const Issue = new Issue(seedData);
-	Issue.organizations = organizationId;
-	Issue.topics = [topicId];
+	const { seedData } = seed;	
+	const newIssue = new Issue(seedData);
+	newIssue.organizations = organizationId;
+	newIssue.topics = [topicId];
 
-	Issue.save();
+	return newIssue.save(function (err) {
+		if (err) console.log(err);
+	});
 }

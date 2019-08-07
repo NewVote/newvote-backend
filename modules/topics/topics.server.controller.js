@@ -11,7 +11,7 @@ var path = require('path'),
 	Solution = mongoose.model('Solution'),
 	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
 	_ = require('lodash'),
-	seedData = require('./seed/seed');
+	seed = require('./seed/seed');
 
 /**
  * Create a topic
@@ -150,9 +150,10 @@ exports.topicByID = function (req, res, next, id) {
 		});
 };
 
-exports.seedData = function (organizationId) {
-	const Topic = new Topic(seedData);
-	Topic.organizations = organizationId;
-
-	Topic.save();
+exports.seedTopic = function (organizationId) {
+	const { seedData } = seed;
+	const newTopic = new Topic(seedData);
+	newTopic.organizations = organizationId;
+	newTopic.save();
+	return Promise.resolve(newTopic);
 }

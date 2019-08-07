@@ -10,7 +10,7 @@ var path = require('path'),
 	Solution = mongoose.model('Solution'),
 	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
 	_ = require('lodash'),
-	seedData = require('./seed/seed');
+	seed = require('./seed/seed');
 
 /**
  * Create a proposal
@@ -220,9 +220,12 @@ function updateSchema(proposals) {
 }
 
 exports.seedData = function (organizationId, solutionId) {
-	const Action = new Action(seedData);
-	Action.organizations = organizationId;
-	Action.solutions = [solutionId];
+	const { seedData } = seed;
+	const newAction = new Action(seedData);
+	newAction.organizations = organizationId;
+	newAction.solutions = [solutionId];
 
-	Action.save();
+	return newAction.save(function (err) {
+		if (err) console.log(err);
+	});
 }

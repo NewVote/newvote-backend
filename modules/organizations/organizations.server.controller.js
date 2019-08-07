@@ -9,12 +9,21 @@ var path = require('path'),
 	Organization = mongoose.model('Organization'),
 	votes = require('../votes/votes.server.controller'),
 	Solution = mongoose.model('Solution'),
+	Topic = mongoose.model('Topic'),
+	Issue = mongoose.model('Issue'),
+	Suggestion = mongoose.model('Suggestion'),
+	Proposal = mongoose.model('Proposal'),
 	User = mongoose.model('User'),
 	FutureLeader = mongoose.model('FutureLeader'),
 	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
 	_ = require('lodash'),
 	nodemailer = require('nodemailer'),
-	transporter = nodemailer.createTransport(config.mailer.options);
+	transporter = nodemailer.createTransport(config.mailer.options),
+	TopicController = require('../topics/topics.server.controller'),
+	IssueController = require('../issues/issues.server.controller'),
+	SolutionController = require('../solutions/solutions.server.controller'),
+	ProposalController = require('../proposals/proposals.server.controller'),
+	SuggestionController = require('../suggestions/suggestions.server.controller');
 
 /**
  * Create a organization
@@ -60,13 +69,13 @@ exports.create = function (req, res) {
 
 			return organization.save();
 		})
-		.then((savedOrg) => {
+		.then((savedOrganization) => {
 			if (!savedOrganization) throw('Error saving organization');
 
 			if (savedOrganization.futureOwner) {
 				sendVerificationCodeViaEmail(req, savedOrganization.futureOwner);
 			}
-			return seedNewOrganization(savedOrg._id);
+			return seedNewOrganization(savedOrganization._id);
 		})
 		.then((promises) => {
 			console.log(promises, 'this is promises on seeded');
@@ -267,19 +276,22 @@ function findUserAndOrganization (email, moderators) {
 }
 
 function seedNewOrganization(organizationId) {
-	const TopicPromise = Topic.seedData(organizationId);
+	const TopicPromise = TopicController.seedTopic(organizationId);
 	const IssuePromise = TopicPromise.then((topic) => {
-		return Issue.seedData(organizationid, topic._id)
+		console.log('ISSUE PROMISE')
+		return IssueController.seedData(organizationid, topic._id)
 	});
 	const SolutionPromise = IssuePromise.then((issue) => {
-		return Solution.seedData(organizationId, issue._id);
+		console.log('Solution PROMISE')
+		return SolutionController.seedData(organizationId, issue._id);
 	});
 	const ProposalPromise = SolutionPromise.then((solution) => {
-		return Proposal.seedData(organizationId, solution._id);
+		console.log('Proposal PROMISE')
+		return ProposalController.seedData(organizationId, solution._id);
 	});
-	const SuggestionPromise = Suggestion.seedData(organizationId);
+	const SuggestionPromise = SuggestionController.seedData(organizationId);
 
-	return Promise.all([TopicPromise, IssuePromise, SolutionPromise, ProposalPromise, SuggestionPromise]);
+	return Promise.all([TopicPromise, IssuePromise, SolutionPromise, ProposalPromise, SuggestionPromise])
 }
 
 var buildMessage = function (code, req) {
