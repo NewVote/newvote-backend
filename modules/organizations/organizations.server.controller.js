@@ -61,21 +61,15 @@ exports.create = function (req, res) {
 			return organization.save();
 		})
 		.then((savedOrg) => {
-
-			
-
-
-
-		})
-
-
-
-		.then((savedOrganization) => {
 			if (!savedOrganization) throw('Error saving organization');
 
 			if (savedOrganization.futureOwner) {
 				sendVerificationCodeViaEmail(req, savedOrganization.futureOwner);
 			}
+			return seedNewOrganization(savedOrg._id);
+		})
+		.then((promises) => {
+			console.log(promises, 'this is promises on seeded');
 			// After user is saved create and send an email to the user
 			return res.json(organization);
 		})
@@ -270,6 +264,22 @@ function findUserAndOrganization (email, moderators) {
 	const findModerators = User.find({ email: moderators });
 
 	return Promise.all([findUserPromise, doesNewLeaderExist, findModerators])
+}
+
+function seedNewOrganization(organizationId) {
+	const TopicPromise = Topic.seedData(organizationId);
+	const IssuePromise = TopicPromise.then((topic) => {
+		return Issue.seedData(organizationid, topic._id)
+	});
+	const SolutionPromise = IssuePromise.then((issue) => {
+		return Solution.seedData(organizationId, issue._id);
+	});
+	const ProposalPromise = SolutionPromise.then((solution) => {
+		return Proposal.seedData(organizationId, solution._id);
+	});
+	const SuggestionPromise = Suggestion.seedData(organizationId);
+
+	return Promise.all([TopicPromise, IssuePromise, SolutionPromise, ProposalPromise, SuggestionPromise]);
 }
 
 var buildMessage = function (code, req) {
