@@ -305,7 +305,9 @@ exports.saveRapidProfile = function (req, profile, done) {
 					});
 				});
 			} else {
-				const orgExists = user.organizations.id(organization._id);
+				const orgExists = res.organizations.find((e) => {
+					return e._id.equals(organization._id)
+				});
 				if (!orgExists) user.organizations.push(organization._id); 
 					
 				console.log('found existing user')
@@ -373,6 +375,11 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
 						});
 					});
 				} else {
+					const orgExists = res.organizations.find((e) => {
+						return e._id.equals(organization._id)
+					});
+					if (!orgExists) user.organizations.push(organization._id); 
+					user.save();
 					return done(err, user);
 				}
 			}
@@ -380,6 +387,11 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
 	} else {
 		// User is already logged in, join the provider data to the existing user
 		var user = req.user;
+
+		const orgExists = res.organizations.find((e) => {
+			return e._id.equals(organization._id)
+		});
+		if (!orgExists) user.organizations.push(organization._id); 
 
 		// Check if user exists, is not signed in using this provider, and doesn't have that provider data already configured
 		if (user.provider !== providerUserProfile.provider && (!user.additionalProvidersData || !user.additionalProvidersData[providerUserProfile.provider])) {
@@ -393,14 +405,12 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
 			// Then tell mongoose that we've updated the additionalProvidersData field
 			user.markModified('additionalProvidersData');
 
-			const orgExists = user.organizations.id(organization._id);
-			if (!orgExists) user.organizations.push(organization._id);
-
 			// And save the user
 			user.save(function (err) {
 				return done(err, user, '/settings/accounts');
 			});
 		} else {
+			user.save();
 			return done(new Error('User is already connected using this provider'), user);
 		}
 	}
