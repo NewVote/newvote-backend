@@ -305,6 +305,9 @@ exports.saveRapidProfile = function (req, profile, done) {
 					});
 				});
 			} else {
+				const orgExists = user.organizations.id(organization._id);
+				if (!orgExists) user.organizations.push(organization._id); 
+					
 				console.log('found existing user')
 				// user exists update ITA and return user
 				if (user.jti && user.jti === profile.jti) {
@@ -389,6 +392,9 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
 
 			// Then tell mongoose that we've updated the additionalProvidersData field
 			user.markModified('additionalProvidersData');
+
+			const orgExists = user.organizations.id(organization._id);
+			if (!orgExists) user.organizations.push(organization._id);
 
 			// And save the user
 			user.save(function (err) {
