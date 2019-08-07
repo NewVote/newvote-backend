@@ -10,7 +10,8 @@ var path = require('path'),
 	votes = require('../votes/votes.server.controller'),
 	Solution = mongoose.model('Solution'),
 	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
-	_ = require('lodash');
+	_ = require('lodash'),
+	seedData = require('./seed/seed');
 
 /**
  * Create a topic
@@ -148,3 +149,10 @@ exports.topicByID = function (req, res, next, id) {
 			next();
 		});
 };
+
+exports.seedData = function (organizationId) {
+	const Topic = new Topic(seedData);
+	Topic.organizations = organizationId;
+
+	Topic.save();
+}

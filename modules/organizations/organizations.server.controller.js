@@ -60,8 +60,18 @@ exports.create = function (req, res) {
 
 			return organization.save();
 		})
+		.then((savedOrg) => {
+
+			
+
+
+
+		})
+
+
+
 		.then((savedOrganization) => {
-			if (!savedOrganization) throw('Error saving leader');
+			if (!savedOrganization) throw('Error saving organization');
 
 			if (savedOrganization.futureOwner) {
 				sendVerificationCodeViaEmail(req, savedOrganization.futureOwner);

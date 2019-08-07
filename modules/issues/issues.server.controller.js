@@ -10,7 +10,8 @@ var path = require('path'),
 	votes = require('../votes/votes.server.controller'),
 	Solution = mongoose.model('Solution'),
 	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
-	_ = require('lodash');
+	_ = require('lodash'),
+	seedData = require('./seed/seed');
 
 /**
  * Create a issue
@@ -255,3 +256,11 @@ exports.attachMetaData = function (issues, user) {
 				});
 		});
 };
+
+exports.seedData = function (organizationId, topicId) {
+	const Issue = new Issue(seedData);
+	Issue.organizations = organizationId;
+	Issue.topics = [topicId];
+
+	Issue.save();
+}

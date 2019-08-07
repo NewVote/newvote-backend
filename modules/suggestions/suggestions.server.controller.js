@@ -207,3 +207,11 @@ exports.suggestionByID = function (req, res, next, id) {
 			next();
 		});
 };
+
+
+exports.seedData = function (organizationId) {
+	const Suggestion = new Suggestion(seedData);
+	Suggestion.organizations = organizationId;
+
+	Suggestion.save();
+}
