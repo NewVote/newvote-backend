@@ -304,7 +304,6 @@ exports.saveRapidProfile = function (req, profile, done) {
 					});
 				});
 			} else {
-				debugger
 				const orgExists = user.organizations.find((e) => {
 					if(e) {
 						return e._id.equals(organization._id)
