@@ -33,20 +33,24 @@ module.exports = function (app) {
 	app.all('*', (req, res, next) => {
 		const { organization:cookieOrg } = req.cookies
 		try {
-			let { referer:url } = req.headers;
+			let url = req.headers.get('referer');
 			url = url.replace(/(^\w+:|^)\/\//, '');
 			const splitUrl = url.split('.');
 			var orgUrl = splitUrl[0]; //using var here to escape try block scope
 		}catch(e) {
 			// usually fails after a redirect which has no header
+			console.error('No referer in header! Trying to use orgUrl cookie instead')
 			var { orgUrl } = req.cookies //using var here to escape try block scope
+			if(!orgUrl) {
+				console.error('No orgUrl cookie! No org will be found')
+			}
 		}
 
 		if (!cookieOrg || cookieOrg === 'null') { //for some reason cookie can be "null" string
 			organizations.organizationByUrl(orgUrl)
 				.then((organization) => {
 					res.cookie('organization', JSON.stringify(organization), { domain: 'newvote.org', secure: false });
-					next();
+					return next();
 				});
 		}else {
 			const organization = JSON.parse(cookieOrg);
@@ -56,7 +60,7 @@ module.exports = function (app) {
 			organizations.organizationByUrl(orgUrl)
 				.then((organization) => {
 					res.cookie('organization', JSON.stringify(organization), { domain: 'newvote.org', secure: false });
-					next();
+					return next();
 				});
 		}
 	});

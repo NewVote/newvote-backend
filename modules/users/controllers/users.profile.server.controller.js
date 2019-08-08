@@ -22,21 +22,21 @@ exports.update = function (req, res) {
 	// For security measurement we remove the roles from the req.body object
 	delete req.body.roles;
 
-	if(user) {
+	if (user) {
 		// Merge existing user
 		user = _.extend(user, req.body);
 		user.updated = Date.now();
 		user.displayName = user.firstName + ' ' + user.lastName;
 
 		user.save(function (err) {
-			if(err) {
+			if (err) {
 				return res.status(400)
 					.send({
 						message: errorHandler.getErrorMessage(err)
 					});
 			} else {
 				req.login(user, function (err) {
-					if(err) {
+					if (err) {
 						res.status(400)
 							.send(err);
 					} else {
@@ -67,9 +67,9 @@ exports.changeProfilePicture = function (req, res) {
 	// Filtering to upload only images
 	upload.fileFilter = profileUploadFileFilter;
 
-	if(user) {
+	if (user) {
 		upload(req, res, function (uploadError) {
-			if(uploadError) {
+			if (uploadError) {
 				return res.status(400)
 					.send({
 						message: 'Error occurred while uploading profile picture'
@@ -78,14 +78,14 @@ exports.changeProfilePicture = function (req, res) {
 				user.profileImageURL = config.uploads.profileUpload.dest + req.file.filename;
 
 				user.save(function (saveError) {
-					if(saveError) {
+					if (saveError) {
 						return res.status(400)
 							.send({
 								message: errorHandler.getErrorMessage(saveError)
 							});
 					} else {
 						req.login(user, function (err) {
-							if(err) {
+							if (err) {
 								res.status(400)
 									.send(err);
 							} else {
@@ -115,8 +115,9 @@ exports.me = function (req, res) {
  * Get count of all users
  */
 exports.count = function (req, res) {
-	const org = JSON.parse(req.cookies.organization).url || null;
-	const orgMatch = org ? { 'organizations.url': org } : {};
+	let org = JSON.parse(req.cookies.organization)
+	let orgUrl = org ? org.url : null;
+	const orgMatch = orgUrl ? { 'organizations.url': orgUrl } : {};
 	// do some kind of aggregate query that outputs the count
 	return User.aggregate([
 			{
