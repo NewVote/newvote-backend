@@ -39,7 +39,6 @@ module.exports = function (app) {
 		}
 		var { orgUrl } = req.cookies // prefer the redirect cookie url over header
 		if (!orgUrl) {
-			console.error('No orgUrl cookie! trying to use referer')
 			try {
 				let url = req.get('referer');
 				url = url.replace(/(^\w+:|^)\/\//, '');
@@ -52,8 +51,6 @@ module.exports = function (app) {
 		} else {
 			res.clearCookie('orgUrl', { path: '/', domain: 'newvote.org' })
 		}
-
-		console.error('using url: ', orgUrl)
 
 		if (!organization) {
 			// no org stored in cookie
