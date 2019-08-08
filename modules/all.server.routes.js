@@ -46,6 +46,8 @@ module.exports = function (app) {
 			}
 		}
 
+		console.error('using url: ', orgUrl)
+
 		if (!cookieOrg || cookieOrg === 'null') { //for some reason cookie can be "null" string
 			organizations.organizationByUrl(orgUrl)
 				.then((organization) => {
