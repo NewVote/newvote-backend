@@ -102,7 +102,7 @@ exports.list = function (req, res) {
 	let query = {};
 	let issueId = req.query.issueId || null;
 	let search = req.query.search || null;
-	let org = req.query.organization || null;
+	let org = JSON.parse(req.cookies.organization).url || null;
 	let showDeleted = req.query.showDeleted || null;
 
 	let orgMatch = org ? { 'organizations.url': org } : {};
@@ -148,7 +148,7 @@ exports.list = function (req, res) {
 					.then(function (solutions) {
 						proposals.attachProposals(solutions, req.user, req.query.regions)
 							.then(solutions => {
-								// debugger;
+								// ;
 								res.json(filterSoftDeleteProposals(solutions, showDeleted))
 							})
 					})

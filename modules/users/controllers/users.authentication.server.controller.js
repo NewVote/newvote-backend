@@ -225,7 +225,7 @@ exports.oauthCall = function (strategy, scope) {
  */
 exports.oauthCallback = function (strategy) {
 	return function (req, res, next) {
-		// debugger;
+		// ;
 		try {
 			var sessionRedirectURL = req.session.redirect_to;
 			delete req.session.redirect_to;
@@ -236,8 +236,8 @@ exports.oauthCallback = function (strategy) {
 		passport.authenticate(strategy, function (err, user, redirectURL) {
 			//   https://rapid.test.aaf.edu.au/jwt/authnrequest/research/4txVkEDrvjAH6PxxlCKZGg
 			// need to generate url from org in request cookie here
-			// debugger;
-			var org = req.cookies.org || 'uq'
+			// ;
+			var org = JSON.parse(req.cookies.organization).url || 'uq'
 			if (config.node_env === 'development') {
 				var host = `http://${org}.localhost.newvote.org:4200`
 			} else {
@@ -274,6 +274,7 @@ exports.oauthCallback = function (strategy) {
  * Helper function to create or update a user after AAF Rapid SSO auth
  */
 exports.saveRapidProfile = function (req, profile, done) {
+	const organization = JSON.parse(req.cookies.organization);
 	console.log('looking up user: ', profile.mail);
 	User.findOne({ email: profile.mail }, '-salt -password -verificationCode', function (err, user) {
 		if (err) {
@@ -294,7 +295,8 @@ exports.saveRapidProfile = function (req, profile, done) {
 						provider: 'aaf',
 						ita: profile.ita,
 						roles: ['user'],
-						verified: true
+						verified: true,
+						organizations: [organization._id]
 					});
 
 					// And save the user
@@ -303,6 +305,11 @@ exports.saveRapidProfile = function (req, profile, done) {
 					});
 				});
 			} else {
+				const orgExists = res.organizations.find((e) => {
+					return e._id.equals(organization._id)
+				});
+				if (!orgExists) user.organizations.push(organization._id); 
+					
 				console.log('found existing user')
 				// user exists update ITA and return user
 				if (user.jti && user.jti === profile.jti) {
@@ -322,6 +329,7 @@ exports.saveRapidProfile = function (req, profile, done) {
  * Helper function to save or update a OAuth user profile
  */
 exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
+	const organization = JSON.parse(req.cookies.organization);
 	if (!req.user) {
 		// Define a search query fields
 		var searchMainProviderIdentifierField = 'providerData.' + providerUserProfile.providerIdentifierField;
@@ -357,7 +365,8 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
 							email: providerUserProfile.email,
 							profileImageURL: providerUserProfile.profileImageURL,
 							provider: providerUserProfile.provider,
-							providerData: providerUserProfile.providerData
+							providerData: providerUserProfile.providerData,
+							organizations: [organization._id]
 						});
 
 						// And save the user
@@ -366,6 +375,11 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
 						});
 					});
 				} else {
+					const orgExists = res.organizations.find((e) => {
+						return e._id.equals(organization._id)
+					});
+					if (!orgExists) user.organizations.push(organization._id); 
+					user.save();
 					return done(err, user);
 				}
 			}
@@ -373,6 +387,11 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
 	} else {
 		// User is already logged in, join the provider data to the existing user
 		var user = req.user;
+
+		const orgExists = res.organizations.find((e) => {
+			return e._id.equals(organization._id)
+		});
+		if (!orgExists) user.organizations.push(organization._id); 
 
 		// Check if user exists, is not signed in using this provider, and doesn't have that provider data already configured
 		if (user.provider !== providerUserProfile.provider && (!user.additionalProvidersData || !user.additionalProvidersData[providerUserProfile.provider])) {
@@ -391,6 +410,7 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
 				return done(err, user, '/settings/accounts');
 			});
 		} else {
+			user.save();
 			return done(new Error('User is already connected using this provider'), user);
 		}
 	}

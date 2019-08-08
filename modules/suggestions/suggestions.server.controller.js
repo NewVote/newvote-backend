@@ -61,7 +61,7 @@ exports.create = function (req, res) {
 
 	return Promise.all([getSuggestion, getOrganization])
 		.then((promises) => {
-			debugger;
+			;
 			const [suggestionPromise, orgPromise] = promises;
 			if (!orgPromise || !suggestionPromise) return false;
 
@@ -143,7 +143,7 @@ exports.delete = function (req, res) {
  */
 exports.list = function (req, res) {
 	let search = req.query.search || null;
-	let org = req.query.organization || null;
+	let org = JSON.parse(req.cookies.organization).url || null;
 	let showDeleted = req.query.showDeleted || null;
 
 	let orgMatch = org ? { 'organizations.url': org } : {};

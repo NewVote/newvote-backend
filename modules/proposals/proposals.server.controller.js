@@ -97,7 +97,7 @@ exports.delete = function (req, res) {
 exports.list = function (req, res) {
 	let solutionId = req.query.solutionId || null;
 	let search = req.query.search || null;
-	let org = req.query.organization || null;
+	let org = JSON.parse(req.cookies.organization).url || null;
 	let showDeleted = req.query.showDeleted || null;
 
 	let orgMatch = org ? { 'organizations.url': org } : {};
@@ -185,7 +185,7 @@ exports.proposalByID = function (req, res, next, id) {
 };
 
 exports.attachProposals = function (objects, user, regions) {
-	// debugger;
+	// ;
 	const promises = objects.map((obj => {
 		return Proposal.find({ solutions: obj._id })
 			.populate('solutions')

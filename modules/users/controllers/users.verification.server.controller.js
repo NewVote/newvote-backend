@@ -67,7 +67,7 @@ exports.sendVerificationCodeViaSms = function (req, res, next) {
 }
 
 exports.sendVerificationCodeViaEmail = function (req, res) {
-	// debugger;
+	// ;
 	var user = req.user;
 	var email = user.email;
 	var pass$ = User.generateRandomPassphrase()
