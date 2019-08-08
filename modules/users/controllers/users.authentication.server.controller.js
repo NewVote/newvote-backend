@@ -275,6 +275,10 @@ exports.oauthCallback = function (strategy) {
  */
 exports.saveRapidProfile = function (req, profile, done) {
 	const organization = req.organization;
+	if(!organization){
+		console.error('no organization in request body')
+	}
+
 	console.log('looking up user: ', profile.mail);
 	User.findOne({ email: profile.mail }, '-salt -password -verificationCode', function (err, user) {
 		if (err) {
@@ -305,12 +309,14 @@ exports.saveRapidProfile = function (req, profile, done) {
 					});
 				});
 			} else {
-				const orgExists = user.organizations.find((e) => {
-					if(e) {
-						return e._id.equals(organization._id)
-					}
-				});
-				if (!orgExists) user.organizations.push(organization._id);
+				if(organization) {
+					const orgExists = user.organizations.find((e) => {
+						if(e) {
+							return e._id.equals(organization._id)
+						}
+					});
+					if (!orgExists) user.organizations.push(organization._id);
+				}
 
 				console.log('found existing user')
 				// user exists update ITA and return user
