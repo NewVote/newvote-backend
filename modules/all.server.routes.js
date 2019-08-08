@@ -31,7 +31,6 @@ var path = require('path'),
 module.exports = function (app) {
 
 	app.all('*', (req, res, next) => {
-		// debugger;
 		const { organization:cookieOrg } = req.cookies
 		try {
 			let { referer:url } = req.headers;
@@ -40,7 +39,7 @@ module.exports = function (app) {
 			var orgUrl = splitUrl[0]; //using var here to escape try block scope
 		}catch(e) {
 			// usually fails after a redirect which has no header
-			var { org:orgUrl } = req.cookies //using var here to escape try block scope
+			var { orgUrl } = req.cookies //using var here to escape try block scope
 		}
 
 		if (!cookieOrg || cookieOrg === 'null') { //for some reason cookie can be "null" string
