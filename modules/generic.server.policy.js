@@ -146,7 +146,7 @@ exports.isAllowed = function (req, res, next) {
 // this is NOT the organization that the content belongs to (not the object.organizations)
 // N.B new content will have no organization
 function canAccessOrganization(req, object) {
-	const orgUrl = JSON.parse(req.cookies.organization).url;
+	const orgUrl = req.organization.url;
 	const user = req.user;
 
 	const method = req.method.toLowerCase();

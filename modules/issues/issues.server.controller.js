@@ -97,9 +97,10 @@ exports.delete = function (req, res) {
  * List of Issues
  */
 exports.list = function (req, res) {
+	debugger
 	let query = {};
 	var topicId = req.query.topicId || null;
-	let org = JSON.parse(req.cookies.organization)
+	let org = req.organization
 	let orgUrl = org ? org.url : null;
 	let search = req.query.search || null;
 	let showDeleted = req.query.showDeleted || null;

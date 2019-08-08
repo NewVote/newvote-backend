@@ -115,7 +115,7 @@ exports.me = function (req, res) {
  * Get count of all users
  */
 exports.count = function (req, res) {
-	let org = JSON.parse(req.cookies.organization)
+	let org = req.organization
 	let orgUrl = org ? org.url : null;
 	const orgMatch = orgUrl ? { 'organizations.url': orgUrl } : {};
 	// do some kind of aggregate query that outputs the count

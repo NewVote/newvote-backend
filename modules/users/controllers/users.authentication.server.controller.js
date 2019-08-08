@@ -236,7 +236,7 @@ exports.oauthCallback = function (strategy) {
 		passport.authenticate(strategy, function (err, user, redirectURL) {
 			//   https://rapid.test.aaf.edu.au/jwt/authnrequest/research/4txVkEDrvjAH6PxxlCKZGg
 			// need to generate url from org in request cookie here
-			let orgObject = JSON.parse(req.cookies.organization)
+			let orgObject = req.organization
 			let org = orgObject ? orgObject.url : null;
 			if (config.node_env === 'development') {
 				var host = `http://${org}.localhost.newvote.org:4200`
@@ -274,7 +274,7 @@ exports.oauthCallback = function (strategy) {
  * Helper function to create or update a user after AAF Rapid SSO auth
  */
 exports.saveRapidProfile = function (req, profile, done) {
-	const organization = JSON.parse(req.cookies.organization);
+	const organization = req.organization;
 	console.log('looking up user: ', profile.mail);
 	User.findOne({ email: profile.mail }, '-salt -password -verificationCode', function (err, user) {
 		if (err) {
@@ -331,7 +331,7 @@ exports.saveRapidProfile = function (req, profile, done) {
  * Helper function to save or update a OAuth user profile
  */
 exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
-	const organization = JSON.parse(req.cookies.organization);
+	const organization = req.organization;
 	if (!req.user) {
 		// Define a search query fields
 		var searchMainProviderIdentifierField = 'providerData.' + providerUserProfile.providerIdentifierField;

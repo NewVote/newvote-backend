@@ -49,16 +49,21 @@ module.exports = function (app) {
 		if (!cookieOrg || cookieOrg === 'null') { //for some reason cookie can be "null" string
 			organizations.organizationByUrl(orgUrl)
 				.then((organization) => {
+					req.organization = organization;
 					res.cookie('organization', JSON.stringify(organization), { domain: 'newvote.org', secure: false });
 					return next();
 				});
 		}else {
 			const organization = JSON.parse(cookieOrg);
-			if (organization.url === orgUrl) return next();
+			if (organization.url === orgUrl) {
+				req.organization = organization;
+				return next();
+			}
 
 			// cookie does not match current url
 			organizations.organizationByUrl(orgUrl)
 				.then((organization) => {
+					req.organization = organization;
 					res.cookie('organization', JSON.stringify(organization), { domain: 'newvote.org', secure: false });
 					return next();
 				});
