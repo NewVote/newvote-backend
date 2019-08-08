@@ -236,7 +236,6 @@ exports.oauthCallback = function (strategy) {
 		passport.authenticate(strategy, function (err, user, redirectURL) {
 			//   https://rapid.test.aaf.edu.au/jwt/authnrequest/research/4txVkEDrvjAH6PxxlCKZGg
 			// need to generate url from org in request cookie here
-			// ;
 			var org = JSON.parse(req.cookies.organization).url || 'uq'
 			if (config.node_env === 'development') {
 				var host = `http://${org}.localhost.newvote.org:4200`
@@ -305,11 +304,14 @@ exports.saveRapidProfile = function (req, profile, done) {
 					});
 				});
 			} else {
-				const orgExists = res.organizations.find((e) => {
-					return e._id.equals(organization._id)
+				debugger
+				const orgExists = user.organizations.find((e) => {
+					if(e) {
+						return e._id.equals(organization._id)
+					}
 				});
-				if (!orgExists) user.organizations.push(organization._id); 
-					
+				if (!orgExists) user.organizations.push(organization._id);
+
 				console.log('found existing user')
 				// user exists update ITA and return user
 				if (user.jti && user.jti === profile.jti) {
@@ -378,7 +380,7 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
 					const orgExists = res.organizations.find((e) => {
 						return e._id.equals(organization._id)
 					});
-					if (!orgExists) user.organizations.push(organization._id); 
+					if (!orgExists) user.organizations.push(organization._id);
 					user.save();
 					return done(err, user);
 				}
@@ -391,7 +393,7 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
 		const orgExists = res.organizations.find((e) => {
 			return e._id.equals(organization._id)
 		});
-		if (!orgExists) user.organizations.push(organization._id); 
+		if (!orgExists) user.organizations.push(organization._id);
 
 		// Check if user exists, is not signed in using this provider, and doesn't have that provider data already configured
 		if (user.provider !== providerUserProfile.provider && (!user.additionalProvidersData || !user.additionalProvidersData[providerUserProfile.provider])) {
