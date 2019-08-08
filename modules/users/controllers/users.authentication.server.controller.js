@@ -236,7 +236,8 @@ exports.oauthCallback = function (strategy) {
 		passport.authenticate(strategy, function (err, user, redirectURL) {
 			//   https://rapid.test.aaf.edu.au/jwt/authnrequest/research/4txVkEDrvjAH6PxxlCKZGg
 			// need to generate url from org in request cookie here
-			var org = JSON.parse(req.cookies.organization).url || 'uq'
+			let orgObject = JSON.parse(req.cookies.organization)
+			let org = orgObject ? orgObject.url : null;
 			if (config.node_env === 'development') {
 				var host = `http://${org}.localhost.newvote.org:4200`
 			} else {

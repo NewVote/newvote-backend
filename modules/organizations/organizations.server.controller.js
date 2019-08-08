@@ -141,7 +141,7 @@ exports.delete = function (req, res) {
 exports.list = function (req, res) {
 	let query = req.query.url ? { url: req.query.url } : {};
 	let showDeleted = req.query.showDeleted || 'null';
-	
+
 	let showPrivateOrgs = req.query.showPrivate || 'false';
 	let showNonPrivates = { $or: [{ 'privateOrg': false }, { 'privateOrg': { $exists: false } }] };
 	let privateMatch = showPrivateOrgs === 'true' ? {} : showNonPrivates;
@@ -223,7 +223,7 @@ exports.organizationByID = function (req, res, next, id) {
 exports.organizationByUrl = function (url) {
 
 	if(!url) {
-		return null;
+		return Promise.resolve(null);
 	}
 
 	let query = { url };
