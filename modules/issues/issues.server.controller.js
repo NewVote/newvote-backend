@@ -97,7 +97,6 @@ exports.delete = function (req, res) {
  * List of Issues
  */
 exports.list = function (req, res) {
-	debugger
 	let query = {};
 	var topicId = req.query.topicId || null;
 	let org = JSON.parse(req.cookies.organization)

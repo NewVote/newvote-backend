@@ -33,7 +33,7 @@ module.exports = function (app) {
 	app.all('*', (req, res, next) => {
 		const { organization:cookieOrg } = req.cookies
 		try {
-			let url = req.headers.get('referer');
+			let url = req.get('referer');
 			url = url.replace(/(^\w+:|^)\/\//, '');
 			const splitUrl = url.split('.');
 			var orgUrl = splitUrl[0]; //using var here to escape try block scope
