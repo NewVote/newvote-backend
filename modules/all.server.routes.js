@@ -43,22 +43,22 @@ module.exports = function (app) {
 		}
 
 		if (!cookieOrg || cookieOrg === 'null') { //for some reason cookie can be "null" string
-			return organizations.organizationByUrl(orgUrl)
+			organizations.organizationByUrl(orgUrl)
+				.then((organization) => {
+					res.cookie('organization', JSON.stringify(organization), { domain: 'newvote.org', secure: false });
+					next();
+				});
+		}else {
+			const organization = JSON.parse(cookieOrg);
+			if (organization.url === orgUrl) return next();
+
+			// cookie does not match current url
+			organizations.organizationByUrl(orgUrl)
 				.then((organization) => {
 					res.cookie('organization', JSON.stringify(organization), { domain: 'newvote.org', secure: false });
 					next();
 				});
 		}
-
-		const organization = JSON.parse(cookieOrg);
-		if (organization.url === orgUrl) return next();
-
-		// cookie does not match current url
-		return organizations.organizationByUrl(orgUrl)
-			.then((organization) => {
-				res.cookie('organization', JSON.stringify(organization), { domain: 'newvote.org', secure: false });
-				next();
-			});
 	});
 
 
