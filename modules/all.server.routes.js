@@ -23,52 +23,60 @@ var path = require('path'),
 	celebrateWrap = require('celebrate'),
 	validators = require('./organizations/organization.validation.js');
 
-	const { schema } = validators;
-	const { errors, celebrate } = celebrateWrap;
+const { schema } = validators;
+const { errors, celebrate } = celebrateWrap;
 
 // jwt module simply puts the user object into req.user if the token is valid
 // otherwise it just does nothing and the policy module handles the rest
 module.exports = function (app) {
 
 	app.all('*', (req, res, next) => {
-		const { organization:cookieOrg } = req.cookies
+		const { organization: cookieOrg } = req.cookies
 		try {
-			let url = req.get('referer');
-			url = url.replace(/(^\w+:|^)\/\//, '');
-			const splitUrl = url.split('.');
-			var orgUrl = splitUrl[0]; //using var here to escape try block scope
+			var organization = JSON.parse(cookieOrg)
 		}catch(e) {
-			// usually fails after a redirect which has no header
-			console.error('No referer in header! Trying to use orgUrl cookie instead')
-			var { orgUrl } = req.cookies //using var here to escape try block scope
-			if(!orgUrl) {
-				console.error('No orgUrl cookie! No org will be found')
+			var organization = null
+		}
+		var { orgUrl } = req.cookies // prefer the redirect cookie url over header
+		if (!orgUrl) {
+			console.error('No orgUrl cookie! trying to use referer')
+			try {
+				let url = req.get('referer');
+				url = url.replace(/(^\w+:|^)\/\//, '');
+				const splitUrl = url.split('.');
+				orgUrl = splitUrl[0];
+			} catch (e) {
+				// usually fails after a redirect which has no header
+				console.error('No referer in header! Cannot look up an org')
 			}
+		} else {
+			res.clearCookie('orgUrl', { path: '/', domain: 'newvote.org' })
 		}
 
 		console.error('using url: ', orgUrl)
 
-		if (!cookieOrg || cookieOrg === 'null') { //for some reason cookie can be "null" string
+		if (!organization) {
+			// no org stored in cookie
 			organizations.organizationByUrl(orgUrl)
 				.then((organization) => {
 					req.organization = organization;
 					res.cookie('organization', JSON.stringify(organization), { domain: 'newvote.org', secure: false });
 					return next();
 				});
-		}else {
-			const organization = JSON.parse(cookieOrg);
+		} else {
+			// org was in cookie, make sure it matches the referer url
 			if (organization.url === orgUrl) {
 				req.organization = organization;
 				return next();
+			} else {
+				// it didn't match the url so user has changed orgs, need to reload org
+				organizations.organizationByUrl(orgUrl)
+					.then((organization) => {
+						req.organization = organization;
+						res.cookie('organization', JSON.stringify(organization), { domain: 'newvote.org', secure: false });
+						return next();
+					});
 			}
-
-			// cookie does not match current url
-			organizations.organizationByUrl(orgUrl)
-				.then((organization) => {
-					req.organization = organization;
-					res.cookie('organization', JSON.stringify(organization), { domain: 'newvote.org', secure: false });
-					return next();
-				});
 		}
 	});
 

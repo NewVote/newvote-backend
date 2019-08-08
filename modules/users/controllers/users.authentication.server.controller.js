@@ -237,7 +237,7 @@ exports.oauthCallback = function (strategy) {
 			//   https://rapid.test.aaf.edu.au/jwt/authnrequest/research/4txVkEDrvjAH6PxxlCKZGg
 			// need to generate url from org in request cookie here
 			let orgObject = req.organization
-			let org = orgObject ? orgObject.url : null;
+			let org = orgObject ? orgObject.url : 'uq';
 			if (config.node_env === 'development') {
 				var host = `http://${org}.localhost.newvote.org:4200`
 			} else {
