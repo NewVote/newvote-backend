@@ -31,13 +31,19 @@ var path = require('path'),
 module.exports = function (app) {
 
 	app.all('*', (req, res, next) => {
+		// debugger;
 		const { organization:cookieOrg } = req.cookies
-		let { referer:url } = req.headers;
-		url = url.replace(/(^\w+:|^)\/\//, '');
-		const splitUrl = url.split('.');
-		const orgUrl = splitUrl[0];
+		try {
+			let { referer:url } = req.headers;
+			url = url.replace(/(^\w+:|^)\/\//, '');
+			const splitUrl = url.split('.');
+			var orgUrl = splitUrl[0]; //using var here to escape try block scope
+		}catch(e) {
+			// usually fails after a redirect which has no header
+			var { org:orgUrl } = req.cookies //using var here to escape try block scope
+		}
 
-		if (!cookieOrg) {
+		if (!cookieOrg || cookieOrg === 'null') { //for some reason cookie can be "null" string
 			return organizations.organizationByUrl(orgUrl)
 				.then((organization) => {
 					res.cookie('organization', JSON.stringify(organization), { domain: 'newvote.org', secure: false });
@@ -52,8 +58,8 @@ module.exports = function (app) {
 		return organizations.organizationByUrl(orgUrl)
 			.then((organization) => {
 				res.cookie('organization', JSON.stringify(organization), { domain: 'newvote.org', secure: false });
-				next();	
-			});	
+				next();
+			});
 	});
 
 
