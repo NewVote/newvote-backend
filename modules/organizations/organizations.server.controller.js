@@ -83,38 +83,87 @@ exports.read = function (req, res) {
  * Update a organization
  */
 exports.update = function (req, res) {
-	var userPromise;
 	var emails = req.body.moderators;
+
 	delete req.body.moderators;
 	delete req.body.moderatorsControl;
+
 	// if a user is chosen from existing users then future owner has to be removed
 	if (req.body.owner) {
 		req.body.futureOwner = null;
 	}
 
+	const newModEmails = [];
+	const modIDs = emails.filter(e => {
+		if (mongoose.Types.ObjectId.isValid(e)) return e;
+		newModEmails.push(e);
+		return false;
+	})
+	
 	var organization = req.organization;
 	_.extend(organization, req.body);
-
-	// turn moderator emails into users before saving
-	if(emails && emails.length > 0) {
-		userPromise = User.find({ email: emails });
-	} else {
-		userPromise = Promise.resolve([]);
-	}
-	userPromise.then(mods => {
-		mods = mods.map(m=>m._id);
-		organization._doc.moderators.addToSet(mods);
-		organization.save(function (err) {
-			if(err) {
+	
+	// If moderators array is same size & there are no emails to append save org
+	if (!newModEmails && modIDs.length === req.organization.moderators.length) {
+		console.log('no emails');
+		return organization.save((err) => {
+			if (err) {
 				return res.status(400)
 					.send({
 						message: errorHandler.getErrorMessage(err)
 					});
-			} else {
-				res.status(200).json(organization);
 			}
-		});
+	
+			res.status(200).json(organization);
+		})
+	}
+	
+	User.find({
+		'email': {
+			$in: newModEmails
+		}
 	})
+	.select({ "_id": 1 })
+	.then((docs) => {
+		// save organization array as moderators might be removed
+		if (!docs.length) {
+			organization.moderators = [...modIDs];
+			return organization.save();
+		}
+		const getObjectIds = docs.map((user) => user._id);
+		organization.moderators = [...modIDs, ...getObjectIds];
+		return organization.save();
+	})
+	.then((org) => {
+		return res.status(200).json(organization);
+	})
+	.catch((err) => {
+		return res.status(400)
+			.send({
+				message: errorHandler.getErrorMessage(err)
+			});
+	})
+
+	// turn moderator emails into users before saving
+	// if(emails && emails.length > 0) {
+	// 	userPromise = User.find({ email: emails });
+	// } else {
+	// 	userPromise = Promise.resolve([]);
+	// }
+
+	
+
+	// userPromise.then(mods => {
+	// 	mods = mods.map(m=>m._id);
+	// 	organization._doc.moderators.addToSet(mods);
+	// 	organization.save(function (err) {
+	// 		if(err) {
+				
+	// 		} else {
+	// 			res.status(200).json(organization);
+	// 		}
+	// 	});
+	// })
 };
 
 /**
