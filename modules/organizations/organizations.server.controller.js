@@ -105,7 +105,6 @@ exports.update = function (req, res) {
 	
 	// If moderators array is same size & there are no emails to append save org
 	if (!newModEmails && modIDs.length === req.organization.moderators.length) {
-		console.log('no emails');
 		return organization.save((err) => {
 			if (err) {
 				return res.status(400)
@@ -113,7 +112,6 @@ exports.update = function (req, res) {
 						message: errorHandler.getErrorMessage(err)
 					});
 			}
-	
 			res.status(200).json(organization);
 		})
 	}
