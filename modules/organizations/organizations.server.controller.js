@@ -48,8 +48,9 @@ exports.create = function (req, res) {
 				user.save();
 			}
 
-			if (moderators) {
-				organization.moderators = moderators;
+			if (moderators.length > 0) {
+				const getObjectIds = moderators.map((mod) => mod._id);
+				organization.moderators = [...getObjectIds];
 			}
 
 			if (futureLeader) {
@@ -304,7 +305,12 @@ function findUserAndOrganization (email, moderators) {
 				return owner;
 		})
 
-	const findModerators = User.find({ email: moderators });
+		const findModerators = User.find({
+			'email': {
+				$in: moderators
+			}
+		})
+		.select({ "_id": 1 })
 
 	return Promise.all([findUserPromise, doesNewLeaderExist, findModerators])
 }
