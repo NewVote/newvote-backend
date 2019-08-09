@@ -61,7 +61,6 @@ exports.create = function (req, res) {
 
 	return Promise.all([getSuggestion, getOrganization])
 		.then((promises) => {
-			;
 			const [suggestionPromise, orgPromise] = promises;
 			if (!orgPromise || !suggestionPromise) return false;
 
@@ -70,15 +69,21 @@ exports.create = function (req, res) {
 				to: orgPromise.owner.email,
 				subject: 'New suggestion created on your NewVote community!',
 				html: buildMessage(suggestion, req)
+			}, (err, info) => {
+				console.log(err, 'this is err');
+				console.log(info, 'this is info');
+				return false;
 			})
 		})
-		.then(function (data) {
+		.then(function () {
 			// console.log('mailer success: ', data);
 			return res.status(200).json(suggestion);
 		})
 		.catch((err) => {
-			console.log('mailer failed: ', err);
-
+			return res.status(400)
+				.send({
+					message: errorHandler.getErrorMessage(err)
+				});
 		});
 };
 
