@@ -30,8 +30,10 @@ exports.create = function (req, res) {
 
 	if (req.body.owner) {
 		email = req.body.owner.email;
-	} else {
+	} else if (req.body.newLeaderEmail) {
 		email = req.body.newLeaderEmail;
+	} else {
+		email = null;
 	}
 
 	return findUserAndOrganization(email, moderators)
@@ -142,27 +144,6 @@ exports.update = function (req, res) {
 				message: errorHandler.getErrorMessage(err)
 			});
 	})
-
-	// turn moderator emails into users before saving
-	// if(emails && emails.length > 0) {
-	// 	userPromise = User.find({ email: emails });
-	// } else {
-	// 	userPromise = Promise.resolve([]);
-	// }
-
-	
-
-	// userPromise.then(mods => {
-	// 	mods = mods.map(m=>m._id);
-	// 	organization._doc.moderators.addToSet(mods);
-	// 	organization.save(function (err) {
-	// 		if(err) {
-				
-	// 		} else {
-	// 			res.status(200).json(organization);
-	// 		}
-	// 	});
-	// })
 };
 
 /**
@@ -286,7 +267,7 @@ exports.organizationByUrl = function (url) {
 
 function findUserAndOrganization (email, moderators) {
 
-	const findUserPromise = User.findOne({ email })
+	let findUserPromise = User.findOne({ email })
 		.then((user) => {
 			if (!user) return false;
 			return user;
@@ -300,6 +281,9 @@ function findUserAndOrganization (email, moderators) {
 					return leader;
 				}
 
+				if (!leader && email === null) {
+					return false;
+				}
 				// if leader does not exist create a new leader
 				const owner = new FutureLeader({ email });
 				return owner;
