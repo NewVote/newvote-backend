@@ -31,13 +31,14 @@ const { errors, celebrate } = celebrateWrap;
 module.exports = function (app) {
 
 	app.all('*', (req, res, next) => {
+		debugger
 		const { organization: cookieOrg } = req.cookies
 		try {
 			var organization = JSON.parse(cookieOrg)
 		}catch(e) {
 			var organization = null
 		}
-		var { orgUrl } = req.cookies // prefer the redirect cookie url over header
+		var { org:orgUrl } = req.cookies // prefer the redirect cookie url over header
 		if (!orgUrl) {
 			try {
 				let url = req.get('referer');
