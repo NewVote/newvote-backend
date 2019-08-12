@@ -30,8 +30,10 @@ exports.create = function (req, res) {
 
 	if (req.body.owner) {
 		email = req.body.owner.email;
-	} else {
+	} else if (req.body.newLeaderEmail) {
 		email = req.body.newLeaderEmail;
+	} else {
+		email = null;
 	}
 
 	return findUserAndOrganization(email, moderators)
@@ -48,8 +50,9 @@ exports.create = function (req, res) {
 				user.save();
 			}
 
-			if (moderators) {
-				organization.moderators = moderators;
+			if (moderators.length > 0) {
+				const getObjectIds = moderators.map((mod) => mod._id);
+				organization.moderators = [...getObjectIds];
 			}
 
 			if (futureLeader) {
@@ -83,37 +86,63 @@ exports.read = function (req, res) {
  * Update a organization
  */
 exports.update = function (req, res) {
-	var userPromise;
 	var emails = req.body.moderators;
+
 	delete req.body.moderators;
 	delete req.body.moderatorsControl;
+
 	// if a user is chosen from existing users then future owner has to be removed
 	if (req.body.owner) {
 		req.body.futureOwner = null;
 	}
 
+	const newModEmails = [];
+	const modIDs = emails.filter(e => {
+		if (mongoose.Types.ObjectId.isValid(e)) return e;
+		newModEmails.push(e);
+		return false;
+	})
+	
 	var organization = req.organization;
 	_.extend(organization, req.body);
-
-	// turn moderator emails into users before saving
-	if(emails && emails.length > 0) {
-		userPromise = User.find({ email: emails });
-	} else {
-		userPromise = Promise.resolve([]);
-	}
-	userPromise.then(mods => {
-		mods = mods.map(m=>m._id);
-		organization._doc.moderators.addToSet(mods);
-		organization.save(function (err) {
-			if(err) {
+	
+	// If moderators array is same size & there are no emails to append save org
+	if (!newModEmails && modIDs.length === req.organization.moderators.length) {
+		return organization.save((err) => {
+			if (err) {
 				return res.status(400)
 					.send({
 						message: errorHandler.getErrorMessage(err)
 					});
-			} else {
-				res.status(200).json(organization);
 			}
-		});
+			res.status(200).json(organization);
+		})
+	}
+	
+	User.find({
+		'email': {
+			$in: newModEmails
+		}
+	})
+	.select({ "_id": 1 })
+	.then((docs) => {
+		// save organization array as moderators might be removed
+		if (!docs.length) {
+			organization.moderators = [...modIDs];
+			return organization.save();
+		}
+		const getObjectIds = docs.map((user) => user._id);
+		organization.moderators = [...modIDs, ...getObjectIds];
+		return organization.save();
+	})
+	.then((org) => {
+		return res.status(200).json(organization);
+	})
+	.catch((err) => {
+		return res.status(400)
+			.send({
+				message: errorHandler.getErrorMessage(err)
+			});
 	})
 };
 
@@ -141,7 +170,7 @@ exports.delete = function (req, res) {
 exports.list = function (req, res) {
 	let query = req.query.url ? { url: req.query.url } : {};
 	let showDeleted = req.query.showDeleted || 'null';
-	
+
 	let showPrivateOrgs = req.query.showPrivate || 'false';
 	let showNonPrivates = { $or: [{ 'privateOrg': false }, { 'privateOrg': { $exists: false } }] };
 	let privateMatch = showPrivateOrgs === 'true' ? {} : showNonPrivates;
@@ -223,7 +252,7 @@ exports.organizationByID = function (req, res, next, id) {
 exports.organizationByUrl = function (url) {
 
 	if(!url) {
-		return null;
+		return Promise.resolve(null);
 	}
 
 	let query = { url };
@@ -238,7 +267,7 @@ exports.organizationByUrl = function (url) {
 
 function findUserAndOrganization (email, moderators) {
 
-	const findUserPromise = User.findOne({ email })
+	let findUserPromise = User.findOne({ email })
 		.then((user) => {
 			if (!user) return false;
 			return user;
@@ -252,12 +281,20 @@ function findUserAndOrganization (email, moderators) {
 					return leader;
 				}
 
+				if (!leader && email === null) {
+					return false;
+				}
 				// if leader does not exist create a new leader
 				const owner = new FutureLeader({ email });
 				return owner;
 		})
 
-	const findModerators = User.find({ email: moderators });
+		const findModerators = User.find({
+			'email': {
+				$in: moderators
+			}
+		})
+		.select({ "_id": 1 })
 
 	return Promise.all([findUserPromise, doesNewLeaderExist, findModerators])
 }

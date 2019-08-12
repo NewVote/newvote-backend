@@ -81,11 +81,12 @@ exports.delete = function (req, res) {
  */
 exports.list = function (req, res) {
 	let query = {};
-	let org = req.query.organization || null;
+	let org = req.organization
+	let orgUrl = org ? org.url : null;
 	let search = req.query.search || null;
 	let showDeleted = req.query.showDeleted || null;
 
-	let orgMatch = org ? { 'organizations.url': org } : {};
+	let orgMatch = orgUrl ? { 'organizations.url': orgUrl } : {};
 	let searchMatch = search ? { $text: { $search: search } } : {};
 
 	let showNonDeletedItemsMatch = { $or: [{ 'softDeleted': false }, { 'softDeleted': { $exists: false } }] };
