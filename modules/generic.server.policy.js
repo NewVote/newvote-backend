@@ -101,7 +101,7 @@ exports.isAllowed = function (req, res, next) {
 		   }
 			// allowed test failed, is this a non GET request? (POST/UPDATE/DELETE)
 			if(req.method.toLowerCase() !== 'get' && user) {
-				
+
 				//check for org owner or moderator on all non get requests
 				// this requires a DB query so only use it when necesary
 				canAccessOrganization(req, object)
@@ -166,7 +166,8 @@ function canAccessOrganization(req, object) {
 				}
 			});
 	} else if(method === 'put') {
-		if(req.organization != null) {
+		debugger
+		if(object.collection.name === 'organization') {
 
 			if (object.owner === null && !user.roles.includes('admin')) {
 				Promise.reject();
