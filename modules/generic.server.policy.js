@@ -167,7 +167,7 @@ function canAccessOrganization(req, object) {
 			});
 	} else if(method === 'put') {
 		debugger
-		if(object.collection.name === 'organization') {
+		if(object.collection.name === 'organizations') {
 
 			if (object.owner === null && !user.roles.includes('admin')) {
 				Promise.reject();
