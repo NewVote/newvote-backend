@@ -166,7 +166,6 @@ function canAccessOrganization(req, object) {
 				}
 			});
 	} else if(method === 'put') {
-		debugger
 		if(object.collection.name === 'organizations') {
 
 			if (object.owner === null && !user.roles.includes('admin')) {
