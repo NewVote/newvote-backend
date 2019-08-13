@@ -98,10 +98,11 @@ exports.delete = function (req, res) {
 exports.list = function (req, res) {
 	let solutionId = req.query.solutionId || null;
 	let search = req.query.search || null;
-	let org = req.query.organization || null;
+	let org = req.organization
+	let orgUrl = org ? org.url : null;
 	let showDeleted = req.query.showDeleted || null;
 
-	let orgMatch = org ? { 'organizations.url': org } : {};
+	let orgMatch = orgUrl ? { 'organizations.url': orgUrl } : {};
 	let solutionMatch = solutionId ? { 'solutions': mongoose.Types.ObjectId(solutionId) } : {};
 	let searchMatch = search ? { $text: { $search: search } } : {};
 
@@ -186,7 +187,7 @@ exports.proposalByID = function (req, res, next, id) {
 };
 
 exports.attachProposals = function (objects, user, regions) {
-	// debugger;
+	// ;
 	const promises = objects.map((obj => {
 		return Proposal.find({ solutions: obj._id })
 			.populate('solutions')

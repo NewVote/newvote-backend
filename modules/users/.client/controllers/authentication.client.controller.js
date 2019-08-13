@@ -3,7 +3,7 @@
 angular.module('users')
 	.controller('AuthenticationController', ['$scope', '$rootScope', '$state', '$stateParams', '$http', '$location', '$window', 'Authentication', 'PasswordValidator', 'Users', 'CountryService', 'vcRecaptchaService', 'VerificationService',
 		function ($scope, $rootScope, $state, $stateParams, $http, $location, $window, Authentication, PasswordValidator, Users, CountryService, vcRecaptchaService, VerificationService) {
-			// debugger;
+			// ;
 			$scope.vm = this;
 			var vm = $scope.vm;
 			$scope.state = 'signin';

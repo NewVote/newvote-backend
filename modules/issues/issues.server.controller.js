@@ -41,7 +41,7 @@ exports.create = function (req, res) {
  * Show the current issue
  */
 exports.read = function (req, res) {
-	// debugger;
+	// ;
 	IssuesController.attachMetaData([req.issue], req.user)
 		.then(function (issueArr) {
 			const updatedIssue = issueArr[0];
@@ -100,18 +100,18 @@ exports.delete = function (req, res) {
 exports.list = function (req, res) {
 	let query = {};
 	var topicId = req.query.topicId || null;
-	let org = req.query.organization || null;
+	let org = req.organization
+	let orgUrl = org ? org.url : null;
 	let search = req.query.search || null;
 	let showDeleted = req.query.showDeleted || null;
 
-	let orgMatch = org ? { 'organizations.url': org } : {};
+	let orgMatch = orgUrl ? { 'organizations.url': orgUrl } : {};
 	let topicMatch = topicId ? { 'topics': mongoose.Types.ObjectId(topicId) } : {};
 	let searchMatch = search ? { $text: { $search: search } } : {};
 
 	let showNonDeletedItemsMatch = { $or: [{ 'softDeleted': false }, { 'softDeleted': { $exists: false } }] };
 	let showAllItemsMatch = {};
 	let softDeleteMatch = showDeleted ? showAllItemsMatch : showNonDeletedItemsMatch;
-	// debugger;
 
 	Issue.aggregate([
 			{ $match: searchMatch },

@@ -81,6 +81,9 @@ var OrganizationSchema = new Schema({
 			}
 		}
 	},
+	authEntityId: {
+		type: String
+	},
 	privateOrg: {
 		type: Boolean,
 		required: true,

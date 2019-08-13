@@ -21,7 +21,7 @@ exports.create = function (req, res) {
 	if (!req.body.imageUrl) {
 		delete req.body.imageUrl;
 	}
-	
+
 	var solution = new Solution(req.body);
 	solution.user = req.user;
 	solution.save(function (err) {
@@ -103,10 +103,11 @@ exports.list = function (req, res) {
 	let query = {};
 	let issueId = req.query.issueId || null;
 	let search = req.query.search || null;
-	let org = req.query.organization || null;
+	let org = req.organization
+	let orgUrl = org ? org.url : null;
 	let showDeleted = req.query.showDeleted || null;
 
-	let orgMatch = org ? { 'organizations.url': org } : {};
+	let orgMatch = orgUrl ? { 'organizations.url': orgUrl } : {};
 	let issueMatch = issueId ? { 'issues': mongoose.Types.ObjectId(issueId) } : {};
 	let searchMatch = search ? { $text: { $search: search } } : {};
 
@@ -149,7 +150,7 @@ exports.list = function (req, res) {
 					.then(function (solutions) {
 						proposals.attachProposals(solutions, req.user, req.query.regions)
 							.then(solutions => {
-								// debugger;
+								// ;
 								res.json(filterSoftDeleteProposals(solutions, showDeleted))
 							})
 					})
@@ -195,7 +196,7 @@ exports.solutionByID = function (req, res, next, id) {
 };
 
 function filterSoftDeleteProposals (solutions, showDeleted) {
-	
+
 	if (showDeleted) return solutions;
 
 	return solutions.map((solution) => {
@@ -204,7 +205,7 @@ function filterSoftDeleteProposals (solutions, showDeleted) {
 				.filter((proposal) => {
 					return proposal.softDeleted === false;
 				});
-			
+
 			return solution;
 		});
 }
