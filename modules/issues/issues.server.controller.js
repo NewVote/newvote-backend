@@ -262,8 +262,6 @@ exports.seedData = function (organizationId, topicId) {
 	const newIssue = new Issue(seedData);
 	newIssue.organizations = organizationId;
 	newIssue.topics = [topicId];
-
-	// save first then return issue - issue not always returned to next promise
 	newIssue.save();
 	return newIssue;
 }

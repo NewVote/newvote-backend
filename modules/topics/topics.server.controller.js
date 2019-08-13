@@ -156,5 +156,5 @@ exports.seedTopic = function (organizationId) {
 	const newTopic = new Topic(seedData);
 	newTopic.organizations = organizationId;
 	newTopic.save();
-	return Promise.resolve(newTopic);
+	return newTopic;
 }

@@ -225,7 +225,6 @@ exports.seedData = function (organizationId, solutionId) {
 	const newProposal = new Proposal(seedData);
 	newProposal.organizations = organizationId;
 	newProposal.solutions = [solutionId];
-
 	newProposal.save();
 	return newProposal;
 }

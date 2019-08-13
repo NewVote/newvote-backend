@@ -220,7 +220,6 @@ exports.seedData = function (organizationId) {
 	const { seedData } = seed;
 	const newSuggestion = new Suggestion(seedData);
 	newSuggestion.organizations = organizationId;
-
 	newSuggestion.save();
 	return newSuggestion;
 }

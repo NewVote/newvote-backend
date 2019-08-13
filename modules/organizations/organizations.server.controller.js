@@ -81,8 +81,6 @@ exports.create = function (req, res) {
 		.then((promises) => {
 			if (!promises) throw('Error Saving Seed Data');
 			return organization.save();
-			// After user is saved create and send an email to the user
-			// 
 		})
 		.then((savedOrganization) => {
 			if (!savedOrganization) throw('Error saving organization');
@@ -93,7 +91,12 @@ exports.create = function (req, res) {
 
 			return res.json(organization);
 		})
-		.catch((err) => err);
+		.catch((err) => {
+			return res.status(400)
+				.send({
+					message: errorHandler.getErrorMessage(err)
+				});
+		});
 
 };
 
@@ -390,7 +393,7 @@ function sendVerificationCodeViaEmail (req, user) {
 function seedNewOrganization(org) {
 	const { _id: organizationId } = org;
 
-	const TopicPromise = TopicController.seedTopic(organizationId);
+	const TopicPromise = Promise.resolve(TopicController.seedTopic(organizationId));
 	const IssuePromise = TopicPromise.then((topic) => {
 		return IssueController.seedData(organizationId, topic._id);
 	});
