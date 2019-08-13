@@ -215,7 +215,6 @@ exports.seedData = function (organizationId) {
 	const newSuggestion = new Suggestion(seedData);
 	newSuggestion.organizations = organizationId;
 
-	return newSuggestion.save(function (err) {
-		if (err) console.log(err);
-	});
+	newSuggestion.save();
+	return newSuggestion;
 }

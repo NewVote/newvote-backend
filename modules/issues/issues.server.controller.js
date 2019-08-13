@@ -263,7 +263,7 @@ exports.seedData = function (organizationId, topicId) {
 	newIssue.organizations = organizationId;
 	newIssue.topics = [topicId];
 
-	return newIssue.save(function (err) {
-		if (err) console.log(err);
-	});
+	// save first then return issue - issue not always returned to next promise
+	newIssue.save();
+	return newIssue;
 }

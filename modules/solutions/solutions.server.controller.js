@@ -215,7 +215,6 @@ exports.seedData = function (organizationId, issueId) {
 	newSolution.organizations = organizationId;
 	newSolution.issues = [issueId];
 
-	return newSolution.save(function (err) {
-		if (err) console.log(err);
-	});
+	newSolution.save();
+	return newSolution;
 }

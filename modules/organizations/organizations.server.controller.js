@@ -43,7 +43,7 @@ exports.create = function (req, res) {
 		email = req.body.newLeaderEmail;
 	}
 
-	return findUserAndOrganization(email, moderators)
+	const createOrg = findUserAndOrganization(email, moderators)
 		.then((promises) => {
 			let [user, futureLeader, moderators] = promises;
 
@@ -67,7 +67,19 @@ exports.create = function (req, res) {
 				futureLeader.save();
 			}
 
+			return organization;
+		})
+		.catch((err) => {
+			console.log(err);
+		})
+	
+
+	return createOrg.then(seedNewOrganization)
+		.then((promises) => {
+			if (!promises) throw('Error Saving Seed Data');
 			return organization.save();
+			// After user is saved create and send an email to the user
+			// 
 		})
 		.then((savedOrganization) => {
 			if (!savedOrganization) throw('Error saving organization');
@@ -75,14 +87,11 @@ exports.create = function (req, res) {
 			if (savedOrganization.futureOwner) {
 				sendVerificationCodeViaEmail(req, savedOrganization.futureOwner);
 			}
-			return seedNewOrganization(savedOrganization._id);
-		})
-		.then((promises) => {
-			console.log(promises, 'this is promises on seeded');
-			// After user is saved create and send an email to the user
+
 			return res.json(organization);
 		})
 		.catch((err) => err);
+
 };
 
 /**
@@ -275,25 +284,6 @@ function findUserAndOrganization (email, moderators) {
 	return Promise.all([findUserPromise, doesNewLeaderExist, findModerators])
 }
 
-function seedNewOrganization(organizationId) {
-	const TopicPromise = TopicController.seedTopic(organizationId);
-	const IssuePromise = TopicPromise.then((topic) => {
-		console.log('ISSUE PROMISE')
-		return IssueController.seedData(organizationid, topic._id)
-	});
-	const SolutionPromise = IssuePromise.then((issue) => {
-		console.log('Solution PROMISE')
-		return SolutionController.seedData(organizationId, issue._id);
-	});
-	const ProposalPromise = SolutionPromise.then((solution) => {
-		console.log('Proposal PROMISE')
-		return ProposalController.seedData(organizationId, solution._id);
-	});
-	const SuggestionPromise = SuggestionController.seedData(organizationId);
-
-	return Promise.all([TopicPromise, IssuePromise, SolutionPromise, ProposalPromise, SuggestionPromise])
-}
-
 var buildMessage = function (code, req) {
 	var messageString = '';
 	var url = req.protocol + '://' + req.get('host') + '/auth/signup/' + code;
@@ -311,6 +301,9 @@ var sendEmail = function (user, pass, req) {
 		to: user.email,
 		subject: 'NewVote UQU Verification',
 		html: buildMessage(pass, req)
+	},
+	(err, info) => {
+		console.log(info, 'error sending email');
 	})
 }
 
@@ -356,3 +349,21 @@ function sendVerificationCodeViaEmail (req, user) {
 			throw('There was a problem while sending your verification e-mail, please try again later.')
 		});
 };
+
+function seedNewOrganization(org) {
+	const { _id: organizationId } = org;
+
+	const TopicPromise = TopicController.seedTopic(organizationId);
+	const IssuePromise = TopicPromise.then((topic) => {
+		return IssueController.seedData(organizationId, topic._id);
+	});
+	const SolutionPromise = IssuePromise.then((issue) => {
+		return SolutionController.seedData(organizationId, issue._id);
+	});
+	const ProposalPromise = SolutionPromise.then((solution) => {
+		return ProposalController.seedData(organizationId, solution._id);
+	});
+	const SuggestionPromise = SuggestionController.seedData(organizationId);
+
+	return Promise.all([TopicPromise, IssuePromise, SolutionPromise, ProposalPromise, SuggestionPromise])
+}

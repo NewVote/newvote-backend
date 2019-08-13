@@ -221,11 +221,10 @@ function updateSchema(proposals) {
 
 exports.seedData = function (organizationId, solutionId) {
 	const { seedData } = seed;
-	const newAction = new Action(seedData);
-	newAction.organizations = organizationId;
-	newAction.solutions = [solutionId];
+	const newProposal = new Proposal(seedData);
+	newProposal.organizations = organizationId;
+	newProposal.solutions = [solutionId];
 
-	return newAction.save(function (err) {
-		if (err) console.log(err);
-	});
+	newProposal.save();
+	return newProposal;
 }
