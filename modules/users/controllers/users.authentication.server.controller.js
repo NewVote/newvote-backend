@@ -189,6 +189,8 @@ exports.signin = function (req, res, next) {
 						} else {
 							const payload = { _id: user._id, roles: user.roles, verified: user.verified };
 							const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
+
+							res.cookie('credentials', JSON.stringify({ token }), { domain: 'newvote.org', secure: false, overwrite: true });
 							res.json({ user: user, token: token });
 						}
 					});
