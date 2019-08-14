@@ -42,6 +42,34 @@ var addToMailingList = function (user) {
 	})
 }
 
+exports.checkAuthStatus = function (req, res, next) {
+	passport.authenticate('check-status', {session: false}, function (err, user, info) {
+		if (err || !user) {
+			console.log('err or no user');
+			return res.status(400)
+				.send(info);
+		}
+
+		// Remove sensitive data before login
+		user.password = undefined;
+		user.salt = undefined;
+		user.verificationCode = undefined;
+
+		req.login(user, function (err) {
+			if (err) {
+				res.status(400)
+					.send(err);
+			} else {
+				const payload = { _id: user._id, roles: user.roles, verified: user.verified };
+				const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
+
+				res.cookie('credentials', JSON.stringify({ user, token }), { domain: 'newvote.org', secure: false, overwrite: true });
+				return res.json({ user: user, token: token });
+			}
+		});
+	})(req, res, next);
+}
+
 /**
  * Signup
  */
@@ -190,7 +218,7 @@ exports.signin = function (req, res, next) {
 							const payload = { _id: user._id, roles: user.roles, verified: user.verified };
 							const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
 
-							res.cookie('credentials', JSON.stringify({ token }), { domain: 'newvote.org', secure: false, overwrite: true });
+							res.cookie('credentials', JSON.stringify({ user, token }), { domain: 'newvote.org', secure: false, overwrite: true });
 							res.json({ user: user, token: token });
 						}
 					});
@@ -479,6 +507,7 @@ exports.updateOrgs = function (loginData) {
 	User.findOne({ _id: loginData._id })
 		.then(user => {
 			if (user) {
+				console.log(user, 'this is user');
 				// get all the votes for this user
 				Vote.find({ user })
 					.populate('object')
