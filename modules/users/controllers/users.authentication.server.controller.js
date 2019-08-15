@@ -45,7 +45,6 @@ var addToMailingList = function (user) {
 exports.checkAuthStatus = function (req, res, next) {
 	passport.authenticate('check-status', {session: false}, function (err, user, info) {
 		if (err || !user) {
-			console.log('err or no user');
 			return res.status(400)
 				.send(info);
 		}
@@ -64,7 +63,7 @@ exports.checkAuthStatus = function (req, res, next) {
 				const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
 
 				res.cookie('credentials', JSON.stringify({ user, token }), { domain: 'newvote.org', secure: false, overwrite: true });
-				return res.json({ user: user, token: token });
+				return res.json({ user, token });
 			}
 		});
 	})(req, res, next);
@@ -74,7 +73,6 @@ exports.checkAuthStatus = function (req, res, next) {
  * Signup
  */
 exports.signup = function (req, res) {
-
 	const { recaptchaResponse, email, password } = req.body;
 	const verificationCode = req.params.verificationCode;
 
@@ -200,7 +198,43 @@ exports.signin = function (req, res, next) {
 				.send(info);
 		} else {
 			// need to update user orgs in case they've voted on a new org
-			exports.updateOrgs(user);
+			// exports.updateOrgs(user);
+
+			// User is already signed to another organization and is verifying with current org
+			if (req.cookies.credentials) {
+				let { credentials } = req.cookies
+				credentials = JSON.parse(credentials);
+				
+				return jwt.verify(credentials.token, config.jwtSecret, function (err, verifiedUser) {
+					if (err) {
+						res.clearCookie('credentials', { path: '/', domain: 'newvote.org' })
+						throw('Invalid token'); 
+					}
+
+					const organizationPromise = Organization.findOne({ _id: req.organization._id });
+					const userPromise = User.findOne({_id: verifiedUser._id});
+
+					return Promise.all([organizationPromise, userPromise])
+						.then((promises) => {
+							const [organization, user] = promises;
+							user.organizations.push(organization._id);
+							return user.save();
+						})
+						.then((savedUser) => {
+							savedUser.password = undefined;
+							savedUser.salt = undefined;
+							savedUser.verificationCode = undefined;	
+							res.clearCookie('credentials', { path: '/', domain: 'newvote.org' })
+							
+							// updated user so create new token
+							const payload = { _id: savedUser._id, roles: savedUser.roles, verified: savedUser.verified };
+							const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
+
+							res.cookie('credentials', JSON.stringify({ user: savedUser, token }), { domain: 'newvote.org', secure: false, overwrite: true });
+							return res.json({ user: savedUser, token });
+						});
+				})
+			}
 
 			User.populate(user, { path: 'country' })
 				.then(function (user) {
@@ -507,7 +541,6 @@ exports.updateOrgs = function (loginData) {
 	User.findOne({ _id: loginData._id })
 		.then(user => {
 			if (user) {
-				console.log(user, 'this is user');
 				// get all the votes for this user
 				Vote.find({ user })
 					.populate('object')
