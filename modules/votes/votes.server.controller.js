@@ -7,6 +7,8 @@ var path = require('path'),
 	mongoose = require('mongoose'),
 	Vote = mongoose.model('Vote'),
 	Region = mongoose.model('Region'),
+	Organization = mongoose.model('Organization'),
+	User = mongoose.model('User'),
 	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
 	_ = require('lodash');
 
@@ -26,10 +28,19 @@ exports.create = function (req, res) {
 		});
 };
 
-exports.updateOrCreate = function (req, res) {
+exports.updateOrCreate = async function (req, res) {
 	var user = req.user;
-	var object = req.body.object;
-	
+	const {object, organizationId } = req.body;
+
+	const isVerified = await isUserSignedToOrg(organizationId, user);
+
+	if (!isVerified) {
+		return res.status(400)
+			.send({
+				message: 'You must verify with Community before being able to vote.'
+			}); 
+	}
+
 	Vote.findOne({
 			user: user,
 			object: object
@@ -327,4 +338,24 @@ function mapObjectWithVotes(objects, user, votes) {
 
 function isString(value) {
 	return typeof value === 'string' || value instanceof String;
+}
+
+function isUserSignedToOrg (currentOrgId, userObject) {
+	
+	return User.findById(userObject._id)
+		.then(user => {
+			if (!user) return false;
+			if (!user.organizations || user.organizations.length < 1) return false;
+
+			return user.organizations;
+		})
+		.then((organizations) => {
+			if (!organizations) return false;
+			const orgExists = organizations.find((org) => {
+				return org.equals(currentOrgId);
+			})
+			console.log(orgExists, 'this is orgExists');
+			
+			return orgExists;
+		});
 }
