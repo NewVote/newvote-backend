@@ -35,9 +35,10 @@ exports.updateOrCreate = async function (req, res) {
 	const isVerified = await isUserSignedToOrg(organizationId, user);
 
 	if (!isVerified) {
-		return res.status(400)
+		return res.status(403)
 			.send({
-				message: 'You must verify with Community before being able to vote.'
+				message: 'You must verify with Community before being able to vote.',
+				notCommunityVerified: true
 			}); 
 	}
 
@@ -354,7 +355,6 @@ function isUserSignedToOrg (currentOrgId, userObject) {
 			const orgExists = organizations.find((org) => {
 				return org.equals(currentOrgId);
 			})
-			console.log(orgExists, 'this is orgExists');
 			
 			return orgExists;
 		});
