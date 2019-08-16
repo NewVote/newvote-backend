@@ -7,7 +7,8 @@ const schema = {
         user: Joi.objectId(),
         objectType: Joi.object(),
         object: Joi.objectId(),
-        voteValue: Joi.number()
+        voteValue: Joi.number(),
+        organizationId: Joi.objectId(),
     })
 }
 
