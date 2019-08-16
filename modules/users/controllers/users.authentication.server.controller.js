@@ -89,7 +89,7 @@ exports.signup = function (req, res) {
 	// Init Variables
 	var user = new User(req.body);
 	var message = null;
-	// var recaptchaResponse = req.body.recaptchaResponse;
+	var recaptchaResponse = req.body.recaptchaResponse;
 
 	//ensure captcha code is valid or return with an error
 	recaptcha.checkResponse(recaptchaResponse, function (err, response) {
@@ -99,13 +99,6 @@ exports.signup = function (req, res) {
 					message: 'Recaptcha verification failed.'
 				});
 		}
-
-		// if(!response.success) {
-		// 	return res.status(400)
-		// 		.send({
-		// 			message: 'CAPTCHA verification failed'
-		// 		});
-		// }
 		else {
 			//user is not a robot, captcha success, continue with sign up
 			// Add missing user fields
