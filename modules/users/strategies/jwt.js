@@ -21,6 +21,7 @@ module.exports = function () {
 		audience: config.jwtAudience,
 		passReqToCallback: true
 	}
+	console.debug('JWT options: ', options);
 	passport.use(new JWTStrategy(options,
 		function (req, jwtPayload, done) {
 			var profile = jwtPayload['https://aaf.edu.au/attributes']
