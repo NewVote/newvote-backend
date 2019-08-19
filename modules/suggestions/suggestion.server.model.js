@@ -19,6 +19,11 @@ var SuggestionSchema = new Schema({
 		trim: true,
 		required: 'Title cannot be empty'
 	},
+	type: {
+		type: String,
+		enum: ['solution', 'action', 'issue', 'other'],
+		default: 'action'
+	},
 	description: {
 		type: String,
 		default: '',
