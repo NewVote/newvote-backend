@@ -162,6 +162,8 @@ function canAccessOrganization(req, object) {
 				) {
 					return true;
 				} else {
+					console.error('failed to test user against owner or mod list')
+					console.error('user is: ', user)
 					return false;
 				}
 			});
@@ -169,6 +171,7 @@ function canAccessOrganization(req, object) {
 		if(object.collection.name === 'organizations') {
 
 			if (object.owner === null && !user.roles.includes('admin')) {
+				console.error('no owner on object and user is not admin')
 				Promise.reject();
 			}
 			// we are updating a community so just check its owner (mods cant edit community)
