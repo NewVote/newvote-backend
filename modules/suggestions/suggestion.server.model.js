@@ -21,8 +21,7 @@ var SuggestionSchema = new Schema({
 	},
 	type: {
 		type: String,
-		enum: ['solution', 'action', 'issue', 'other'],
-		default: 'action'
+		enum: ['solution', 'action', 'issue', 'other']
 	},
 	description: {
 		type: String,
@@ -45,12 +44,13 @@ var SuggestionSchema = new Schema({
 		ref: 'User'
 	},
 	parentType: {
-		type: String,
-		required: function () { return this.parent }
+		type: String
+	},
+	parentTitle: {
+		type: String
 	},
 	parent: {
-		type: Schema.ObjectId,
-		refPath: 'parentType'
+		type: Schema.ObjectId
 	},
 	status: { // status: 1=approved 0=pending -1=declined
 		type: Number,

@@ -10,6 +10,7 @@ var path = require('path'),
 	Organization = mongoose.model('Organization'),
 	Issue = mongoose.model('Issue'),
 	Solution = mongoose.model('Solution'),
+	Proposal = mongoose.model('Proposal'),
 	votes = require('../votes/votes.server.controller'),
 	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
 	nodemailer = require('nodemailer'),
@@ -44,13 +45,19 @@ var buildMessage = function (suggestion, req) {
  */
 exports.create = function (req, res) {
 	var suggestion = new Suggestion(req.body);
+
+	if (!suggestion.parent) {
+		suggestion.parent = null;
+	}
+	// console.log(err, 'this is err');
+	// console.log(info, 'this is info');ion(req.body);
 	suggestion.user = req.user;
 	suggestion.save((err) => {
 		if (err) throw(err);
 	});
 
 	const getSuggestion = Suggestion
-		.populate(suggestion, { path: 'user parent organizations' })
+		.populate(suggestion, { path: 'user organizations' })
 
 	const getOrganization = getSuggestion.then((suggestion) => {
 		// if organization has no owner then begin exit out of promise chain
@@ -70,8 +77,6 @@ exports.create = function (req, res) {
 				subject: 'New suggestion created on your NewVote community!',
 				html: buildMessage(suggestion, req)
 			}, (err, info) => {
-				console.log(err, 'this is err');
-				console.log(info, 'this is info');
 				return false;
 			})
 		})
@@ -151,9 +156,11 @@ exports.list = function (req, res) {
 	let org = req.organization
 	let orgUrl = org ? org.url : null;
 	let showDeleted = req.query.showDeleted || null;
+	let type = req.query.type || null;
 
 	let orgMatch = orgUrl ? { 'organizations.url': orgUrl } : {};
 	let searchMatch = search ? { $text: { $search: search } } : {};
+	let typeMatch = type ? { type: type } : {};
 
 	let showNonDeletedItemsMatch = { $or: [{ 'softDeleted': false }, { 'softDeleted': { $exists: false } }] };
 	let showAllItemsMatch = {};
@@ -163,6 +170,7 @@ exports.list = function (req, res) {
 
 		{ $match: searchMatch },
 		{ $match: softDeleteMatch },
+		{ $match: typeMatch },
 		{
 			$lookup: {
 				'from': 'organizations',
@@ -198,7 +206,6 @@ exports.suggestionByID = function (req, res, next, id) {
 
 	Suggestion.findById(id)
 		.populate('user', 'displayName')
-		.populate('parent')
 		.populate('organizations')
 		.exec(function (err, suggestion) {
 			if(err) {
