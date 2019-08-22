@@ -136,16 +136,19 @@ exports.update = function (req, res) {
 exports.delete = function (req, res) {
 	var suggestion = req.suggestion;
 
-	suggestion.remove(function (err) {
-		if(err) {
+	Vote.deleteMany({ object: req.suggestion._id, objectType: 'Suggestion'})
+		.then((votes) => {
+			return suggestion.remove()
+		})
+		.then((suggestion) => {
+			return res.json(suggestion);
+		})
+		.catch(err => {
 			return res.status(400)
 				.send({
 					message: errorHandler.getErrorMessage(err)
 				});
-		} else {
-			res.json(suggestion);
-		}
-	});
+		})
 };
 
 /**

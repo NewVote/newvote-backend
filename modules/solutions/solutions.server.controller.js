@@ -6,6 +6,8 @@
 var path = require('path'),
 	mongoose = require('mongoose'),
 	Solution = mongoose.model('Solution'),
+	Suggestion = mongoose.model('Suggestion'),
+	Vote = mongoose.model('Vote'),
 	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
 	votes = require('../votes/votes.server.controller'),
 	proposals = require('../proposals/proposals.server.controller'),
@@ -15,24 +17,50 @@ var path = require('path'),
  * Create a solution
  */
 exports.create = function (req, res) {
-
 	// if the string is empty revert to default on model
 	if (!req.body.imageUrl) {
 		delete req.body.imageUrl;
 	}
 
-	var solution = new Solution(req.body);
-	solution.user = req.user;
-	solution.save(function (err) {
-		if(err) {
+	const solutionPromise = new Promise((resolve, reject) => {
+		var solution = new Solution(req.body);
+		solution.user = req.user;
+		resolve(solution);
+	});
+
+	const votePromise = Vote.find({ object: req.body.suggestion._id, objectType: 'Suggestion' })
+		.select('-_id -created')
+
+	Promise.all([solutionPromise, votePromise])
+		.then((promises) => {
+			const [solution, votes] = promises;
+
+			if (!solution) throw ('Solution failed to save');
+
+			if (votes.length > 0) {
+				const convertSuggestionVotesToSolution = votes.slice().map((vote) => {
+					let newVote = new Vote(vote);
+					newVote.objectType = 'Solution';
+					newVote.object = solution._id;
+					return newVote;
+				})
+				
+				Vote.insertMany(convertSuggestionVotesToSolution);
+			}
+
+			return solution.save();
+		})
+		.then((solution) => {
+			return res.json(solution);
+		})
+		.catch((err) => {
+			console.log(err, 'this is catch err');
 			return res.status(400)
 				.send({
 					message: errorHandler.getErrorMessage(err)
 				});
-		} else {
-			res.json(solution);
-		}
-	});
+		})
+
 };
 
 /**
@@ -83,16 +111,21 @@ exports.update = function (req, res) {
 exports.delete = function (req, res) {
 	var solution = req.solution;
 
-	solution.remove(function (err) {
-		if(err) {
+	Vote.deleteMany({ object: req.solution._id, objectType: 'Solution'})
+		.then((votes) => {
+			return solution.remove()
+		})
+		.then((solution) => {
+			return res.json(solution);
+		})
+		.catch(err => {
 			return res.status(400)
 				.send({
 					message: errorHandler.getErrorMessage(err)
 				});
-		} else {
-			res.json(solution);
-		}
-	});
+		})
+	
+	
 };
 
 /**

@@ -62,6 +62,10 @@ var ProposalSchema = new Schema({
 	softDeleted: {
 		type: Boolean,
 		default: false
+	},
+	suggestion: {
+		type: Schema.ObjectId,
+		ref: 'Suggestion'
 	}
 });
 

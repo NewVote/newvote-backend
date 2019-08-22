@@ -6,6 +6,7 @@
 var path = require('path'),
 	mongoose = require('mongoose'),
 	Proposal = mongoose.model('Proposal'),
+	Vote = mongoose.model('Vote'),
 	votes = require('../votes/votes.server.controller'),
 	Solution = mongoose.model('Solution'),
 	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
@@ -20,18 +21,46 @@ exports.create = function (req, res) {
 		delete req.body.imageUrl;
 	}
 
-	var proposal = new Proposal(req.body);
-	proposal.user = req.user;
-	proposal.save(function (err) {
-		if(err) {
+	const proposalPromise = new Promise((resolve, reject) => {
+
+		var proposal = new Proposal(req.body);
+		proposal.user = req.user;
+		resolve(proposal);
+	});
+
+	// Return votes without an _id - as it cannot be deleted
+	// _id being preset prevents copying and saving of vote data between collections
+	const votePromise = Vote.find({ object: req.body.suggestion._id, objectType: 'Suggestion' })
+		.select('-_id -created')
+
+	Promise.all([proposalPromise, votePromise])
+		.then((promises) => {
+			const [proposal, votes] = promises;
+
+			if (!proposal) throw ('Proposal failed to save');
+
+			if (votes) {
+				const convertSuggestionVotesToProposal = votes.map((vote) => {
+					let newVote = new Vote(vote);
+					newVote.objectType = 'Proposal';
+					newVote.object = proposal._id;
+					return newVote;
+				})
+
+				Vote.insertMany(convertSuggestionVotesToProposal);
+			}
+
+			return proposal.save();
+		})
+		.then((proposal) => {
+			return res.json(proposal);
+		})
+		.catch((err) => {
 			return res.status(400)
 				.send({
 					message: errorHandler.getErrorMessage(err)
 				});
-		} else {
-			res.json(proposal);
-		}
-	});
+		})
 };
 
 /**
@@ -79,16 +108,19 @@ exports.update = function (req, res) {
 exports.delete = function (req, res) {
 	var proposal = req.proposal;
 
-	proposal.remove(function (err) {
-		if(err) {
+	Vote.deleteMany({ object: req.proposal._id, objectType: 'Proposal'})
+		.then((votes) => {
+			return proposal.remove()
+		})
+		.then((proposal) => {
+			return res.json(proposal);
+		})
+		.catch(err => {
 			return res.status(400)
 				.send({
 					message: errorHandler.getErrorMessage(err)
 				});
-		} else {
-			res.json(proposal);
-		}
-	});
+		})
 };
 
 /**
