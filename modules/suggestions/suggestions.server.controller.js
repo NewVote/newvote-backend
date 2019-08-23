@@ -11,6 +11,7 @@ var path = require('path'),
 	Issue = mongoose.model('Issue'),
 	Solution = mongoose.model('Solution'),
 	Proposal = mongoose.model('Proposal'),
+	Vote = mongoose.model('Vote'),
 	votes = require('../votes/votes.server.controller'),
 	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
 	nodemailer = require('nodemailer'),
@@ -49,8 +50,7 @@ exports.create = function (req, res) {
 	if (!suggestion.parent) {
 		suggestion.parent = null;
 	}
-	// console.log(err, 'this is err');
-	// console.log(info, 'this is info');ion(req.body);
+
 	suggestion.user = req.user;
 	suggestion.save((err) => {
 		if (err) throw(err);
