@@ -49,6 +49,10 @@ module.exports = function (app) {
 		.all(jwt({ secret: config.jwtSecret, credentialsRequired: false }))
 		.post(users.changeProfilePicture);
 
+	app.route('/api/users/tour/:userId')
+		.all(jwt({ secret: config.jwtSecret, credentialsRequired: false }))
+		.patch(users.patch)
+
 	// Finish by binding the user middleware
 	app.param('userId', users.userByID);
 };
