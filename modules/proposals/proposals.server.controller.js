@@ -92,7 +92,7 @@ exports.update = function (req, res) {
 	// proposal.content = req.body.content;
 	proposal.user = req.user;
 	proposal.save(function (err) {
-		if(err) {
+		if (err) {
 			return res.status(400)
 				.send({
 					message: errorHandler.getErrorMessage(err)
@@ -109,7 +109,7 @@ exports.update = function (req, res) {
 exports.delete = function (req, res) {
 	var proposal = req.proposal;
 
-	Vote.deleteMany({ object: req.proposal._id, objectType: 'Proposal'})
+	Vote.deleteMany({ object: req.proposal._id, objectType: 'Proposal' })
 		.then((votes) => {
 			return proposal.remove()
 		})
@@ -167,7 +167,7 @@ exports.list = function (req, res) {
 			{ $sort: { 'created': -1 } }
 	])
 		.exec(function (err, proposals) {
-			if(err) {
+			if (err) {
 				return res.status(400)
 					.send({
 						message: errorHandler.getErrorMessage(err)
@@ -192,7 +192,7 @@ exports.list = function (req, res) {
  */
 exports.proposalByID = function (req, res, next, id) {
 
-	if(!mongoose.Types.ObjectId.isValid(id)) {
+	if (!mongoose.Types.ObjectId.isValid(id)) {
 		return res.status(400)
 			.send({
 				message: 'Proposal is invalid'
@@ -205,9 +205,9 @@ exports.proposalByID = function (req, res, next, id) {
 		.populate('solution')
 		.populate('organizations')
 		.exec(function (err, proposal) {
-			if(err) {
+			if (err) {
 				return next(err);
-			} else if(!proposal) {
+			} else if (!proposal) {
 				return res.status(404)
 					.send({
 						message: 'No proposal with that identifier has been found'
@@ -236,10 +236,10 @@ exports.attachProposals = function (objects, user, regions) {
 
 function updateSchema(proposals) {
 	console.log('schema update called');
-	for(var i = 0; i < proposals.length; i++) {
+	for (var i = 0; i < proposals.length; i++) {
 		var proposal = proposals[i];
 		console.log('testing: ', proposal.title);
-		if(proposal.goals && proposal.goals.length > 0) {
+		if (proposal.goals && proposal.goals.length > 0) {
 			proposal.solutions = proposal.goals;
 			// proposal.goal = undefined;
 			proposal.goals = undefined;

@@ -23,14 +23,14 @@ exports.create = function (req, res) {
 		.then((vote) => {
 			return res.json(vote);
 		})
-		.catch((err) => { 
-			throw(err) 
+		.catch((err) => {
+			throw (err)
 		});
 };
 
 exports.updateOrCreate = async function (req, res) {
 	var user = req.user;
-	const {object, organizationId } = req.body;
+	const { object, organizationId } = req.body;
 
 	const isVerified = await isUserSignedToOrg(organizationId, user);
 
@@ -39,7 +39,7 @@ exports.updateOrCreate = async function (req, res) {
 			.send({
 				message: 'You must verify with Community before being able to vote.',
 				notCommunityVerified: true
-			}); 
+			});
 	}
 
 	Vote.findOne({
@@ -78,12 +78,12 @@ exports.update = function (req, res) {
 		.then((vote) => {
 			return res.json(vote);
 		})
-		.catch((err) => { 
+		.catch((err) => {
 			return res.status(400)
 				.send({
 					message: errorHandler.getErrorMessage(err)
 				});
-		 });
+		});
 };
 
 /**
@@ -242,9 +242,10 @@ function fixVoteTypes(vote) {
 	if (vote.objectType === 'proposal') {
 		console.log('found vote to fix');
 		vote.objectType = 'Proposal';
-		vote.save().then(function(vote) {
-			console.log('vote updated: ', vote._id);
-		});
+		vote.save()
+			.then(function (vote) {
+				console.log('vote updated: ', vote._id);
+			});
 	}
 }
 
@@ -341,8 +342,8 @@ function isString(value) {
 	return typeof value === 'string' || value instanceof String;
 }
 
-function isUserSignedToOrg (currentOrgId, userObject) {
-	
+function isUserSignedToOrg(currentOrgId, userObject) {
+
 	return User.findById(userObject._id)
 		.then(user => {
 			if (!user) return false;
@@ -355,7 +356,7 @@ function isUserSignedToOrg (currentOrgId, userObject) {
 			const orgExists = organizations.find((org) => {
 				return org.equals(currentOrgId);
 			})
-			
+
 			return orgExists;
 		});
 }

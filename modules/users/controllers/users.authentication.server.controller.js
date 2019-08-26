@@ -43,7 +43,7 @@ var addToMailingList = function (user) {
 }
 
 exports.checkAuthStatus = function (req, res, next) {
-	passport.authenticate('check-status', {session: false}, function (err, user, info) {
+	passport.authenticate('check-status', { session: false }, function (err, user, info) {
 		if (err || !user) {
 			return res.status(400)
 				.send(info);
@@ -73,6 +73,8 @@ exports.checkAuthStatus = function (req, res, next) {
  * Signup
  */
 exports.signup = function (req, res) {
+	// Init Variables
+	var user = new User(req.body);
 	const { recaptchaResponse, email, password } = req.body;
 	const verificationCode = req.params.verificationCode;
 
@@ -86,11 +88,6 @@ exports.signup = function (req, res) {
 	// For security measurement we remove the roles from the req.body object
 	delete req.body.roles;
 
-	// Init Variables
-	var user = new User(req.body);
-	var message = null;
-	var recaptchaResponse = req.body.recaptchaResponse;
-
 	//ensure captcha code is valid or return with an error
 	recaptcha.checkResponse(recaptchaResponse, function (err, response) {
 		if (err || !response.success) {
@@ -98,8 +95,7 @@ exports.signup = function (req, res) {
 				.send({
 					message: 'Recaptcha verification failed.'
 				});
-		}
-		else {
+		} else {
 			//user is not a robot, captcha success, continue with sign up
 			// Add missing user fields
 			user.provider = 'local';
@@ -197,15 +193,15 @@ exports.signin = function (req, res, next) {
 			if (req.cookies.credentials) {
 				let { credentials } = req.cookies
 				credentials = JSON.parse(credentials);
-				
+
 				return jwt.verify(credentials.token, config.jwtSecret, function (err, verifiedUser) {
 					if (err) {
 						res.clearCookie('credentials', { path: '/', domain: 'newvote.org' })
-						throw('Invalid token'); 
+						throw ('Invalid token');
 					}
 
 					const organizationPromise = Organization.findOne({ _id: req.organization._id });
-					const userPromise = User.findOne({_id: verifiedUser._id});
+					const userPromise = User.findOne({ _id: verifiedUser._id });
 
 					return Promise.all([organizationPromise, userPromise])
 						.then((promises) => {
@@ -216,9 +212,9 @@ exports.signin = function (req, res, next) {
 						.then((savedUser) => {
 							savedUser.password = undefined;
 							savedUser.salt = undefined;
-							savedUser.verificationCode = undefined;	
+							savedUser.verificationCode = undefined;
 							res.clearCookie('credentials', { path: '/', domain: 'newvote.org' })
-							
+
 							// updated user so create new token
 							const payload = { _id: savedUser._id, roles: savedUser.roles, verified: savedUser.verified };
 							const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
@@ -332,8 +328,8 @@ exports.oauthCallback = function (strategy) {
  */
 exports.saveRapidProfile = function (req, profile, done) {
 
-	const organizationPromise = Organization.findOne({_id : req.organization._id});
-	const userPromise = User.findOne({ email: profile.mail },  '-salt -password -verificationCode');
+	const organizationPromise = Organization.findOne({ _id: req.organization._id });
+	const userPromise = User.findOne({ email: profile.mail }, '-salt -password -verificationCode');
 
 	Promise.all([organizationPromise, userPromise])
 		.then((promises) => {
@@ -362,9 +358,9 @@ exports.saveRapidProfile = function (req, profile, done) {
 					return user.save();
 				});
 			} else {
-				if(organization) {
+				if (organization) {
 					const orgExists = user.organizations.find((e) => {
-						if(e) {
+						if (e) {
 							return e._id.equals(organization._id)
 						}
 					});
@@ -385,63 +381,63 @@ exports.saveRapidProfile = function (req, profile, done) {
 		})
 		.catch((err) => done(err));
 }
-	// const organization = req.organization;
-	// if(!organization){
-	// 	console.error('no organization in request body')
-	// }
+// const organization = req.organization;
+// if(!organization){
+// 	console.error('no organization in request body')
+// }
 
-	// console.log('looking up user: ', profile.mail);
-	// User.findOne({ email: profile.mail }, '-salt -password -verificationCode', function (err, user) {
-	// 	if (err) {
-	// 		return done(err);
-	// 	} else {
-	// 		if (!user) {
-	// 			console.log('no user, creating new account')
-	// 			var possibleUsername = profile.cn || profile.displayname || profile.givenname + profile.surname || ((profile.mail) ? profile.mail.split('@')[0] : '');
+// console.log('looking up user: ', profile.mail);
+// User.findOne({ email: profile.mail }, '-salt -password -verificationCode', function (err, user) {
+// 	if (err) {
+// 		return done(err);
+// 	} else {
+// 		if (!user) {
+// 			console.log('no user, creating new account')
+// 			var possibleUsername = profile.cn || profile.displayname || profile.givenname + profile.surname || ((profile.mail) ? profile.mail.split('@')[0] : '');
 
-	// 			User.findUniqueUsername(possibleUsername, null, function (availableUsername) {
-	// 				console.log('generated username: ', availableUsername)
-	// 				user = new User({
-	// 					firstName: profile.givenname,
-	// 					lastName: profile.surname,
-	// 					username: profile.mail,
-	// 					displayName: profile.displayname,
-	// 					email: profile.mail,
-	// 					provider: 'aaf',
-	// 					ita: profile.ita,
-	// 					roles: ['user'],
-	// 					verified: true,
-	// 					organizations: [organization._id]
-	// 				});
+// 			User.findUniqueUsername(possibleUsername, null, function (availableUsername) {
+// 				console.log('generated username: ', availableUsername)
+// 				user = new User({
+// 					firstName: profile.givenname,
+// 					lastName: profile.surname,
+// 					username: profile.mail,
+// 					displayName: profile.displayname,
+// 					email: profile.mail,
+// 					provider: 'aaf',
+// 					ita: profile.ita,
+// 					roles: ['user'],
+// 					verified: true,
+// 					organizations: [organization._id]
+// 				});
 
-	// 				// And save the user
-	// 				user.save(function (err) {
-	// 					return done(err, user);
-	// 				});
-	// 			});
-	// 		} else {
-	// 			if(organization) {
-	// 				const orgExists = user.organizations.find((e) => {
-	// 					if(e) {
-	// 						return e._id.equals(organization._id)
-	// 					}
-	// 				});
-	// 				if (!orgExists) user.organizations.push(organization._id);
-	// 			}
+// 				// And save the user
+// 				user.save(function (err) {
+// 					return done(err, user);
+// 				});
+// 			});
+// 		} else {
+// 			if(organization) {
+// 				const orgExists = user.organizations.find((e) => {
+// 					if(e) {
+// 						return e._id.equals(organization._id)
+// 					}
+// 				});
+// 				if (!orgExists) user.organizations.push(organization._id);
+// 			}
 
-	// 			console.log('found existing user')
-	// 			// user exists update ITA and return user
-	// 			if (user.jti && user.jti === profile.jti) {
-	// 				return done(new Error('ITA Match please login again'))
-	// 			}
-	// 			user.jti = profile.jti
-	// 			user.save()
-	// 				.then(user => {
-	// 					return done(err, user);
-	// 				})
-	// 		}
-	// 	}
-	// });
+// 			console.log('found existing user')
+// 			// user exists update ITA and return user
+// 			if (user.jti && user.jti === profile.jti) {
+// 				return done(new Error('ITA Match please login again'))
+// 			}
+// 			user.jti = profile.jti
+// 			user.save()
+// 				.then(user => {
+// 					return done(err, user);
+// 				})
+// 		}
+// 	}
+// });
 
 
 /**

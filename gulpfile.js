@@ -121,7 +121,7 @@ gulp.task('lint', function () {
 
 	return gulp.src(assets)
 		.pipe(plugins.eslint())
-		.pipe(plugins.eslint.format())
+		.pipe(plugins.eslint.formatEach())
 		.pipe(plugins.eslint.failOnError());
 });
 

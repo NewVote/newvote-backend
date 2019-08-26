@@ -112,7 +112,7 @@ exports.update = function (req, res) {
 exports.delete = function (req, res) {
 	var solution = req.solution;
 
-	Vote.deleteMany({ object: req.solution._id, objectType: 'Solution'})
+	Vote.deleteMany({ object: req.solution._id, objectType: 'Solution' })
 		.then((votes) => {
 			return solution.remove()
 		})

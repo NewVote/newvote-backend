@@ -149,7 +149,7 @@ exports.update = function (req, res) {
 			$in: newModEmails
 		}
 	})
-	.select({ "_id": 1 })
+	.select({ '_id': 1 })
 	.then((docs) => {
 		// save organization array as moderators might be removed
 		if (!docs.length) {
@@ -319,7 +319,7 @@ function findUserAndOrganization (email, moderators) {
 				$in: moderators
 			}
 		})
-		.select({ "_id": 1 })
+		.select({ '_id': 1 })
 
 	return Promise.all([findUserPromise, doesNewLeaderExist, findModerators])
 }

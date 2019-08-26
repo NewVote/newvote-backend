@@ -137,7 +137,7 @@ exports.update = function (req, res) {
 exports.delete = function (req, res) {
 	var suggestion = req.suggestion;
 
-	Vote.deleteMany({ object: req.suggestion._id, objectType: 'Suggestion'})
+	Vote.deleteMany({ object: req.suggestion._id, objectType: 'Suggestion' })
 		.then((votes) => {
 			return suggestion.remove()
 		})

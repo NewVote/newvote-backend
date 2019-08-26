@@ -28,13 +28,13 @@ exports.patch = function (req, res) {
 
 	User.findById(user._id)
 		.then((userDoc) => {
-			if (!userDoc) throw('User does not exist');
+			if (!userDoc) throw ('User does not exist');
 			userDoc.completedTour = true;
 			return userDoc.save();
 		})
 		.then(() => {
 			res.status(200)
-				.send({ message: 'Tour Complete'});
+				.send({ message: 'Tour Complete' });
 		})
 		.catch((err) => {
 			return res.status(404)
