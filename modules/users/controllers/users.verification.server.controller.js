@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-var _ = require('lodash'),
+let _ = require('lodash'),
 	mongoose = require('mongoose'),
 	User = mongoose.model('User'),
 	path = require('path'),
@@ -25,7 +25,7 @@ exports.sendVerificationCodeViaSms = function (req, res, next) {
 	const code = User.generateVerificationCode();
 
 	console.log(`sending code ${code} to number ${number}`);
-	var options = {
+	let options = {
 		'uri': 'https://api.smsbroadcast.com.au/api-adv.php',
 		'qs': {
 			'username': config.smsBroadcast.username,
@@ -44,7 +44,7 @@ exports.sendVerificationCodeViaSms = function (req, res, next) {
 		}
 
 		if(response.statusCode == 200) {
-			var responseMessage = body.split(':');
+			let responseMessage = body.split(':');
 			if(responseMessage[0] == 'OK') {
 				return saveVerificationSmsCode(user, code, number, res);
 			} else if(responseMessage[0] == 'BAD') {
@@ -68,9 +68,9 @@ exports.sendVerificationCodeViaSms = function (req, res, next) {
 
 exports.sendVerificationCodeViaEmail = function (req, res) {
 	// ;
-	var user = req.user;
-	var email = user.email;
-	var pass$ = User.generateRandomPassphrase()
+	let user = req.user;
+	let email = user.email;
+	let pass$ = User.generateRandomPassphrase()
 
 	//send code via sms
 	return pass$.then(pass => saveEmailVerificationCode(user, pass))
@@ -178,9 +178,9 @@ exports.verify = function (req, res) {
 		});
 };
 
-var buildMessage = function (user, code, req) {
-	var messageString = '';
-	var url = req.protocol + '://' + req.get('host') + '/verify/' + code;
+let buildMessage = function (user, code, req) {
+	let messageString = '';
+	let url = req.protocol + '://' + req.get('host') + '/verify/' + code;
 
 	messageString += `<h3> Welcome ${user.firstName} </h3>`;
 	messageString += `<p>Thank you for joining the NewVote platform, you are almost ready to start having your say!
@@ -190,7 +190,7 @@ var buildMessage = function (user, code, req) {
 	return messageString;
 };
 
-var sendEmail = function (user, pass, req) {
+let sendEmail = function (user, pass, req) {
 	return transporter.sendMail({
 		from: process.env.MAILER_FROM,
 		to: user.email,

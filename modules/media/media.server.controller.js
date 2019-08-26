@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-var path = require('path'),
+let path = require('path'),
 	mongoose = require('mongoose'),
 	Media = mongoose.model('Media'),
 	votes = require('../votes/votes.server.controller'),
@@ -15,7 +15,7 @@ var path = require('path'),
  * Create a media
  */
 exports.create = function (req, res) {
-	var media = new Media(req.body);
+	let media = new Media(req.body);
 	media.user = req.user;
 	media.save(function (err) {
 		if(err) {
@@ -50,7 +50,7 @@ exports.read = function (req, res) {
  * Update a media
  */
 exports.update = function (req, res) {
-	var media = req.media;
+	let media = req.media;
 	_.extend(media, req.body);
 
 	media.save(function (err) {
@@ -69,7 +69,7 @@ exports.update = function (req, res) {
  * Delete an media
  */
 exports.delete = function (req, res) {
-	var media = req.media;
+	let media = req.media;
 
 	media.remove(function (err) {
 		if(err) {
@@ -87,7 +87,7 @@ exports.delete = function (req, res) {
  * List of Medias
  */
 exports.list = function (req, res) {
-	var solutionId = req.query.solutionId,
+	let solutionId = req.query.solutionId,
 		issueId = req.query.issueId,
 		proposalId = req.query.proposalId,
 		searchParams = req.query.search,
@@ -177,11 +177,11 @@ exports.mediaByID = function (req, res, next, id) {
 };
 
 exports.getMeta = function (req, res) {
-	var url = req.params.uri;
+	let url = req.params.uri;
 	return scrape(url)
 		.then(function (meta) {
-			var media = {};
-			var title, description, image;
+			let media = {};
+			let title, description, image;
 			if(meta.dublinCore && meta.dublinCore.title) {
 				title = meta.openGraph.title;
 			} else if(meta.dublinCore && meta.openGraph.title) {

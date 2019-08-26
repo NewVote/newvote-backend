@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-var path = require('path'),
+let path = require('path'),
 	config = require(path.resolve('./config/config')),
 	policy = require('./generic.server.policy'),
 	topics = require('./topics/topics.server.controller'),
@@ -40,7 +40,7 @@ module.exports = function (app) {
 			var organization = null
 		}
 		// var { org:orgUrl } = req.cookies // prefer the redirect cookie url over header
-		var orgUrl = req.cookies.org ? req.cookies.org : req.cookies.orgUrl // try "orgUrl" cookie instead of org if its undefined
+		let orgUrl = req.cookies.org ? req.cookies.org : req.cookies.orgUrl // try "orgUrl" cookie instead of org if its undefined
 		if (!orgUrl) {
 			// still no orgUrl so try getting org from the referer in the request
 			try {

@@ -3,14 +3,14 @@
 /**
  * Module dependencies.
  */
-var acl = require('acl'),
+let acl = require('acl'),
 	organizations = require('./organizations/organizations.server.controller');
 
 // Using the memory backend
 acl = new acl(new acl.memoryBackend());
 
-var collectionRoutes = ['/api/organizations', '/api/issues', '/api/topics', '/api/solutions', '/api/votes', '/api/comments', '/api/proposals', '/api/suggestions', '/api/endorsement', '/api/media', '/api/regions', '/api/countries'];
-var objectRoutes = ['/api/organizations/:organizationId', '/api/issues/:issueId', '/api/topics/:topicId', '/api/solutions/:solutionId', '/api/votes/:voteId', '/api/comments/:commentId', '/api/proposals/:proposalId', '/api/suggestions/:suggestionId', '/api/endorsement/:endorsementId', '/api/media/:mediaId', '/api/meta/:uri', '/api/regions/:regionId'];
+let collectionRoutes = ['/api/organizations', '/api/issues', '/api/topics', '/api/solutions', '/api/votes', '/api/comments', '/api/proposals', '/api/suggestions', '/api/endorsement', '/api/media', '/api/regions', '/api/countries'];
+let objectRoutes = ['/api/organizations/:organizationId', '/api/issues/:issueId', '/api/topics/:topicId', '/api/solutions/:solutionId', '/api/votes/:voteId', '/api/comments/:commentId', '/api/proposals/:proposalId', '/api/suggestions/:suggestionId', '/api/endorsement/:endorsementId', '/api/media/:mediaId', '/api/meta/:uri', '/api/regions/:regionId'];
 /**
  * Invoke Articles Permissions
  */
@@ -20,60 +20,60 @@ exports.invokeRolesPolicies = function () {
 		allows: [{
 			resources: collectionRoutes,
 			permissions: '*'
-    }, {
+		}, {
 			resources: objectRoutes,
 			permissions: '*'
-    }]
-  }, {
+		}]
+	}, {
 		roles: ['endorser'],
 		allows: [{
 			resources: collectionRoutes,
 			permissions: ['get']
-    }, {
+		}, {
 			resources: objectRoutes,
 			permissions: ['get']
-  }, {
+		}, {
 			resources: ['/api/votes', '/api/suggestions', '/api/endorsement'],
 			permissions: ['get', 'post']
-  }]
-  }, {
+		}]
+	}, {
 		roles: ['user'],
 		allows: [{
 			resources: collectionRoutes,
 			permissions: ['get']
-    }, {
+		}, {
 			resources: objectRoutes,
 			permissions: ['get']
-  }, {
+		}, {
 	  		// users can create votes
 			resources: ['/api/votes'],
 			permissions: ['get', 'post']
-  }, {
+		}, {
 	  		// users can create and edit suggestions
 			resources: ['/api/suggestions'],
 			permissions: ['get', 'post', 'put']
-  }]
-  }, {
+		}]
+	}, {
 		roles: ['guest'],
 		allows: [{
 			resources: collectionRoutes,
 			permissions: ['get']
-    }, {
+		}, {
 			resources: objectRoutes,
 			permissions: ['get']
-    }]
-  }]);
+		}]
+	}]);
 };
 
 /**
  * Check If Articles Policy Allows
  */
 exports.isAllowed = function (req, res, next) {
-	var roles = (req.user) ? req.user.roles : ['guest'];
-	var user = req.user;
+	let roles = (req.user) ? req.user.roles : ['guest'];
+	let user = req.user;
 
 	// If an article is being processed and the current user created it then allow any manipulation
-	var object = req.vote || req.issue || req.solution || req.proposal || req.organization || req.endorsement || req.topic || req.media || req.suggestion;
+	let object = req.vote || req.issue || req.solution || req.proposal || req.organization || req.endorsement || req.topic || req.media || req.suggestion;
 	if(object && req.user && object.user && object.user.id === req.user.id) {
 		return next();
 	}

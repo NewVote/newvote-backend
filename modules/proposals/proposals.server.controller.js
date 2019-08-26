@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-var path = require('path'),
+let path = require('path'),
 	mongoose = require('mongoose'),
 	Proposal = mongoose.model('Proposal'),
 	Vote = mongoose.model('Vote'),
@@ -23,7 +23,7 @@ exports.create = function (req, res) {
 
 	const proposalPromise = new Promise((resolve, reject) => {
 
-		var proposal = new Proposal(req.body);
+		let proposal = new Proposal(req.body);
 		proposal.user = req.user;
 		resolve(proposal);
 	});
@@ -85,7 +85,7 @@ exports.read = function (req, res) {
  */
 exports.update = function (req, res) {
 	delete req.body.__v;
-	var proposal = req.proposal;
+	let proposal = req.proposal;
 	_.extend(proposal, req.body);
 	// proposal.title = req.body.title;
 	// proposal.content = req.body.content;
@@ -106,9 +106,9 @@ exports.update = function (req, res) {
  * Delete an proposal
  */
 exports.delete = function (req, res) {
-	var proposal = req.proposal;
+	let proposal = req.proposal;
 
-	Vote.deleteMany({ object: req.proposal._id, objectType: 'Proposal'})
+	Vote.deleteMany({ object: req.proposal._id, objectType: 'Proposal' })
 		.then((votes) => {
 			return proposal.remove()
 		})
@@ -235,8 +235,8 @@ exports.attachProposals = function (objects, user, regions) {
 
 function updateSchema(proposals) {
 	console.log('schema update called');
-	for(var i = 0; i < proposals.length; i++) {
-		var proposal = proposals[i];
+	for(let i = 0; i < proposals.length; i++) {
+		let proposal = proposals[i];
 		console.log('testing: ', proposal.title);
 		if(proposal.goals && proposal.goals.length > 0) {
 			proposal.solutions = proposal.goals;

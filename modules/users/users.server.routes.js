@@ -2,7 +2,7 @@
 
 module.exports = function (app) {
 	// User Routes
-	var path = require('path'),
+	let path = require('path'),
 		config = require(path.resolve('./config/config')),
 		users = require('./users.server.controller'),
 		jwt = require('express-jwt');

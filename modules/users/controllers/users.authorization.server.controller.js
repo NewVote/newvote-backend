@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-var _ = require('lodash'),
+let _ = require('lodash'),
 	mongoose = require('mongoose'),
 	User = mongoose.model('User');
 
@@ -11,7 +11,7 @@ var _ = require('lodash'),
  * User middleware
  */
 exports.userByID = function (req, res, next, id) {
-    console.log('id in user middleware: ', id);
+	console.log('id in user middleware: ', id);
 	if (!mongoose.Types.ObjectId.isValid(id)) {
 		return res.status(400)
 			.send({
@@ -20,8 +20,8 @@ exports.userByID = function (req, res, next, id) {
 	}
 
 	User.findOne({
-			_id: id
-		})
+		_id: id
+	})
 		.populate('country')
 		.exec(function (err, user) {
 			if (err) {

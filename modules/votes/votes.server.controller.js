@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-var path = require('path'),
+let path = require('path'),
 	mongoose = require('mongoose'),
 	Vote = mongoose.model('Vote'),
 	Region = mongoose.model('Region'),
@@ -14,7 +14,7 @@ var path = require('path'),
  * Create a vote
  */
 exports.create = function (req, res) {
-	var vote = new Vote(req.body);
+	let vote = new Vote(req.body);
 	vote.user = req.user;
 
 	vote.save()
@@ -27,13 +27,13 @@ exports.create = function (req, res) {
 };
 
 exports.updateOrCreate = function (req, res) {
-	var user = req.user;
-	var object = req.body.object;
+	let user = req.user;
+	let object = req.body.object;
 	
 	Vote.findOne({
-			user: user,
-			object: object
-		})
+		user: user,
+		object: object
+	})
 		.then((vote) => {
 			if (!vote) return exports.create(req, res);
 			req.vote = vote;
@@ -58,7 +58,7 @@ exports.read = function (req, res) {
  * Update a vote
  */
 exports.update = function (req, res) {
-	var vote = req.vote;
+	let vote = req.vote;
 	_.extend(vote, req.body);
 	// vote.title = req.body.title;
 	// vote.content = req.body.content;
@@ -78,7 +78,7 @@ exports.update = function (req, res) {
  * Delete an vote
  */
 exports.delete = function (req, res) {
-	var vote = req.vote;
+	let vote = req.vote;
 
 	vote.remove(function (err) {
 		if (err) {
@@ -96,7 +96,7 @@ exports.delete = function (req, res) {
  * List of Votes
  */
 exports.list = function (req, res) {
-	var regionIds = req.query.regionId;
+	let regionIds = req.query.regionId;
 
 	if (regionIds) {
 		getPostcodes(regionIds)
@@ -156,21 +156,21 @@ exports.voteByID = function (req, res, next, id) {
 
 exports.attachVotes = function (objects, user, regions) {
 	if (!objects) return Promise.resolve(objects);
-	var objectIds = objects.map(function (object) {
+	let objectIds = objects.map(function (object) {
 		return object._id;
 	});
 
 	return Promise.resolve(regions)
 		.then(function (regionString) {
 			if (regionString) {
-				var regionIds = [];
+				let regionIds = [];
 
 				if (isString(regionString)) {
-					var region = JSON.parse(regionString);
+					let region = JSON.parse(regionString);
 					regionIds.push(region._id);
 				} else {
 					regionIds = regionString.map(function (regionObj) {
-						var region = JSON.parse(regionObj);
+						let region = JSON.parse(regionObj);
 						return region._id;
 					});
 				}
@@ -179,26 +179,26 @@ exports.attachVotes = function (objects, user, regions) {
 					.then(function (postCodes) {
 						// Find votes submitted from users with those postcodes
 						return getVotes({
-								object: {
-									$in: objectIds
-								}
-							}, {
-								path: 'user',
-								match: {
-									$or: [{
-											postalCode: {
-												$in: postCodes
-											}
-										},
+							object: {
+								$in: objectIds
+							}
+						}, {
+							path: 'user',
+							match: {
+								$or: [{
+									postalCode: {
+										$in: postCodes
+									}
+								},
 										{
 											woodfordian: {
 												$in: postCodes
 											}
 										}
-									]
-								},
-								select: 'postalCode -_id'
-							})
+								]
+							},
+							select: 'postalCode -_id'
+						})
 							.then(function (votes) {
 								return mapObjectWithVotes(objects, user, votes);
 							});
@@ -207,10 +207,10 @@ exports.attachVotes = function (objects, user, regions) {
 			} else {
 
 				return getVotes({
-						object: {
-							$in: objectIds
-						}
-					}, null)
+					object: {
+						$in: objectIds
+					}
+				}, null)
 					.then(function (votes) {
 						votes.forEach(function (vote) {
 							fixVoteTypes(vote);
@@ -273,15 +273,15 @@ function getVotes(findQuery, populateQuery) {
 
 function getPostcodes(regionIds) {
 	return Region.find({
-			_id: {
-				$in: regionIds
-			}
-		})
+		_id: {
+			$in: regionIds
+		}
+	})
 		.exec()
 		.then(function (regions) {
 			// Get postcodes from all regions
-			var postCodes = [];
-			var region;
+			let postCodes = [];
+			let region;
 			for (region in regions) {
 				postCodes = postCodes.concat(regions[region].postcodes);
 			}
@@ -292,11 +292,11 @@ function getPostcodes(regionIds) {
 function mapObjectWithVotes(objects, user, votes) {
 	objects = objects.map(function (object) {
 		// object = object.toObject(); //to be able to set props on the mongoose object
-		var objVotes = [];
-		var userVote = null;
-		var up = 0;
-		var down = 0;
-		var total = 0;
+		let objVotes = [];
+		let userVote = null;
+		let up = 0;
+		let down = 0;
+		let total = 0;
 		object.votes = {};
 
 		votes.forEach(function (vote) {

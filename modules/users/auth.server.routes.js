@@ -3,11 +3,11 @@
 /**
  * Module dependencies.
  */
-var passport = require('passport');
+let passport = require('passport');
 
 module.exports = function (app) {
 	// User Routes
-	var users = require('./users.server.controller');
+	let users = require('./users.server.controller');
 
 	// Setting up the users password api
 	app.route('/api/auth/forgot')
@@ -46,7 +46,7 @@ module.exports = function (app) {
 			scope: [
       'https://www.googleapis.com/auth/userinfo.profile',
       'https://www.googleapis.com/auth/userinfo.email'
-    ]
+			]
 		}));
 	app.route('/api/auth/google/callback')
 		.get(users.oauthCallback('google'));
@@ -57,7 +57,7 @@ module.exports = function (app) {
 			scope: [
       'r_basicprofile',
       'r_emailaddress'
-    ]
+			]
 		}));
 	app.route('/api/auth/linkedin/callback')
 		.get(users.oauthCallback('linkedin'));

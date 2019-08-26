@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-var path = require('path'),
+let path = require('path'),
 	config = require(path.resolve('./config/config')),
 	mongoose = require('mongoose'),
 	Organization = mongoose.model('Organization'),
@@ -37,14 +37,14 @@ exports.update = function (req, res) {
 	const doesNewLeaderExist = FutureLeader.findOne({ email })
 		.then((leader) => {
 			// if leader exists then future leader is on the database
-				// if leader does exist we want to return leader
-				if (leader) {
-					return leader;
-				}
+			// if leader does exist we want to return leader
+			if (leader) {
+				return leader;
+			}
 
-				// if leader does not exist create a new leader
-				const owner = new FutureLeader({ email });
-				return owner;				
+			// if leader does not exist create a new leader
+			const owner = new FutureLeader({ email });
+			return owner;				
 		})
 
 
@@ -84,15 +84,15 @@ exports.update = function (req, res) {
 		.catch((err) => {
 			console.log(err, 'this is err');
 			return res.status(400)
-					.send({
-						message: errorHandler.getErrorMessage(err)
-					});
+				.send({
+					message: errorHandler.getErrorMessage(err)
+				});
 		})
 };
 
-var buildMessage = function (user, code, req) {
-	var messageString = '';
-	var url = req.protocol + '://' + req.get('host') + '/auth/signup/' + code;
+let buildMessage = function (user, code, req) {
+	let messageString = '';
+	let url = req.protocol + '://' + req.get('host') + '/auth/signup/' + code;
 
 	messageString += `<h3> You have been invited to join NewVote </h3>`;
 	messageString += `<p>To complete your account setup, just click the URL below or copy and paste it into your browser's address bar</p>`;
@@ -101,7 +101,7 @@ var buildMessage = function (user, code, req) {
 	return messageString;
 };
 
-var sendEmail = function (user, pass, req) {
+let sendEmail = function (user, pass, req) {
 	return transporter.sendMail({
 		from: process.env.MAILER_FROM,
 		to: user.email,
@@ -126,12 +126,12 @@ function saveEmailVerificationCode(user, code) {
 
 			//update user model
 			return user.save();			
-        })
+		})
 		.then(() => code)
 }
 
 function sendVerificationCodeViaEmail (req, res, user) {
-	var pass$ = FutureLeader.generateRandomPassphrase()
+	let pass$ = FutureLeader.generateRandomPassphrase()
 
 	if (user.emailDelivered) return res.status(200).send({ message: 'Leader Successfully Added' });
 

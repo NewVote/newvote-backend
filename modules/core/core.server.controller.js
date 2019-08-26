@@ -1,6 +1,6 @@
 'use strict';
 
-var path = require('path'),
+let path = require('path'),
 	config = require(path.resolve('config/config')),
 	util = require('util');
 

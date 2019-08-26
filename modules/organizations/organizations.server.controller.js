@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-var path = require('path'),
+let path = require('path'),
 	config = require(path.resolve('./config/config')),
 	mongoose = require('mongoose'),
 	Organization = mongoose.model('Organization'),
@@ -21,8 +21,8 @@ var path = require('path'),
  */
 exports.create = function (req, res) {
 
-	var organization = new Organization(req.body);
-	var userPromise;
+	let organization = new Organization(req.body);
+	let userPromise;
 	organization.user = req.user;
 
 	let email;
@@ -86,7 +86,7 @@ exports.read = function (req, res) {
  * Update a organization
  */
 exports.update = function (req, res) {
-	var emails = req.body.moderators;
+	let emails = req.body.moderators;
 
 	delete req.body.moderators;
 	delete req.body.moderatorsControl;
@@ -103,7 +103,7 @@ exports.update = function (req, res) {
 		return false;
 	})
 	
-	var organization = req.organization;
+	let organization = req.organization;
 	_.extend(organization, req.body);
 	
 	// If moderators array is same size & there are no emails to append save org
@@ -124,33 +124,33 @@ exports.update = function (req, res) {
 			$in: newModEmails
 		}
 	})
-	.select({ "_id": 1 })
-	.then((docs) => {
+		.select({ '_id': 1 })
+		.then((docs) => {
 		// save organization array as moderators might be removed
-		if (!docs.length) {
-			organization.moderators = [...modIDs];
+			if (!docs.length) {
+				organization.moderators = [...modIDs];
+				return organization.save();
+			}
+			const getObjectIds = docs.map((user) => user._id);
+			organization.moderators = [...modIDs, ...getObjectIds];
 			return organization.save();
-		}
-		const getObjectIds = docs.map((user) => user._id);
-		organization.moderators = [...modIDs, ...getObjectIds];
-		return organization.save();
-	})
-	.then((org) => {
-		return res.status(200).json(organization);
-	})
-	.catch((err) => {
-		return res.status(400)
-			.send({
-				message: errorHandler.getErrorMessage(err)
-			});
-	})
+		})
+		.then((org) => {
+			return res.status(200).json(organization);
+		})
+		.catch((err) => {
+			return res.status(400)
+				.send({
+					message: errorHandler.getErrorMessage(err)
+				});
+		})
 };
 
 /**
  * Delete an organization
  */
 exports.delete = function (req, res) {
-	var organization = req.organization;
+	let organization = req.organization;
 
 	organization.remove(function (err) {
 		if(err) {
@@ -228,24 +228,24 @@ exports.organizationByID = function (req, res, next, id) {
 		})
 		.catch((err) => {
 			return res.status(404).send({ message: errorHandler.getErrorMessage(err)
-		})});
+			})});
 
-		// .exec(function (err, organization) {
-		// 	if(err) return next(err);
-		// 	if(!organization) {
-		// 		return res.status(404)
-		// 			.send({
-		// 				message: 'No organization with that identifier has been found'
-		// 			});
-		// 	}
-		// 	req.organization = organization;
-		// 	next();
-		// });
+	// .exec(function (err, organization) {
+	// 	if(err) return next(err);
+	// 	if(!organization) {
+	// 		return res.status(404)
+	// 			.send({
+	// 				message: 'No organization with that identifier has been found'
+	// 			});
+	// 	}
+	// 	req.organization = organization;
+	// 	next();
+	// });
 
-		// return res.status(400)
-		// 	.send({
-		// 		message: 'Organization is invalid'
-		// 	});
+	// return res.status(400)
+	// 	.send({
+	// 		message: 'Organization is invalid'
+	// 	});
 
 };
 
@@ -276,32 +276,32 @@ function findUserAndOrganization (email, moderators) {
 	const doesNewLeaderExist = FutureLeader.findOne({ email })
 		.then((leader) => {
 			// if leader exists then future leader is on the database
-				// if leader does exist we want to return leader
-				if (leader) {
-					return leader;
-				}
-
-				if (!leader && email === null) {
-					return false;
-				}
-				// if leader does not exist create a new leader
-				const owner = new FutureLeader({ email });
-				return owner;
-		})
-
-		const findModerators = User.find({
-			'email': {
-				$in: moderators
+			// if leader does exist we want to return leader
+			if (leader) {
+				return leader;
 			}
+
+			if (!leader && email === null) {
+				return false;
+			}
+			// if leader does not exist create a new leader
+			const owner = new FutureLeader({ email });
+			return owner;
 		})
-		.select({ "_id": 1 })
+
+	const findModerators = User.find({
+		'email': {
+			$in: moderators
+		}
+	})
+		.select({ '_id': 1 })
 
 	return Promise.all([findUserPromise, doesNewLeaderExist, findModerators])
 }
 
-var buildMessage = function (code, req) {
-	var messageString = '';
-	var url = req.protocol + '://' + req.get('host') + '/auth/signup/' + code;
+let buildMessage = function (code, req) {
+	let messageString = '';
+	let url = req.protocol + '://' + req.get('host') + '/auth/signup/' + code;
 
 	messageString += `<h3> You have been invited to join NewVote </h3>`;
 	messageString += `<p>To complete your account setup, just click the URL below or copy and paste it into your browser's address bar</p>`;
@@ -310,7 +310,7 @@ var buildMessage = function (code, req) {
 	return messageString;
 };
 
-var sendEmail = function (user, pass, req) {
+let sendEmail = function (user, pass, req) {
 	return transporter.sendMail({
 		from: process.env.MAILER_FROM,
 		to: user.email,
@@ -336,12 +336,12 @@ function saveEmailVerificationCode(user, code) {
 
 			//update user model
 			return user.save();
-        })
+		})
 		.then(() => code)
 }
 
 function sendVerificationCodeViaEmail (req, user) {
-	var pass$ = FutureLeader.generateRandomPassphrase()
+	let pass$ = FutureLeader.generateRandomPassphrase()
 
 	if (user.emailDelivered) return true;
 

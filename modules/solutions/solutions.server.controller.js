@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-var path = require('path'),
+let path = require('path'),
 	mongoose = require('mongoose'),
 	Solution = mongoose.model('Solution'),
 	Suggestion = mongoose.model('Suggestion'),
@@ -23,7 +23,7 @@ exports.create = function (req, res) {
 	}
 
 	const solutionPromise = new Promise((resolve, reject) => {
-		var solution = new Solution(req.body);
+		let solution = new Solution(req.body);
 		solution.user = req.user;
 		resolve(solution);
 	});
@@ -90,7 +90,7 @@ exports.read = function (req, res) {
  */
 exports.update = function (req, res) {
 	delete req.body.__v;
-	var solution = req.solution;
+	let solution = req.solution;
 	_.extend(solution, req.body);
 	// solution.title = req.body.title;
 	// solution.content = req.body.content;
@@ -109,9 +109,9 @@ exports.update = function (req, res) {
  * Delete an solution
  */
 exports.delete = function (req, res) {
-	var solution = req.solution;
+	let solution = req.solution;
 
-	Vote.deleteMany({ object: req.solution._id, objectType: 'Solution'})
+	Vote.deleteMany({ object: req.solution._id, objectType: 'Solution' })
 		.then((votes) => {
 			return solution.remove()
 		})
@@ -233,11 +233,11 @@ function filterSoftDeleteProposals (solutions, showDeleted) {
 
 	return solutions.map((solution) => {
 
-			solution.proposals = solution.proposals
-				.filter((proposal) => {
-					return proposal.softDeleted === false;
-				});
+		solution.proposals = solution.proposals
+			.filter((proposal) => {
+				return proposal.softDeleted === false;
+			});
 
-			return solution;
-		});
+		return solution;
+	});
 }

@@ -3,9 +3,9 @@
 /**
  * Module dependencies.
  */
-var passport = require('passport'),
+let passport = require('passport'),
 	User = require('mongoose')
-	.model('User'),
+		.model('User'),
 	path = require('path'),
 	config = require(path.resolve('./config/config')),
 	jwt = require('express-jwt');

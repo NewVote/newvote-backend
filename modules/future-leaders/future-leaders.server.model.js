@@ -5,7 +5,7 @@
  */
 
 
-var mongoose = require('mongoose'),
+let mongoose = require('mongoose'),
  	_ = require('lodash'),
 	Schema = mongoose.Schema,
 	crypto = require('crypto'),
@@ -24,7 +24,7 @@ owasp.config({
  * Article Schema
  */
 
- var FutureLeaderSchema = new Schema({
+let FutureLeaderSchema = new Schema({
  	email: {
  		type: String,
  		trim: true,
@@ -47,16 +47,16 @@ owasp.config({
  		type: Boolean,
  		default: false
  	}
- })
+})
 
 
- /**
+/**
  * Hook a pre save method to hash the password
  */
 
- // With Future leaders the user does not sign up so have to pre generate the salt for hashing
+// With Future leaders the user does not sign up so have to pre generate the salt for hashing
 
- FutureLeaderSchema.pre('save', function (next) {
+FutureLeaderSchema.pre('save', function (next) {
 	if (!this.salt) {
 		this.salt = crypto.randomBytes(16)
         	.toString('base64');
@@ -66,7 +66,7 @@ owasp.config({
 });
 
 
- /**
+/**
  * Create instance method for hashing a verification code (sent by SMS)
  */
 FutureLeaderSchema.methods.hashVerificationCode = function (code) {
@@ -92,8 +92,8 @@ FutureLeaderSchema.methods.verify = function (code) {
  */
 FutureLeaderSchema.statics.generateRandomPassphrase = function () {
 	return new Promise(function (resolve, reject) {
-		var password = '';
-		var repeatingCharacters = new RegExp('(.)\\1{2,}', 'g');
+		let password = '';
+		let repeatingCharacters = new RegExp('(.)\\1{2,}', 'g');
 
 		// iterate until the we have a valid passphrase.
 		// NOTE: Should rarely iterate more than once, but we need this to ensure no repeating characters are present.

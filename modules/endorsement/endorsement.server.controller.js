@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-var path = require('path'),
+let path = require('path'),
 	mongoose = require('mongoose'),
 	Endorsement = mongoose.model('Endorsement'),
 	votes = require('../votes/votes.server.controller'),
@@ -15,7 +15,7 @@ var path = require('path'),
  * Create a endorsement
  */
 exports.create = function (req, res) {
-	var endorsement = new Endorsement(req.body);
+	let endorsement = new Endorsement(req.body);
 	endorsement.user = req.user;
 	endorsement.save(function (err) {
 		if (err) {
@@ -39,7 +39,7 @@ exports.read = function (req, res) {
  * Update a endorsement
  */
 exports.update = function (req, res) {
-	var endorsement = req.endorsement;
+	let endorsement = req.endorsement;
 	_.extend(endorsement, req.body);
 
 	endorsement.save(function (err) {
@@ -57,7 +57,7 @@ exports.update = function (req, res) {
  * Delete an endorsement
  */
 exports.delete = function (req, res) {
-	var endorsement = req.endorsement;
+	let endorsement = req.endorsement;
 
 	endorsement.remove(function (err) {
 		if (err) {
@@ -74,7 +74,7 @@ exports.delete = function (req, res) {
  * List of endorsements
  */
 exports.list = function (req, res) {
-	var solutionId = req.query.solutionId,
+	let solutionId = req.query.solutionId,
 		issueId = req.query.issueId,
 		proposalId = req.query.proposalId,
 		searchParams = req.query.search,

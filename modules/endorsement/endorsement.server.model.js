@@ -3,13 +3,13 @@
 /**
  * Module dependencies.
  */
-var mongoose = require('mongoose'),
+let mongoose = require('mongoose'),
 	Schema = mongoose.Schema;
 
 /**
  * Article Schema
  */
-var EndorsementSchema = new Schema({
+let EndorsementSchema = new Schema({
 	created: {
 		type: Date,
 		default: Date.now

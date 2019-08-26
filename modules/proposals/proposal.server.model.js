@@ -3,13 +3,13 @@
 /**
  * Module dependencies.
  */
-var mongoose = require('mongoose'),
+let mongoose = require('mongoose'),
 	Schema = mongoose.Schema;
 
 /**
  * Article Schema
  */
-var ProposalSchema = new Schema({
+let ProposalSchema = new Schema({
 	created: {
 		type: Date,
 		default: Date.now
@@ -36,7 +36,7 @@ var ProposalSchema = new Schema({
 	solutions: [{
 		type: Schema.ObjectId,
 		ref: 'Solution',
-        required: true
+		required: true
 	}],
 	goals: [{
 		type: Schema.ObjectId,

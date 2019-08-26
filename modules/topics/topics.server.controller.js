@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-var path = require('path'),
+let path = require('path'),
 	mongoose = require('mongoose'),
 	Topic = mongoose.model('Topic'),
 	TopicsController = require('./topics.server.controller'),
@@ -16,7 +16,7 @@ var path = require('path'),
  * Create a topic
  */
 exports.create = function (req, res) {
-	var topic = new Topic(req.body);
+	let topic = new Topic(req.body);
 	topic.user = req.user;
 	topic.save(function (err) {
 		if(err) {
@@ -41,7 +41,7 @@ exports.read = function (req, res) {
  * Update a topic
  */
 exports.update = function (req, res) {
-	var topic = req.topic;
+	let topic = req.topic;
 	_.extend(topic, req.body);
 	// topic.title = req.body.title;
 	// topic.content = req.body.content;
@@ -62,7 +62,7 @@ exports.update = function (req, res) {
  * Delete an topic
  */
 exports.delete = function (req, res) {
-	var topic = req.topic;
+	let topic = req.topic;
 
 	topic.remove(function (err) {
 		if(err) {

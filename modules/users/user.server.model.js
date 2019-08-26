@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-var mongoose = require('mongoose'),
+let mongoose = require('mongoose'),
 	arrayUniquePlugin = require('mongoose-unique-array'),
  	_ = require('lodash'),
 	Schema = mongoose.Schema,
@@ -23,29 +23,29 @@ owasp.config({
 /**
  * A Validation function for local strategy properties
  */
-var validateLocalStrategyProperty = function (property) {
+let validateLocalStrategyProperty = function (property) {
 	return ((this.provider !== 'local' && !this.updated) || property.length);
 };
 
 /**
  * A Validation function for checking UQ emails
  */
-var validateUQEmail = function (email) {
-	var regex = /^[a-zA-Z0-9_.+-]+@(?:(?:[a-zA-Z0-9-]+\.)?[a-zA-Z]+\.)?(uqconnect|uq)\.(edu|net)\.au$/;
-	var pass = (email.match(regex) != null);
+let validateUQEmail = function (email) {
+	let regex = /^[a-zA-Z0-9_.+-]+@(?:(?:[a-zA-Z0-9-]+\.)?[a-zA-Z]+\.)?(uqconnect|uq)\.(edu|net)\.au$/;
+	let pass = (email.match(regex) != null);
 	return pass;
 }
 /**
  * A Validation function for local strategy email
  */
-var validateLocalStrategyEmail = function (email) {
+let validateLocalStrategyEmail = function (email) {
 	return ((this.provider !== 'local' && !this.updated) || (validator.isEmail(email) && validateUQEmail(email)) || (email == 'rohan.m.richards@gmail.com'));
 };
 
 /**
  * User Schema
  */
-var UserSchema = new Schema({
+let UserSchema = new Schema({
 	firstName: {
 		type: String,
 		trim: true,
@@ -194,9 +194,9 @@ UserSchema.pre('save', function (next) {
  */
 UserSchema.pre('validate', function (next) {
 	if(this.provider === 'local' && this.password && this.isModified('password')) {
-		var result = owasp.test(this.password);
+		let result = owasp.test(this.password);
 		if(result.requiredTestErrors.length) {
-			var error = result.requiredTestErrors.join(' ');
+			let error = result.requiredTestErrors.join(' ');
 			this.invalidate('password', error);
 		}
 	}
@@ -252,8 +252,8 @@ UserSchema.statics.generateVerificationCode = function () {
  * Find possible not used username
  */
 UserSchema.statics.findUniqueUsername = function (username, suffix, callback) {
-	var _this = this;
-	var possibleUsername = username.toLowerCase() + (suffix || '');
+	let _this = this;
+	let possibleUsername = username.toLowerCase() + (suffix || '');
 
 	_this.findOne({
 		username: possibleUsername
@@ -277,8 +277,8 @@ UserSchema.statics.findUniqueUsername = function (username, suffix, callback) {
  */
 UserSchema.statics.generateRandomPassphrase = function () {
 	return new Promise(function (resolve, reject) {
-		var password = '';
-		var repeatingCharacters = new RegExp('(.)\\1{2,}', 'g');
+		let password = '';
+		let repeatingCharacters = new RegExp('(.)\\1{2,}', 'g');
 
 		// iterate until the we have a valid passphrase.
 		// NOTE: Should rarely iterate more than once, but we need this to ensure no repeating characters are present.

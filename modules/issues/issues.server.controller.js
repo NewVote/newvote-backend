@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-var path = require('path'),
+let path = require('path'),
 	mongoose = require('mongoose'),
 	Issue = mongoose.model('Issue'),
 	IssuesController = require('./issues.server.controller'),
@@ -22,7 +22,7 @@ exports.create = function (req, res) {
 		delete req.body.imageUrl;
 	}
 
-	var issue = new Issue(req.body);
+	let issue = new Issue(req.body);
 	issue.user = req.user;
 	issue.save(function (err) {
 		if(err) {
@@ -60,26 +60,26 @@ exports.read = function (req, res) {
 exports.update = function (req, res) {
 	// __v causes version conflicts during tests, so remove from client side request
 	delete req.body.__v;
-	var issue = req.issue;
+	let issue = req.issue;
 	_.extend(issue, req.body);
 	// issue.title = req.body.title;
 	// issue.content = req.body.content;
 
-		issue.save()
-			.then((savedIssue) => res.json(savedIssue))
-			.catch((err) => {
-				return res.status(400)
-					.send({
-						message: errorHandler.getErrorMessage(err)
-					});
-			});
+	issue.save()
+		.then((savedIssue) => res.json(savedIssue))
+		.catch((err) => {
+			return res.status(400)
+				.send({
+					message: errorHandler.getErrorMessage(err)
+				});
+		});
 };
 
 /**
  * Delete an issue
  */
 exports.delete = function (req, res) {
-	var issue = req.issue;
+	let issue = req.issue;
 
 	issue.remove(function (err) {
 		if(err) {
@@ -98,7 +98,7 @@ exports.delete = function (req, res) {
  */
 exports.list = function (req, res) {
 	let query = {};
-	var topicId = req.query.topicId || null;
+	let topicId = req.query.topicId || null;
 	let org = req.organization
 	let orgUrl = org ? org.url : null;
 	let search = req.query.search || null;
@@ -191,15 +191,15 @@ exports.issueByID = function (req, res, next, id) {
 exports.attachMetaData = function (issues, user) {
 	if(!issues) return Promise.resolve(issues);
 
-	var issueIds = issues.map(function (issue) {
+	let issueIds = issues.map(function (issue) {
 		return issue._id;
 	});
 
 	return Solution.find({
-			issues: {
-				$in: issueIds
-			}
-		})
+		issues: {
+			$in: issueIds
+		}
+	})
 		.sort('-created')
 		.exec()
 		.then(function (solutions) {
@@ -207,7 +207,7 @@ exports.attachMetaData = function (issues, user) {
 				.then(function (solutions) {
 					issues = issues.map(function (issue) {
 
-						var up = 0,
+						let up = 0,
 							down = 0,
 							total = 0,
 							solutionCount = 0,
@@ -222,10 +222,10 @@ exports.attachMetaData = function (issues, user) {
 							//must check that this solution belongs to the current issue being tested
 							if(solution.issues.indexOf(issue._id.toString()) !== -1) {
 								//found issue id inside solution issues array
-								var currentDate = new Date(lastCreated);
-								var date = new Date(solution.created);
-								var nowDate = new Date();
-								var age = (nowDate.getTime() - date.getTime()) / (1000 * 60 * 60);
+								let currentDate = new Date(lastCreated);
+								let date = new Date(solution.created);
+								let nowDate = new Date();
+								let age = (nowDate.getTime() - date.getTime()) / (1000 * 60 * 60);
 
 								up += solution.votes.up;
 								down += solution.votes.down;

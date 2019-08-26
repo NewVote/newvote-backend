@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-var path = require('path'),
+let path = require('path'),
 	mongoose = require('mongoose'),
 	config = require(path.resolve('./config/config')),
 	Suggestion = mongoose.model('Suggestion'),
@@ -19,9 +19,9 @@ var path = require('path'),
 	_ = require('lodash');
 
 // TODO: Use a server side templating language to use a html file for this
-var buildMessage = function (suggestion, req) {
-	var messageString = '';
-	var url = req.protocol + '://' + req.get('host');
+let buildMessage = function (suggestion, req) {
+	let messageString = '';
+	let url = req.protocol + '://' + req.get('host');
 	if(!suggestion.parent) {
 		messageString += '<h2> This is a new suggestion' + '</h2>';
 		messageString += '<h3>Title: ' + suggestion.title + '</h3>';
@@ -45,7 +45,7 @@ var buildMessage = function (suggestion, req) {
  * Create a suggestion
  */
 exports.create = function (req, res) {
-	var suggestion = new Suggestion(req.body);
+	let suggestion = new Suggestion(req.body);
 
 	if (!suggestion.parent) {
 		suggestion.parent = null;
@@ -63,7 +63,7 @@ exports.create = function (req, res) {
 		// if organization has no owner then begin exit out of promise chain
 		if (!suggestion.organizations || !suggestion.organizations.owner) return false;
 		return Organization
-				.populate(suggestion.organizations, { path: 'owner' })
+			.populate(suggestion.organizations, { path: 'owner' })
 	})
 
 	return Promise.all([getSuggestion, getOrganization])
@@ -113,7 +113,7 @@ exports.read = function (req, res) {
  * Update a suggestion
  */
 exports.update = function (req, res) {
-	var suggestion = req.suggestion;
+	let suggestion = req.suggestion;
 	_.extend(suggestion, req.body);
 	// suggestion.title = req.body.title;
 	// suggestion.content = req.body.content;
@@ -134,9 +134,9 @@ exports.update = function (req, res) {
  * Delete an suggestion
  */
 exports.delete = function (req, res) {
-	var suggestion = req.suggestion;
+	let suggestion = req.suggestion;
 
-	Vote.deleteMany({ object: req.suggestion._id, objectType: 'Suggestion'})
+	Vote.deleteMany({ object: req.suggestion._id, objectType: 'Suggestion' })
 		.then((votes) => {
 			return suggestion.remove()
 		})
@@ -187,13 +187,13 @@ exports.list = function (req, res) {
 		{ $unwind: '$organizations' },
 		{ $sort: { 'created': -1 } }
 	])
-	.exec(function (err, suggestions) {
-		if(err) throw(err);
+		.exec(function (err, suggestions) {
+			if(err) throw(err);
 
-		votes.attachVotes(suggestions, req.user, req.query.regions)
-			.then((suggestions) => res.json(suggestions))
-			.catch((err) => {throw(err)});
-	})
+			votes.attachVotes(suggestions, req.user, req.query.regions)
+				.then((suggestions) => res.json(suggestions))
+				.catch((err) => {throw(err)});
+		})
 };
 
 /**
