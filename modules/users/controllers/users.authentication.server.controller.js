@@ -227,7 +227,7 @@ exports.oauthCallback = function (strategy) {
     return function (req, res, next) {
         // ;
         try {
-            var sessionRedirectURL = req.session.redirect_to;
+            const sessionRedirectURL = req.session.redirect_to;
             delete req.session.redirect_to;
         } catch (e) {
             // quietly now
@@ -238,10 +238,11 @@ exports.oauthCallback = function (strategy) {
             // need to generate url from org in request cookie here
             let orgObject = req.organization
             let org = orgObject ? orgObject.url : 'home';
+            let host = ''
             if (config.node_env === 'development') {
-                var host = `http://${org}.localhost.newvote.org:4200`
+                host = `http://${org}.localhost.newvote.org:4200`
             } else {
-                var host = `https://${org}.newvote.org`
+                host = `https://${org}.newvote.org`
             }
 
             if (err) {
@@ -275,7 +276,7 @@ exports.oauthCallback = function (strategy) {
  */
 exports.saveRapidProfile = function (req, profile, done) {
     const organization = req.organization;
-    if(!organization){
+    if (!organization) {
         console.error('no organization in request body')
     }
 
@@ -309,9 +310,9 @@ exports.saveRapidProfile = function (req, profile, done) {
                     });
                 });
             } else {
-                if(organization) {
+                if (organization) {
                     const orgExists = user.organizations.find((e) => {
-                        if(e) {
+                        if (e) {
                             return e._id.equals(organization._id)
                         }
                     });

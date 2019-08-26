@@ -154,7 +154,7 @@ function sendVerificationCodeViaEmail (req, res, user) {
                     message: 'There was a problem while sending your verification e-mail, please try again later.'
                 });
         });
-};
+}
 
 
 

@@ -20,7 +20,7 @@ let path = require('path'),
 let buildMessage = function (suggestion, req) {
     let messageString = '';
     let url = req.protocol + '://' + req.get('host');
-    if(!suggestion.parent) {
+    if (!suggestion.parent) {
         messageString += '<h2> This is a new suggestion' + '</h2>';
         messageString += '<h3>Title: ' + suggestion.title + '</h3>';
     } else {
@@ -46,7 +46,7 @@ exports.create = function (req, res) {
     let suggestion = new Suggestion(req.body);
     suggestion.user = req.user;
     suggestion.save((err) => {
-        if (err) throw(err);
+        if (err) throw (err);
     });
 
     const getSuggestion = Suggestion
@@ -77,7 +77,8 @@ exports.create = function (req, res) {
         })
         .then(function () {
             // console.log('mailer success: ', data);
-            return res.status(200).json(suggestion);
+            return res.status(200)
+                .json(suggestion);
         })
         .catch((err) => {
             return res.status(400)
@@ -114,7 +115,7 @@ exports.update = function (req, res) {
     // suggestion.content = req.body.content;
 
     suggestion.save(function (err) {
-        if(err) {
+        if (err) {
             return res.status(400)
                 .send({
                     message: errorHandler.getErrorMessage(err)
@@ -132,7 +133,7 @@ exports.delete = function (req, res) {
     let suggestion = req.suggestion;
 
     suggestion.remove(function (err) {
-        if(err) {
+        if (err) {
             return res.status(400)
                 .send({
                     message: errorHandler.getErrorMessage(err)
@@ -160,28 +161,27 @@ exports.list = function (req, res) {
     let softDeleteMatch = showDeleted ? showAllItemsMatch : showNonDeletedItemsMatch;
 
     Suggestion.aggregate([
+            { $match: searchMatch },
+            { $match: softDeleteMatch },
+            {
+                $lookup: {
+                    'from': 'organizations',
+                    'localField': 'organizations',
+                    'foreignField': '_id',
+                    'as': 'organizations'
 
-		{ $match: searchMatch },
-		{ $match: softDeleteMatch },
-		{
-		    $lookup: {
-		        'from': 'organizations',
-		        'localField': 'organizations',
-		        'foreignField': '_id',
-		        'as': 'organizations'
-
-		    }
-		},
-		{ $match: orgMatch },
-		{ $unwind: '$organizations' },
-		{ $sort: { 'created': -1 } }
+                }
+            },
+            { $match: orgMatch },
+            { $unwind: '$organizations' },
+            { $sort: { 'created': -1 } }
     ])
         .exec(function (err, suggestions) {
-            if(err) throw(err);
+            if (err) throw (err);
 
             votes.attachVotes(suggestions, req.user, req.query.regions)
                 .then((suggestions) => res.json(suggestions))
-                .catch((err) => {throw(err)});
+                .catch((err) => { throw (err) });
         })
 };
 
@@ -189,7 +189,7 @@ exports.list = function (req, res) {
  * Suggestion middleware
  */
 exports.suggestionByID = function (req, res, next, id) {
-    if(!mongoose.Types.ObjectId.isValid(id)) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400)
             .send({
                 message: 'Suggestion is invalid'
@@ -201,9 +201,9 @@ exports.suggestionByID = function (req, res, next, id) {
         .populate('parent')
         .populate('organizations')
         .exec(function (err, suggestion) {
-            if(err) {
+            if (err) {
                 return next(err);
-            } else if(!suggestion) {
+            } else if (!suggestion) {
                 return res.status(404)
                     .send({
                         message: 'No suggestion with that identifier has been found'

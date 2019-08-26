@@ -35,9 +35,9 @@ module.exports = function (app) {
         // start wit the organization stored in the cookie and attempt to parse
         const { organization: cookieOrg } = req.cookies
         try {
-            var organization = JSON.parse(cookieOrg)
+            const organization = JSON.parse(cookieOrg)
         } catch (e) {
-            var organization = null
+            const organization = null
         }
         // var { org:orgUrl } = req.cookies // prefer the redirect cookie url over header
         let orgUrl = req.cookies.org ? req.cookies.org : req.cookies.orgUrl // try "orgUrl" cookie instead of org if its undefined

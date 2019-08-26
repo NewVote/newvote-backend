@@ -360,4 +360,4 @@ function sendVerificationCodeViaEmail (req, user) {
             console.log('error sending verification email: ', err);
             throw('There was a problem while sending your verification e-mail, please try again later.')
         });
-};
+}
