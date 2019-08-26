@@ -8,7 +8,8 @@
     no-empty-class:              0,
     object-curly-spacing:        [2, 'always'],
     quotes:                      [1, 'single', {'allowTemplateLiterals': true}],
-    space-in-parens:             [2, 'never']
+    space-in-parens:             [2, 'never'],
+    no-var:                      [1]
   },
   env:                           {
     es6:                         true,

@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-var path = require('path'),
+const path = require('path'),
 	config = require(path.resolve('./config/config')),
 	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
 	_ = require('lodash'),
@@ -21,20 +21,20 @@ var path = require('path'),
 	async = require('async');
 
 // URLs for which user can't be redirected on signin
-var noReturnUrls = [
+const noReturnUrls = [
 	'/authentication/signin',
 	'/authentication/signup'
 ];
 
-var recaptcha = new Recaptcha({
+const recaptcha = new Recaptcha({
 	secret: config.reCaptcha.secret,
 	verbose: true
 });
 
-var addToMailingList = function (user) {
+const addToMailingList = function (user) {
 
-	var mailchimp = new Mailchimp(config.mailchimp.api);
-	var MAILCHIMP_LIST_ID = config.mailchimp.list;
+	const mailchimp = new Mailchimp(config.mailchimp.api);
+	const MAILCHIMP_LIST_ID = config.mailchimp.list;
 
 	return mailchimp.post(`/lists/${MAILCHIMP_LIST_ID}/members`, {
 		email_address: user.email,
@@ -44,6 +44,7 @@ var addToMailingList = function (user) {
 
 exports.checkAuthStatus = function (req, res, next) {
 	passport.authenticate('check-status', { session: false }, function (err, user, info) {
+		debugger
 		if (err || !user) {
 			return res.status(400)
 				.send(info);
@@ -74,7 +75,7 @@ exports.checkAuthStatus = function (req, res, next) {
  */
 exports.signup = function (req, res) {
 	// Init Variables
-	var user = new User(req.body);
+	const user = new User(req.body);
 	const { recaptchaResponse, email, password } = req.body;
 	const verificationCode = req.params.verificationCode;
 
@@ -156,9 +157,9 @@ exports.signup = function (req, res) {
 	});
 };
 
-var buildMessage = function (user, code, req) {
-	var messageString = '';
-	var url = req.protocol + '://' + req.get('host') + '/verify/' + code;
+const buildMessage = function (user, code, req) {
+	const messageString = '';
+	const url = req.protocol + '://' + req.get('host') + '/verify/' + code;
 
 	messageString += `<h3> Welcome ${user.firstName} </h3>`;
 	messageString += `<p>Thank you for joining the NewVote platform, you are almost ready to start having your say!
@@ -168,7 +169,7 @@ var buildMessage = function (user, code, req) {
 	return messageString;
 };
 
-var sendEmail = function (user, pass, req) {
+const sendEmail = function (user, pass, req) {
 	return transporter.sendMail({
 		from: process.env.MAILER_FROM,
 		to: user.email,
@@ -217,10 +218,16 @@ exports.signin = function (req, res, next) {
 
 							// updated user so create new token
 							const payload = { _id: savedUser._id, roles: savedUser.roles, verified: savedUser.verified };
-							const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
+							const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry })
+							const creds = { user, token }
+							const opts = {
+								domain: 'newvote.org',
+								httpOnly: false,
+								secure: false
+							}
 
-							res.cookie('credentials', JSON.stringify({ user: savedUser, token }), { domain: 'newvote.org', secure: false, overwrite: true });
-							return res.json({ user: savedUser, token });
+							res.cookie('credentials', JSON.stringify(creds), opts)
+							res.json(creds);
 						});
 				})
 			}
@@ -240,9 +247,15 @@ exports.signin = function (req, res, next) {
 						} else {
 							const payload = { _id: user._id, roles: user.roles, verified: user.verified };
 							const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
+							const creds = { user, token }
+							const opts = {
+								domain: 'newvote.org',
+								httpOnly: false,
+								secure: false
+							}
 
-							res.cookie('credentials', JSON.stringify({ user, token }), { domain: 'newvote.org', secure: false, overwrite: true });
-							res.json({ user: user, token: token });
+							res.cookie('credentials', JSON.stringify(creds), opts)
+							res.json(creds);
 						}
 					});
 				});
@@ -280,7 +293,7 @@ exports.oauthCallback = function (strategy) {
 	return function (req, res, next) {
 		// ;
 		try {
-			var sessionRedirectURL = req.session.redirect_to;
+			const sessionRedirectURL = req.session.redirect_to;
 			delete req.session.redirect_to;
 		} catch (e) {
 			// quietly now
@@ -291,10 +304,11 @@ exports.oauthCallback = function (strategy) {
 			// need to generate url from org in request cookie here
 			let orgObject = req.organization
 			let org = orgObject ? orgObject.url : 'home';
+			let host = ''
 			if (config.node_env === 'development') {
-				var host = `http://${org}.localhost.newvote.org:4200`
+				host = `http://${org}.localhost.newvote.org:4200`
 			} else {
-				var host = `https://${org}.newvote.org`
+				host = `https://${org}.newvote.org`
 			}
 
 			if (err) {
@@ -309,14 +323,14 @@ exports.oauthCallback = function (strategy) {
 				}
 				const payload = { _id: user._id, roles: user.roles, verified: user.verified };
 				const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
-				var creds = { user, token }
-				var opts = {
+				const creds = { user, token }
+				const opts = {
 					domain: 'newvote.org',
 					httpOnly: false,
 					secure: false
 				}
 				res.cookie('credentials', JSON.stringify(creds), opts)
-				var redirect = sessionRedirectURL ? host + sessionRedirectURL : host + '/'
+				const redirect = sessionRedirectURL ? host + sessionRedirectURL : host + '/'
 				return res.redirect(302, redirect);
 			});
 		})(req, res, next);
@@ -337,7 +351,7 @@ exports.saveRapidProfile = function (req, profile, done) {
 
 			if (!user) {
 				console.log('no user, creating new account')
-				var possibleUsername = profile.cn || profile.displayname || profile.givenname + profile.surname || ((profile.mail) ? profile.mail.split('@')[0] : '');
+				const possibleUsername = profile.cn || profile.displayname || profile.givenname + profile.surname || ((profile.mail) ? profile.mail.split('@')[0] : '');
 
 				User.findUniqueUsername(possibleUsername, null, function (availableUsername) {
 					console.log('generated username: ', availableUsername)
@@ -447,20 +461,20 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
 	const organization = req.organization;
 	if (!req.user) {
 		// Define a search query fields
-		var searchMainProviderIdentifierField = 'providerData.' + providerUserProfile.providerIdentifierField;
-		var searchAdditionalProviderIdentifierField = 'additionalProvidersData.' + providerUserProfile.provider + '.' + providerUserProfile.providerIdentifierField;
+		const searchMainProviderIdentifierField = 'providerData.' + providerUserProfile.providerIdentifierField;
+		const searchAdditionalProviderIdentifierField = 'additionalProvidersData.' + providerUserProfile.provider + '.' + providerUserProfile.providerIdentifierField;
 
 		// Define main provider search query
-		var mainProviderSearchQuery = {};
+		const mainProviderSearchQuery = {};
 		mainProviderSearchQuery.provider = providerUserProfile.provider;
 		mainProviderSearchQuery[searchMainProviderIdentifierField] = providerUserProfile.providerData[providerUserProfile.providerIdentifierField];
 
 		// Define additional provider search query
-		var additionalProviderSearchQuery = {};
+		const additionalProviderSearchQuery = {};
 		additionalProviderSearchQuery[searchAdditionalProviderIdentifierField] = providerUserProfile.providerData[providerUserProfile.providerIdentifierField];
 
 		// Define a search query to find existing user with current provider profile
-		var searchQuery = {
+		const searchQuery = {
 			$or: [mainProviderSearchQuery, additionalProviderSearchQuery]
 		};
 
@@ -469,7 +483,7 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
 				return done(err);
 			} else {
 				if (!user) {
-					var possibleUsername = providerUserProfile.username || ((providerUserProfile.email) ? providerUserProfile.email.split('@')[0] : '');
+					const possibleUsername = providerUserProfile.username || ((providerUserProfile.email) ? providerUserProfile.email.split('@')[0] : '');
 
 					User.findUniqueUsername(possibleUsername, null, function (availableUsername) {
 						user = new User({
@@ -501,7 +515,7 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
 		});
 	} else {
 		// User is already logged in, join the provider data to the existing user
-		var user = req.user;
+		const user = req.user;
 
 		const orgExists = res.organizations.find((e) => {
 			return e._id.equals(organization._id)
@@ -535,8 +549,8 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
  * Remove OAuth provider
  */
 exports.removeOAuthProvider = function (req, res, next) {
-	var user = req.user;
-	var provider = req.query.provider;
+	const user = req.user;
+	const provider = req.query.provider;
 
 	if (!user) {
 		return res.status(401)
