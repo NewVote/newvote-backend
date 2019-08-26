@@ -9,12 +9,21 @@ var path = require('path'),
 	Organization = mongoose.model('Organization'),
 	votes = require('../votes/votes.server.controller'),
 	Solution = mongoose.model('Solution'),
+	Topic = mongoose.model('Topic'),
+	Issue = mongoose.model('Issue'),
+	Suggestion = mongoose.model('Suggestion'),
+	Proposal = mongoose.model('Proposal'),
 	User = mongoose.model('User'),
 	FutureLeader = mongoose.model('FutureLeader'),
 	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
 	_ = require('lodash'),
 	nodemailer = require('nodemailer'),
-	transporter = nodemailer.createTransport(config.mailer.options);
+	transporter = nodemailer.createTransport(config.mailer.options),
+	TopicController = require('../topics/topics.server.controller'),
+	IssueController = require('../issues/issues.server.controller'),
+	SolutionController = require('../solutions/solutions.server.controller'),
+	ProposalController = require('../proposals/proposals.server.controller'),
+	SuggestionController = require('../suggestions/suggestions.server.controller');
 
 /**
  * Create a organization
@@ -36,7 +45,7 @@ exports.create = function (req, res) {
 		email = null;
 	}
 
-	return findUserAndOrganization(email, moderators)
+	const createOrg = findUserAndOrganization(email, moderators)
 		.then((promises) => {
 			let [user, futureLeader, moderators] = promises;
 
@@ -61,18 +70,34 @@ exports.create = function (req, res) {
 				futureLeader.save();
 			}
 
+			return organization;
+		})
+		.catch((err) => {
+			console.log(err);
+		})
+	
+
+	return createOrg.then(seedNewOrganization)
+		.then((promises) => {
+			if (!promises) throw('Error Saving Seed Data');
 			return organization.save();
 		})
 		.then((savedOrganization) => {
-			if (!savedOrganization) throw('Error saving leader');
+			if (!savedOrganization) throw('Error saving organization');
 
 			if (savedOrganization.futureOwner) {
 				sendVerificationCodeViaEmail(req, savedOrganization.futureOwner);
 			}
-			// After user is saved create and send an email to the user
+
 			return res.json(organization);
 		})
-		.catch((err) => err);
+		.catch((err) => {
+			return res.status(400)
+				.send({
+					message: errorHandler.getErrorMessage(err)
+				});
+		});
+
 };
 
 /**
@@ -316,6 +341,9 @@ var sendEmail = function (user, pass, req) {
 		to: user.email,
 		subject: 'NewVote UQU Verification',
 		html: buildMessage(pass, req)
+	},
+	(err, info) => {
+		console.log(info, 'error sending email');
 	})
 }
 
@@ -361,3 +389,21 @@ function sendVerificationCodeViaEmail (req, user) {
 			throw('There was a problem while sending your verification e-mail, please try again later.')
 		});
 };
+
+function seedNewOrganization(org) {
+	const { _id: organizationId } = org;
+
+	const TopicPromise = Promise.resolve(TopicController.seedTopic(organizationId));
+	const IssuePromise = TopicPromise.then((topic) => {
+		return IssueController.seedData(organizationId, topic._id);
+	});
+	const SolutionPromise = IssuePromise.then((issue) => {
+		return SolutionController.seedData(organizationId, issue._id);
+	});
+	const ProposalPromise = SolutionPromise.then((solution) => {
+		return ProposalController.seedData(organizationId, solution._id);
+	});
+	const SuggestionPromise = SuggestionController.seedData(organizationId);
+
+	return Promise.all([TopicPromise, IssuePromise, SolutionPromise, ProposalPromise, SuggestionPromise])
+}

@@ -16,7 +16,8 @@ var path = require('path'),
 	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
 	nodemailer = require('nodemailer'),
 	transporter = nodemailer.createTransport(config.mailer.options),
-	_ = require('lodash');
+	_ = require('lodash'),
+	seed = require('./seed/seed');
 
 // TODO: Use a server side templating language to use a html file for this
 var buildMessage = function (suggestion, req) {
@@ -223,3 +224,12 @@ exports.suggestionByID = function (req, res, next, id) {
 			next();
 		});
 };
+
+
+exports.seedData = function (organizationId) {
+	const { seedData } = seed;
+	const newSuggestion = new Suggestion(seedData);
+	newSuggestion.organizations = organizationId;
+	newSuggestion.save();
+	return newSuggestion;
+}

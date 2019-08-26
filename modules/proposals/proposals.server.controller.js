@@ -10,7 +10,8 @@ var path = require('path'),
 	votes = require('../votes/votes.server.controller'),
 	Solution = mongoose.model('Solution'),
 	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
-	_ = require('lodash');
+	_ = require('lodash'),
+	seed = require('./seed/seed');
 
 /**
  * Create a proposal
@@ -249,4 +250,13 @@ function updateSchema(proposals) {
 				.then(() => console.log('saved proposal'));
 		}
 	}
+}
+
+exports.seedData = function (organizationId, solutionId) {
+	const { seedData } = seed;
+	const newProposal = new Proposal(seedData);
+	newProposal.organizations = organizationId;
+	newProposal.solutions = [solutionId];
+	newProposal.save();
+	return newProposal;
 }
