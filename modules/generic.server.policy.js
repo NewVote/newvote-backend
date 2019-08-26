@@ -101,6 +101,7 @@ exports.isAllowed = function (req, res, next) {
 		   }
 			// allowed test failed, is this a non GET request? (POST/UPDATE/DELETE)
 			if(req.method.toLowerCase() !== 'get' && user) {
+				debugger
 
 				//check for org owner or moderator on all non get requests
 				// this requires a DB query so only use it when necesary
@@ -146,30 +147,38 @@ exports.isAllowed = function (req, res, next) {
 // this is NOT the organization that the content belongs to (not the object.organizations)
 // N.B new content will have no organization
 function canAccessOrganization(req, object) {
-	const orgUrl = req.organization.url;
-	const user = req.user;
-
+	const user = req.user
 	const method = req.method.toLowerCase();
+	let organization = null
+	let orgUrl = null
+
+	try {
+		organization = req.organization
+		orgUrl = organization.url
+	} catch(e) {
+		Promise.reject('No organization discovered in request body')
+	}
 
 	// when creating there is no org for the object yet
 	// so use the org in the url to test for ownership
 	if(method === 'post') {
-		return organizations.organizationByUrl(orgUrl)
-			.then(org => {
-				if(
-					(org.owner && org.owner._id == user._id) ||
-					(org.moderators && org.moderators.some((mod) => mod._id == user._id))
-				) {
-					return true;
-				} else {
-					return false;
-				}
-			});
+		if(
+			(user.roles.includes('admin')) ||
+			(organization.owner && organization.owner._id == user._id) ||
+			(organization.moderators && organization.moderators.some((mod) => mod._id == user._id))
+		) {
+			return Promise.resolve(true);
+		} else {
+			console.error('failed to test user against admin owner or mod list')
+			console.error('user is: ', user)
+			return Promise.reject('An error occoured while validating your credentials');
+		}
 	} else if(method === 'put') {
 		if(object.collection.name === 'organizations') {
 
 			if (object.owner === null && !user.roles.includes('admin')) {
-				Promise.reject();
+				console.error('no owner on object and user is not admin')
+				Promise.reject('An error occoured while validating your credentials');
 			}
 			// we are updating a community so just check its owner (mods cant edit community)
 			return Promise.resolve(user.roles.includes('admin') || object.owner._id == user._id);
