@@ -1,6 +1,6 @@
 {
   rules:                         {
-    indent:                      [0, 'tab', {'SwitchCase': 1}],
+    indent:                      ['error', 'tab', {'SwitchCase': 1, 'ArrayExpression': 'off'}],
     no-multi-spaces:             2,
     no-underscore-dangle:        0,
     no-use-before-define:        [1, 'nofunc'],
@@ -8,7 +8,8 @@
     no-empty-class:              0,
     object-curly-spacing:        [2, 'always'],
     quotes:                      [1, 'single', {'allowTemplateLiterals': true}],
-    space-in-parens:             [2, 'never']
+    space-in-parens:             [2, 'never'],
+    no-var:                      1
   },
   env:                           {
     es6:                         true,
