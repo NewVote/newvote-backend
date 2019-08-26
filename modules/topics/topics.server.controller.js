@@ -3,122 +3,122 @@
 /**
  * Module dependencies.
  */
-var path = require('path'),
-	mongoose = require('mongoose'),
-	Topic = mongoose.model('Topic'),
-	TopicsController = require('./topics.server.controller'),
-	votes = require('../votes/votes.server.controller'),
-	Solution = mongoose.model('Solution'),
-	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
-	_ = require('lodash');
+let path = require('path'),
+    mongoose = require('mongoose'),
+    Topic = mongoose.model('Topic'),
+    TopicsController = require('./topics.server.controller'),
+    votes = require('../votes/votes.server.controller'),
+    Solution = mongoose.model('Solution'),
+    errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
+    _ = require('lodash');
 
 /**
  * Create a topic
  */
 exports.create = function (req, res) {
-	var topic = new Topic(req.body);
-	topic.user = req.user;
-	topic.save(function (err) {
-		if(err) {
-			return res.status(400)
-				.send({
-					message: errorHandler.getErrorMessage(err)
-				});
-		} else {
-			res.json(topic);
-		}
-	});
+    let topic = new Topic(req.body);
+    topic.user = req.user;
+    topic.save(function (err) {
+        if(err) {
+            return res.status(400)
+                .send({
+                    message: errorHandler.getErrorMessage(err)
+                });
+        } else {
+            res.json(topic);
+        }
+    });
 };
 
 /**
  * Show the current topic
  */
 exports.read = function (req, res) {
-	res.json(req.topic);
+    res.json(req.topic);
 };
 
 /**
  * Update a topic
  */
 exports.update = function (req, res) {
-	var topic = req.topic;
-	_.extend(topic, req.body);
-	// topic.title = req.body.title;
-	// topic.content = req.body.content;
+    let topic = req.topic;
+    _.extend(topic, req.body);
+    // topic.title = req.body.title;
+    // topic.content = req.body.content;
 
-	topic.save(function (err) {
-		if(err) {
-			return res.status(400)
-				.send({
-					message: errorHandler.getErrorMessage(err)
-				});
-		} else {
-			res.json(topic);
-		}
-	});
+    topic.save(function (err) {
+        if(err) {
+            return res.status(400)
+                .send({
+                    message: errorHandler.getErrorMessage(err)
+                });
+        } else {
+            res.json(topic);
+        }
+    });
 };
 
 /**
  * Delete an topic
  */
 exports.delete = function (req, res) {
-	var topic = req.topic;
+    let topic = req.topic;
 
-	topic.remove(function (err) {
-		if(err) {
-			return res.status(400)
-				.send({
-					message: errorHandler.getErrorMessage(err)
-				});
-		} else {
-			res.json(topic);
-		}
-	});
+    topic.remove(function (err) {
+        if(err) {
+            return res.status(400)
+                .send({
+                    message: errorHandler.getErrorMessage(err)
+                });
+        } else {
+            res.json(topic);
+        }
+    });
 };
 
 /**
  * List of Topics
  */
 exports.list = function (req, res) {
-	let query = {};
-	let org = req.organization
-	let orgUrl = org ? org.url : null;
-	let search = req.query.search || null;
-	let showDeleted = req.query.showDeleted || null;
+    let query = {};
+    let org = req.organization
+    let orgUrl = org ? org.url : null;
+    let search = req.query.search || null;
+    let showDeleted = req.query.showDeleted || null;
 
-	let orgMatch = orgUrl ? { 'organizations.url': orgUrl } : {};
-	let searchMatch = search ? { $text: { $search: search } } : {};
+    let orgMatch = orgUrl ? { 'organizations.url': orgUrl } : {};
+    let searchMatch = search ? { $text: { $search: search } } : {};
 
-	let showNonDeletedItemsMatch = { $or: [{ 'softDeleted': false }, { 'softDeleted': { $exists: false } }] };
-	let showAllItemsMatch = {};
-	let softDeleteMatch = showDeleted ? showAllItemsMatch : showNonDeletedItemsMatch;
+    let showNonDeletedItemsMatch = { $or: [{ 'softDeleted': false }, { 'softDeleted': { $exists: false } }] };
+    let showAllItemsMatch = {};
+    let softDeleteMatch = showDeleted ? showAllItemsMatch : showNonDeletedItemsMatch;
 
-	Topic.aggregate([
+    Topic.aggregate([
 			{ $match: searchMatch },
 			{ $match: softDeleteMatch },
 			{
-				$lookup: {
-					'from': 'organizations',
-					'localField': 'organizations',
-					'foreignField': '_id',
-					'as': 'organizations'
-				}
+			    $lookup: {
+			        'from': 'organizations',
+			        'localField': 'organizations',
+			        'foreignField': '_id',
+			        'as': 'organizations'
+			    }
 			},
 			{ $unwind: '$organizations' },
 			{ $match: orgMatch },
 			{ $sort: { 'name': 1 } }
-	])
-		.exec(function (err, topics) {
-			if(err) {
-				console.log(err);
-				return res.status(400)
-					.send({
-						message: errorHandler.getErrorMessage(err)
-					});
-			} else {
-				res.json(topics);
-			}
-		});
+    ])
+        .exec(function (err, topics) {
+            if(err) {
+                console.log(err);
+                return res.status(400)
+                    .send({
+                        message: errorHandler.getErrorMessage(err)
+                    });
+            } else {
+                res.json(topics);
+            }
+        });
 };
 
 /**
@@ -126,26 +126,26 @@ exports.list = function (req, res) {
  */
 exports.topicByID = function (req, res, next, id) {
 
-	if(!mongoose.Types.ObjectId.isValid(id)) {
-		return res.status(400)
-			.send({
-				message: 'Topic is invalid'
-			});
-	}
+    if(!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400)
+            .send({
+                message: 'Topic is invalid'
+            });
+    }
 
-	Topic.findById(id)
-		.populate('user', 'displayName')
-		.populate('organizations')
-		.exec(function (err, topic) {
-			if(err) {
-				return next(err);
-			} else if(!topic) {
-				return res.status(404)
-					.send({
-						message: 'No topic with that identifier has been found'
-					});
-			}
-			req.topic = topic;
-			next();
-		});
+    Topic.findById(id)
+        .populate('user', 'displayName')
+        .populate('organizations')
+        .exec(function (err, topic) {
+            if(err) {
+                return next(err);
+            } else if(!topic) {
+                return res.status(404)
+                    .send({
+                        message: 'No topic with that identifier has been found'
+                    });
+            }
+            req.topic = topic;
+            next();
+        });
 };

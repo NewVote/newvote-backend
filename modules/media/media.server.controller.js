@@ -3,145 +3,145 @@
 /**
  * Module dependencies.
  */
-var path = require('path'),
-	mongoose = require('mongoose'),
-	Media = mongoose.model('Media'),
-	votes = require('../votes/votes.server.controller'),
-	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
-	_ = require('lodash'),
-	scrape = require('html-metadata');
+let path = require('path'),
+    mongoose = require('mongoose'),
+    Media = mongoose.model('Media'),
+    votes = require('../votes/votes.server.controller'),
+    errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
+    _ = require('lodash'),
+    scrape = require('html-metadata');
 
 /**
  * Create a media
  */
 exports.create = function (req, res) {
-	var media = new Media(req.body);
-	media.user = req.user;
-	media.save(function (err) {
-		if(err) {
-			return res.status(400)
-				.send({
-					message: errorHandler.getErrorMessage(err)
-				});
-		} else {
-			res.json(media);
-		}
-	});
+    let media = new Media(req.body);
+    media.user = req.user;
+    media.save(function (err) {
+        if(err) {
+            return res.status(400)
+                .send({
+                    message: errorHandler.getErrorMessage(err)
+                });
+        } else {
+            res.json(media);
+        }
+    });
 };
 
 /**
  * Show the current media
  */
 exports.read = function (req, res) {
-	votes.attachVotes([req.media], req.user)
-		.then(function (mediaArr) {
-			const updatedMedia = mediaArr[0];
-			res.json(req.media);
-		})
-		.catch(err => {
-			return res.status(400)
-				.send({
-					message: errorHandler.getErrorMessage(err)
-				});
-		});
+    votes.attachVotes([req.media], req.user)
+        .then(function (mediaArr) {
+            const updatedMedia = mediaArr[0];
+            res.json(req.media);
+        })
+        .catch(err => {
+            return res.status(400)
+                .send({
+                    message: errorHandler.getErrorMessage(err)
+                });
+        });
 };
 
 /**
  * Update a media
  */
 exports.update = function (req, res) {
-	var media = req.media;
-	_.extend(media, req.body);
+    let media = req.media;
+    _.extend(media, req.body);
 
-	media.save(function (err) {
-		if(err) {
-			return res.status(400)
-				.send({
-					message: errorHandler.getErrorMessage(err)
-				});
-		} else {
-			res.json(media);
-		}
-	});
+    media.save(function (err) {
+        if(err) {
+            return res.status(400)
+                .send({
+                    message: errorHandler.getErrorMessage(err)
+                });
+        } else {
+            res.json(media);
+        }
+    });
 };
 
 /**
  * Delete an media
  */
 exports.delete = function (req, res) {
-	var media = req.media;
+    let media = req.media;
 
-	media.remove(function (err) {
-		if(err) {
-			return res.status(400)
-				.send({
-					message: errorHandler.getErrorMessage(err)
-				});
-		} else {
-			res.json(media);
-		}
-	});
+    media.remove(function (err) {
+        if(err) {
+            return res.status(400)
+                .send({
+                    message: errorHandler.getErrorMessage(err)
+                });
+        } else {
+            res.json(media);
+        }
+    });
 };
 
 /**
  * List of Medias
  */
 exports.list = function (req, res) {
-	var solutionId = req.query.solutionId,
-		issueId = req.query.issueId,
-		proposalId = req.query.proposalId,
-		searchParams = req.query.search,
-		mediaId = req.query.mediaId,
-		query;
+    let solutionId = req.query.solutionId,
+        issueId = req.query.issueId,
+        proposalId = req.query.proposalId,
+        searchParams = req.query.search,
+        mediaId = req.query.mediaId,
+        query;
 
-	if(solutionId) {
-		query = {
-			solutions: solutionId
-		};
-	} else if(issueId) {
-		query = {
-			issues: issueId
-		};
-	} else if(proposalId) {
-		query = {
-			proposals: proposalId
-		};
-	} else if(searchParams) {
-		query = {
-			title: {
-				$regex: searchParams,
-				$options: 'i'
-			}
-		};
-	} else {
-		query = null;
-	}
-	Media.find(query)
-		.sort('-created')
-		.populate('user', 'displayName')
-		.populate('issues')
-		.populate('solutions')
-		.populate('proposals')
-		.exec(function (err, medias) {
-			if(err) {
-				return res.status(400)
-					.send({
-						message: errorHandler.getErrorMessage(err)
-					});
-			} else {
-				votes.attachVotes(medias, req.user)
-					.then(function (mediaArr) {
-						// console.log(mediaArr);
-						res.json(mediaArr);
-					})
-					.catch(function (err) {
-						res.status(500)
-							.send({
-								message: errorHandler.getErrorMessage(err)
-							});
-					});
-			}
-		});
+    if(solutionId) {
+        query = {
+            solutions: solutionId
+        };
+    } else if(issueId) {
+        query = {
+            issues: issueId
+        };
+    } else if(proposalId) {
+        query = {
+            proposals: proposalId
+        };
+    } else if(searchParams) {
+        query = {
+            title: {
+                $regex: searchParams,
+                $options: 'i'
+            }
+        };
+    } else {
+        query = null;
+    }
+    Media.find(query)
+        .sort('-created')
+        .populate('user', 'displayName')
+        .populate('issues')
+        .populate('solutions')
+        .populate('proposals')
+        .exec(function (err, medias) {
+            if(err) {
+                return res.status(400)
+                    .send({
+                        message: errorHandler.getErrorMessage(err)
+                    });
+            } else {
+                votes.attachVotes(medias, req.user)
+                    .then(function (mediaArr) {
+                        // console.log(mediaArr);
+                        res.json(mediaArr);
+                    })
+                    .catch(function (err) {
+                        res.status(500)
+                            .send({
+                                message: errorHandler.getErrorMessage(err)
+                            });
+                    });
+            }
+        });
 };
 
 /**
@@ -149,72 +149,72 @@ exports.list = function (req, res) {
  */
 exports.mediaByID = function (req, res, next, id) {
 
-	if(!mongoose.Types.ObjectId.isValid(id)) {
-		return res.status(400)
-			.send({
-				message: 'Media is invalid'
-			});
-	}
+    if(!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400)
+            .send({
+                message: 'Media is invalid'
+            });
+    }
 
-	Media.findById(id)
-		.populate('user', 'displayName')
-		.populate('issues')
-		.populate('solutions')
-		.populate('proposals')
-		.populate('organizations')
-		.exec(function (err, media) {
-			if(err) {
-				return next(err);
-			} else if(!media) {
-				return res.status(404)
-					.send({
-						message: 'No media with that identifier has been found'
-					});
-			}
-			req.media = media;
-			next();
-		});
+    Media.findById(id)
+        .populate('user', 'displayName')
+        .populate('issues')
+        .populate('solutions')
+        .populate('proposals')
+        .populate('organizations')
+        .exec(function (err, media) {
+            if(err) {
+                return next(err);
+            } else if(!media) {
+                return res.status(404)
+                    .send({
+                        message: 'No media with that identifier has been found'
+                    });
+            }
+            req.media = media;
+            next();
+        });
 };
 
 exports.getMeta = function (req, res) {
-	var url = req.params.uri;
-	return scrape(url)
-		.then(function (meta) {
-			var media = {};
-			var title, description, image;
-			if(meta.dublinCore && meta.dublinCore.title) {
-				title = meta.openGraph.title;
-			} else if(meta.dublinCore && meta.openGraph.title) {
-				title = meta.openGraph.title;
-			} else if(meta.general && meta.general.title) {
-				title = meta.general.title;
-			}
+    let url = req.params.uri;
+    return scrape(url)
+        .then(function (meta) {
+            let media = {};
+            let title, description, image;
+            if(meta.dublinCore && meta.dublinCore.title) {
+                title = meta.openGraph.title;
+            } else if(meta.dublinCore && meta.openGraph.title) {
+                title = meta.openGraph.title;
+            } else if(meta.general && meta.general.title) {
+                title = meta.general.title;
+            }
 
-			if(meta.dublinCore && meta.dublinCore.description) {
-				description = meta.dublinCore.description;
-			} else if(meta.openGraph && meta.openGraph.description) {
-				description = meta.openGraph.description;
-			} else if(meta.general && meta.general.description) {
-				description = meta.general.description;
-			}
+            if(meta.dublinCore && meta.dublinCore.description) {
+                description = meta.dublinCore.description;
+            } else if(meta.openGraph && meta.openGraph.description) {
+                description = meta.openGraph.description;
+            } else if(meta.general && meta.general.description) {
+                description = meta.general.description;
+            }
 
-			if(meta.openGraph && meta.openGraph.image) {
-				image = meta.openGraph.image.url;
-			} else if(meta.twitter && meta.twitter.description) {
-				image = meta.twitter.image;
-			}
+            if(meta.openGraph && meta.openGraph.image) {
+                image = meta.openGraph.image.url;
+            } else if(meta.twitter && meta.twitter.description) {
+                image = meta.twitter.image;
+            }
 
-			media.title = title ? title : null;
-			media.description = description ? description : null;
-			media.image = image ? image : null;
-			media.url = url;
+            media.title = title ? title : null;
+            media.description = description ? description : null;
+            media.image = image ? image : null;
+            media.url = url;
 
-			return res.json(media);
-		}, function (error) {
-			console.log('Error scraping: ', error.message);
-			return res.status(400)
-				.send({
-					message: 'No metadata found.'
-				});
-		});
+            return res.json(media);
+        }, function (error) {
+            console.log('Error scraping: ', error.message);
+            return res.status(400)
+                .send({
+                    message: 'No metadata found.'
+                });
+        });
 };

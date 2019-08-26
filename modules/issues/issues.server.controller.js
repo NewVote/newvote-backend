@@ -3,255 +3,255 @@
 /**
  * Module dependencies.
  */
-var path = require('path'),
-	mongoose = require('mongoose'),
-	Issue = mongoose.model('Issue'),
-	IssuesController = require('./issues.server.controller'),
-	votes = require('../votes/votes.server.controller'),
-	Solution = mongoose.model('Solution'),
-	errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
-	_ = require('lodash');
+let path = require('path'),
+    mongoose = require('mongoose'),
+    Issue = mongoose.model('Issue'),
+    IssuesController = require('./issues.server.controller'),
+    votes = require('../votes/votes.server.controller'),
+    Solution = mongoose.model('Solution'),
+    errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
+    _ = require('lodash');
 
 /**
  * Create a issue
  */
 exports.create = function (req, res) {
 
-	// if the string is empty revert to default on model
-	if (!req.body.imageUrl) {
-		delete req.body.imageUrl;
-	}
+    // if the string is empty revert to default on model
+    if (!req.body.imageUrl) {
+        delete req.body.imageUrl;
+    }
 
-	var issue = new Issue(req.body);
-	issue.user = req.user;
-	issue.save(function (err) {
-		if(err) {
-			return res.status(400)
-				.send({
-					message: errorHandler.getErrorMessage(err)
-				});
-		} else {
-			res.json(issue);
-		}
-	});
+    let issue = new Issue(req.body);
+    issue.user = req.user;
+    issue.save(function (err) {
+        if(err) {
+            return res.status(400)
+                .send({
+                    message: errorHandler.getErrorMessage(err)
+                });
+        } else {
+            res.json(issue);
+        }
+    });
 };
 
 /**
  * Show the current issue
  */
 exports.read = function (req, res) {
-	// ;
-	IssuesController.attachMetaData([req.issue], req.user)
-		.then(function (issueArr) {
-			const updatedIssue = issueArr[0];
-			res.json(updatedIssue);
-		})
-		.catch(err => {
-			return res.status(400)
-				.send({
-					message: errorHandler.getErrorMessage(err)
-				});
-		});
+    // ;
+    IssuesController.attachMetaData([req.issue], req.user)
+        .then(function (issueArr) {
+            const updatedIssue = issueArr[0];
+            res.json(updatedIssue);
+        })
+        .catch(err => {
+            return res.status(400)
+                .send({
+                    message: errorHandler.getErrorMessage(err)
+                });
+        });
 };
 
 /**
  * Update a issue
  */
 exports.update = function (req, res) {
-	// __v causes version conflicts during tests, so remove from client side request
-	delete req.body.__v;
-	var issue = req.issue;
-	_.extend(issue, req.body);
-	// issue.title = req.body.title;
-	// issue.content = req.body.content;
+    // __v causes version conflicts during tests, so remove from client side request
+    delete req.body.__v;
+    let issue = req.issue;
+    _.extend(issue, req.body);
+    // issue.title = req.body.title;
+    // issue.content = req.body.content;
 
-		issue.save()
-			.then((savedIssue) => res.json(savedIssue))
-			.catch((err) => {
-				return res.status(400)
-					.send({
-						message: errorHandler.getErrorMessage(err)
-					});
-			});
+    issue.save()
+        .then((savedIssue) => res.json(savedIssue))
+        .catch((err) => {
+            return res.status(400)
+                .send({
+                    message: errorHandler.getErrorMessage(err)
+                });
+        });
 };
 
 /**
  * Delete an issue
  */
 exports.delete = function (req, res) {
-	var issue = req.issue;
+    let issue = req.issue;
 
-	issue.remove(function (err) {
-		if(err) {
-			return res.status(400)
-				.send({
-					message: errorHandler.getErrorMessage(err)
-				});
-		} else {
-			res.json(issue);
-		}
-	});
+    issue.remove(function (err) {
+        if(err) {
+            return res.status(400)
+                .send({
+                    message: errorHandler.getErrorMessage(err)
+                });
+        } else {
+            res.json(issue);
+        }
+    });
 };
 
 /**
  * List of Issues
  */
 exports.list = function (req, res) {
-	let query = {};
-	var topicId = req.query.topicId || null;
-	let org = req.organization
-	let orgUrl = org ? org.url : null;
-	let search = req.query.search || null;
-	let showDeleted = req.query.showDeleted || null;
+    let query = {};
+    let topicId = req.query.topicId || null;
+    let org = req.organization
+    let orgUrl = org ? org.url : null;
+    let search = req.query.search || null;
+    let showDeleted = req.query.showDeleted || null;
 
-	let orgMatch = orgUrl ? { 'organizations.url': orgUrl } : {};
-	let topicMatch = topicId ? { 'topics': mongoose.Types.ObjectId(topicId) } : {};
-	let searchMatch = search ? { $text: { $search: search } } : {};
+    let orgMatch = orgUrl ? { 'organizations.url': orgUrl } : {};
+    let topicMatch = topicId ? { 'topics': mongoose.Types.ObjectId(topicId) } : {};
+    let searchMatch = search ? { $text: { $search: search } } : {};
 
-	let showNonDeletedItemsMatch = { $or: [{ 'softDeleted': false }, { 'softDeleted': { $exists: false } }] };
-	let showAllItemsMatch = {};
-	let softDeleteMatch = showDeleted ? showAllItemsMatch : showNonDeletedItemsMatch;
+    let showNonDeletedItemsMatch = { $or: [{ 'softDeleted': false }, { 'softDeleted': { $exists: false } }] };
+    let showAllItemsMatch = {};
+    let softDeleteMatch = showDeleted ? showAllItemsMatch : showNonDeletedItemsMatch;
 
-	Issue.aggregate([
+    Issue.aggregate([
 			{ $match: searchMatch },
 			{ $match: softDeleteMatch },
 			{ $match: topicMatch },
 			{
-				$lookup: {
-					'from': 'organizations',
-					'localField': 'organizations',
-					'foreignField': '_id',
-					'as': 'organizations'
-				}
+			    $lookup: {
+			        'from': 'organizations',
+			        'localField': 'organizations',
+			        'foreignField': '_id',
+			        'as': 'organizations'
+			    }
 			},
 			{ $match: orgMatch },
 			{ $unwind: '$organizations' },
 			{
-				$lookup: {
-					'from': 'topics',
-					'localField': 'topics',
-					'foreignField': '_id',
-					'as': 'topics'
-				}
+			    $lookup: {
+			        'from': 'topics',
+			        'localField': 'topics',
+			        'foreignField': '_id',
+			        'as': 'topics'
+			    }
 			},
 			{ $sort: { 'name': 1 } }
-	])
-		.exec(function (err, issues) {
-			if(err) {
-				return res.status(400)
-					.send({
-						message: errorHandler.getErrorMessage(err)
-					});
-			} else {
-				IssuesController.attachMetaData(issues, req.user)
-					.then(function (issues) {
-						res.json(issues);
-					})
-					.catch(function (err) {
-						res.status(500)
-							.send({
-								message: errorHandler.getErrorMessage(err)
-							});
-					});
-			}
-		});
+    ])
+        .exec(function (err, issues) {
+            if(err) {
+                return res.status(400)
+                    .send({
+                        message: errorHandler.getErrorMessage(err)
+                    });
+            } else {
+                IssuesController.attachMetaData(issues, req.user)
+                    .then(function (issues) {
+                        res.json(issues);
+                    })
+                    .catch(function (err) {
+                        res.status(500)
+                            .send({
+                                message: errorHandler.getErrorMessage(err)
+                            });
+                    });
+            }
+        });
 };
 
 /**
  * Issue middleware
  */
 exports.issueByID = function (req, res, next, id) {
-	console.log('issueById user: ', req.user);
+    console.log('issueById user: ', req.user);
 
-	if(!mongoose.Types.ObjectId.isValid(id)) {
-		return res.status(400)
-			.send({
-				message: 'Issue is invalid'
-			});
-	}
+    if(!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400)
+            .send({
+                message: 'Issue is invalid'
+            });
+    }
 
-	Issue.findById(id)
-		.populate('user', 'displayName')
-		.populate('topics', 'name')
-		.populate('organizations')
-		.exec(function (err, issue) {
-			if(err) {
-				return next(err);
-			} else if(!issue) {
-				return res.status(404)
-					.send({
-						message: 'No issue with that identifier has been found'
-					});
-			}
-			req.issue = issue;
-			next();
-		});
+    Issue.findById(id)
+        .populate('user', 'displayName')
+        .populate('topics', 'name')
+        .populate('organizations')
+        .exec(function (err, issue) {
+            if(err) {
+                return next(err);
+            } else if(!issue) {
+                return res.status(404)
+                    .send({
+                        message: 'No issue with that identifier has been found'
+                    });
+            }
+            req.issue = issue;
+            next();
+        });
 };
 
 exports.attachMetaData = function (issues, user) {
-	if(!issues) return Promise.resolve(issues);
+    if(!issues) return Promise.resolve(issues);
 
-	var issueIds = issues.map(function (issue) {
-		return issue._id;
-	});
+    let issueIds = issues.map(function (issue) {
+        return issue._id;
+    });
 
-	return Solution.find({
-			issues: {
-				$in: issueIds
-			}
-		})
-		.sort('-created')
-		.exec()
-		.then(function (solutions) {
-			return votes.attachVotes(solutions, user)
-				.then(function (solutions) {
-					issues = issues.map(function (issue) {
+    return Solution.find({
+        issues: {
+            $in: issueIds
+        }
+    })
+        .sort('-created')
+        .exec()
+        .then(function (solutions) {
+            return votes.attachVotes(solutions, user)
+                .then(function (solutions) {
+                    issues = issues.map(function (issue) {
 
-						var up = 0,
-							down = 0,
-							total = 0,
-							solutionCount = 0,
-							totalTrendingScore = 0,
-							lastCreated = issue.created;
+                        let up = 0,
+                            down = 0,
+                            total = 0,
+                            solutionCount = 0,
+                            totalTrendingScore = 0,
+                            lastCreated = issue.created;
 
-						//looping through each issue passed in to exported method
+                        //looping through each issue passed in to exported method
 
-						solutions.forEach(function (solution) {
-							//loop through each solution found in the db
+                        solutions.forEach(function (solution) {
+                            //loop through each solution found in the db
 
-							//must check that this solution belongs to the current issue being tested
-							if(solution.issues.indexOf(issue._id.toString()) !== -1) {
-								//found issue id inside solution issues array
-								var currentDate = new Date(lastCreated);
-								var date = new Date(solution.created);
-								var nowDate = new Date();
-								var age = (nowDate.getTime() - date.getTime()) / (1000 * 60 * 60);
+                            //must check that this solution belongs to the current issue being tested
+                            if(solution.issues.indexOf(issue._id.toString()) !== -1) {
+                                //found issue id inside solution issues array
+                                let currentDate = new Date(lastCreated);
+                                let date = new Date(solution.created);
+                                let nowDate = new Date();
+                                let age = (nowDate.getTime() - date.getTime()) / (1000 * 60 * 60);
 
-								up += solution.votes.up;
-								down += solution.votes.down;
-								total += solution.votes.total;
-								solutionCount++;
-								totalTrendingScore += (solution.votes.up / age);
-								lastCreated = date > lastCreated ? date : lastCreated;
-							}
-						});
+                                up += solution.votes.up;
+                                down += solution.votes.down;
+                                total += solution.votes.total;
+                                solutionCount++;
+                                totalTrendingScore += (solution.votes.up / age);
+                                lastCreated = date > lastCreated ? date : lastCreated;
+                            }
+                        });
 
-						issue.solutionMetaData = {
-							votes: {
-								up: up,
-								down: down,
-								total: total
-							},
-							solutionCount: solutionCount,
-							totalTrendingScore: totalTrendingScore,
-							lastCreated: lastCreated
-						};
+                        issue.solutionMetaData = {
+                            votes: {
+                                up: up,
+                                down: down,
+                                total: total
+                            },
+                            solutionCount: solutionCount,
+                            totalTrendingScore: totalTrendingScore,
+                            lastCreated: lastCreated
+                        };
 
-						// console.log(issue.solutionMetaData);
+                        // console.log(issue.solutionMetaData);
 
-						return issue;
-					});
-					return issues;
-				});
-		});
+                        return issue;
+                    });
+                    return issues;
+                });
+        });
 };

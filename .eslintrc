@@ -1,6 +1,6 @@
 {
   rules:                         {
-    indent:                      ['error', 'tab', {'SwitchCase': 1, 'ArrayExpression': 'off'}],
+    indent:                      [2, 4, {'SwitchCase': 1, 'ArrayExpression': 'off'}],
     no-multi-spaces:             2,
     no-underscore-dangle:        0,
     no-use-before-define:        [1, 'nofunc'],
