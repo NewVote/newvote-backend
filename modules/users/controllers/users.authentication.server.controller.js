@@ -42,11 +42,37 @@ var addToMailingList = function (user) {
 	})
 }
 
+exports.checkAuthStatus = function (req, res, next) {
+	passport.authenticate('check-status', {session: false}, function (err, user, info) {
+		if (err || !user) {
+			return res.status(400)
+				.send(info);
+		}
+
+		// Remove sensitive data before login
+		user.password = undefined;
+		user.salt = undefined;
+		user.verificationCode = undefined;
+
+		req.login(user, function (err) {
+			if (err) {
+				res.status(400)
+					.send(err);
+			} else {
+				const payload = { _id: user._id, roles: user.roles, verified: user.verified };
+				const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
+
+				res.cookie('credentials', JSON.stringify({ user, token }), { domain: 'newvote.org', secure: false, overwrite: true });
+				return res.json({ user, token });
+			}
+		});
+	})(req, res, next);
+}
+
 /**
  * Signup
  */
 exports.signup = function (req, res) {
-
 	const { recaptchaResponse, email, password } = req.body;
 	const verificationCode = req.params.verificationCode;
 
@@ -63,7 +89,7 @@ exports.signup = function (req, res) {
 	// Init Variables
 	var user = new User(req.body);
 	var message = null;
-	// var recaptchaResponse = req.body.recaptchaResponse;
+	var recaptchaResponse = req.body.recaptchaResponse;
 
 	//ensure captcha code is valid or return with an error
 	recaptcha.checkResponse(recaptchaResponse, function (err, response) {
@@ -73,13 +99,6 @@ exports.signup = function (req, res) {
 					message: 'Recaptcha verification failed.'
 				});
 		}
-
-		// if(!response.success) {
-		// 	return res.status(400)
-		// 		.send({
-		// 			message: 'CAPTCHA verification failed'
-		// 		});
-		// }
 		else {
 			//user is not a robot, captcha success, continue with sign up
 			// Add missing user fields
@@ -172,7 +191,43 @@ exports.signin = function (req, res, next) {
 				.send(info);
 		} else {
 			// need to update user orgs in case they've voted on a new org
-			exports.updateOrgs(user);
+			// exports.updateOrgs(user);
+
+			// User is already signed to another organization and is verifying with current org
+			if (req.cookies.credentials) {
+				let { credentials } = req.cookies
+				credentials = JSON.parse(credentials);
+				
+				return jwt.verify(credentials.token, config.jwtSecret, function (err, verifiedUser) {
+					if (err) {
+						res.clearCookie('credentials', { path: '/', domain: 'newvote.org' })
+						throw('Invalid token'); 
+					}
+
+					const organizationPromise = Organization.findOne({ _id: req.organization._id });
+					const userPromise = User.findOne({_id: verifiedUser._id});
+
+					return Promise.all([organizationPromise, userPromise])
+						.then((promises) => {
+							const [organization, user] = promises;
+							user.organizations.push(organization._id);
+							return user.save();
+						})
+						.then((savedUser) => {
+							savedUser.password = undefined;
+							savedUser.salt = undefined;
+							savedUser.verificationCode = undefined;	
+							res.clearCookie('credentials', { path: '/', domain: 'newvote.org' })
+							
+							// updated user so create new token
+							const payload = { _id: savedUser._id, roles: savedUser.roles, verified: savedUser.verified };
+							const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
+
+							res.cookie('credentials', JSON.stringify({ user: savedUser, token }), { domain: 'newvote.org', secure: false, overwrite: true });
+							return res.json({ user: savedUser, token });
+						});
+				})
+			}
 
 			User.populate(user, { path: 'country' })
 				.then(function (user) {
@@ -189,6 +244,8 @@ exports.signin = function (req, res, next) {
 						} else {
 							const payload = { _id: user._id, roles: user.roles, verified: user.verified };
 							const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
+
+							res.cookie('credentials', JSON.stringify({ user, token }), { domain: 'newvote.org', secure: false, overwrite: true });
 							res.json({ user: user, token: token });
 						}
 					});
@@ -274,16 +331,14 @@ exports.oauthCallback = function (strategy) {
  * Helper function to create or update a user after AAF Rapid SSO auth
  */
 exports.saveRapidProfile = function (req, profile, done) {
-	const organization = req.organization;
-	if(!organization){
-		console.error('no organization in request body')
-	}
 
-	console.log('looking up user: ', profile.mail);
-	User.findOne({ email: profile.mail }, '-salt -password -verificationCode', function (err, user) {
-		if (err) {
-			return done(err);
-		} else {
+	const organizationPromise = Organization.findOne({_id : req.organization._id});
+	const userPromise = User.findOne({ email: profile.mail },  '-salt -password -verificationCode');
+
+	Promise.all([organizationPromise, userPromise])
+		.then((promises) => {
+			const [organization, user] = promises;
+
 			if (!user) {
 				console.log('no user, creating new account')
 				var possibleUsername = profile.cn || profile.displayname || profile.givenname + profile.surname || ((profile.mail) ? profile.mail.split('@')[0] : '');
@@ -304,9 +359,7 @@ exports.saveRapidProfile = function (req, profile, done) {
 					});
 
 					// And save the user
-					user.save(function (err) {
-						return done(err, user);
-					});
+					return user.save();
 				});
 			} else {
 				if(organization) {
@@ -324,14 +377,72 @@ exports.saveRapidProfile = function (req, profile, done) {
 					return done(new Error('ITA Match please login again'))
 				}
 				user.jti = profile.jti
-				user.save()
-					.then(user => {
-						return done(err, user);
-					})
+				return user.save();
 			}
-		}
-	});
+		})
+		.then((user) => {
+			return done(null, user);
+		})
+		.catch((err) => done(err));
 }
+	// const organization = req.organization;
+	// if(!organization){
+	// 	console.error('no organization in request body')
+	// }
+
+	// console.log('looking up user: ', profile.mail);
+	// User.findOne({ email: profile.mail }, '-salt -password -verificationCode', function (err, user) {
+	// 	if (err) {
+	// 		return done(err);
+	// 	} else {
+	// 		if (!user) {
+	// 			console.log('no user, creating new account')
+	// 			var possibleUsername = profile.cn || profile.displayname || profile.givenname + profile.surname || ((profile.mail) ? profile.mail.split('@')[0] : '');
+
+	// 			User.findUniqueUsername(possibleUsername, null, function (availableUsername) {
+	// 				console.log('generated username: ', availableUsername)
+	// 				user = new User({
+	// 					firstName: profile.givenname,
+	// 					lastName: profile.surname,
+	// 					username: profile.mail,
+	// 					displayName: profile.displayname,
+	// 					email: profile.mail,
+	// 					provider: 'aaf',
+	// 					ita: profile.ita,
+	// 					roles: ['user'],
+	// 					verified: true,
+	// 					organizations: [organization._id]
+	// 				});
+
+	// 				// And save the user
+	// 				user.save(function (err) {
+	// 					return done(err, user);
+	// 				});
+	// 			});
+	// 		} else {
+	// 			if(organization) {
+	// 				const orgExists = user.organizations.find((e) => {
+	// 					if(e) {
+	// 						return e._id.equals(organization._id)
+	// 					}
+	// 				});
+	// 				if (!orgExists) user.organizations.push(organization._id);
+	// 			}
+
+	// 			console.log('found existing user')
+	// 			// user exists update ITA and return user
+	// 			if (user.jti && user.jti === profile.jti) {
+	// 				return done(new Error('ITA Match please login again'))
+	// 			}
+	// 			user.jti = profile.jti
+	// 			user.save()
+	// 				.then(user => {
+	// 					return done(err, user);
+	// 				})
+	// 		}
+	// 	}
+	// });
+
 
 /**
  * Helper function to save or update a OAuth user profile
