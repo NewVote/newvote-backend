@@ -62,9 +62,15 @@ exports.checkAuthStatus = function (req, res, next) {
 			} else {
 				const payload = { _id: user._id, roles: user.roles, verified: user.verified };
 				const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
+				const creds = { user, token }
+				const opts = {
+					domain: 'newvote.org',
+					httpOnly: false,
+					secure: false
+				}
 
-				res.cookie('credentials', JSON.stringify({ user, token }), { domain: 'newvote.org', secure: false, overwrite: true });
-				return res.json({ user, token });
+				res.cookie('credentials', JSON.stringify(creds), opts)
+				res.json(creds);
 			}
 		});
 	})(req, res, next);
