@@ -244,6 +244,8 @@ exports.solutionByID = function(req, res, next, id) {
 function filterSoftDeleteProposals(solutions, showDeleted) {
     if (showDeleted) return solutions;
 
+    if (showDeleted) return solutions;
+
     return solutions.map(solution => {
         solution.proposals = solution.proposals.filter(proposal => {
             return proposal.softDeleted === false;

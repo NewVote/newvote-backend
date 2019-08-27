@@ -18,28 +18,32 @@ owasp.config({
     minLength: 6,
     minPhraseLength: 20,
     minOptionalTestsToPass: 3
-})
+});
 
 /**
  * A Validation function for local strategy properties
  */
-let validateLocalStrategyProperty = function (property) {
-    return ((this.provider !== 'local' && !this.updated) || property.length);
+let validateLocalStrategyProperty = function(property) {
+    return (this.provider !== 'local' && !this.updated) || property.length;
 };
 
 /**
  * A Validation function for checking UQ emails
  */
-let validateUQEmail = function (email) {
+let validateUQEmail = function(email) {
     let regex = /^[a-zA-Z0-9_.+-]+@(?:(?:[a-zA-Z0-9-]+\.)?[a-zA-Z]+\.)?(uqconnect|uq)\.(edu|net)\.au$/;
-    let pass = (email.match(regex) != null);
+    let pass = email.match(regex) != null;
     return pass;
-}
+};
 /**
  * A Validation function for local strategy email
  */
-let validateLocalStrategyEmail = function (email) {
-    return ((this.provider !== 'local' && !this.updated) || (validator.isEmail(email) && validateUQEmail(email)) || (email == 'rohan.m.richards@gmail.com'));
+let validateLocalStrategyEmail = function(email) {
+    return (
+        (this.provider !== 'local' && !this.updated) ||
+        (validator.isEmail(email) && validateUQEmail(email)) ||
+        email == 'rohan.m.richards@gmail.com'
+    );
 };
 
 /**
@@ -148,10 +152,12 @@ let UserSchema = new Schema({
     providerData: {},
     additionalProvidersData: {},
     roles: {
-        type: [{
-            type: String,
-            enum: ['guest', 'user', 'admin', 'endorser']
-        }],
+        type: [
+            {
+                type: String,
+                enum: ['guest', 'user', 'admin', 'endorser']
+            }
+        ],
         default: ['guest'],
         required: 'Please provide at least one role'
     },
@@ -183,10 +189,9 @@ let UserSchema = new Schema({
 /**
  * Hook a pre save method to hash the password
  */
-UserSchema.pre('save', function (next) {
+UserSchema.pre('save', function(next) {
     if (this.password && this.isModified('password')) {
-        this.salt = crypto.randomBytes(16)
-            .toString('base64');
+        this.salt = crypto.randomBytes(16).toString('base64');
         this.password = this.hashPassword(this.password);
     }
 
@@ -196,8 +201,12 @@ UserSchema.pre('save', function (next) {
 /**
  * Hook a pre validate method to test the local password
  */
-UserSchema.pre('validate', function (next) {
-    if (this.provider === 'local' && this.password && this.isModified('password')) {
+UserSchema.pre('validate', function(next) {
+    if (
+        this.provider === 'local' &&
+        this.password &&
+        this.isModified('password')
+    ) {
         let result = owasp.test(this.password);
         if (result.requiredTestErrors.length) {
             let error = result.requiredTestErrors.join(' ');
@@ -211,9 +220,16 @@ UserSchema.pre('validate', function (next) {
 /**
  * Create instance method for hashing a password
  */
-UserSchema.methods.hashPassword = function (password) {
+UserSchema.methods.hashPassword = function(password) {
     if (this.salt && password) {
-        return crypto.pbkdf2Sync(password, Buffer.from(this.salt, 'base64'), 100000, 64, 'SHA512')
+        return crypto
+            .pbkdf2Sync(
+                password,
+                Buffer.from(this.salt, 'base64'),
+                100000,
+                64,
+                'SHA512'
+            )
             .toString('base64');
     } else {
         return password;
@@ -223,17 +239,24 @@ UserSchema.methods.hashPassword = function (password) {
 /**
  * Create instance method for authenticating user
  */
-UserSchema.methods.authenticate = function (password) {
+UserSchema.methods.authenticate = function(password) {
     return this.password === this.hashPassword(password);
 };
 
 /**
  * Create instance method for hashing a verification code (sent by SMS)
  */
-UserSchema.methods.hashVerificationCode = function (code) {
+UserSchema.methods.hashVerificationCode = function(code) {
     if (this.salt && code) {
         console.log('hashing code: ', code);
-        return crypto.pbkdf2Sync(code.toString(), Buffer.from(this.salt, 'base64'), 100000, 64, 'SHA512')
+        return crypto
+            .pbkdf2Sync(
+                code.toString(),
+                Buffer.from(this.salt, 'base64'),
+                100000,
+                64,
+                'SHA512'
+            )
             .toString('base64');
     } else {
         console.log('salt was not present');
@@ -244,34 +267,41 @@ UserSchema.methods.hashVerificationCode = function (code) {
 /**
  * Create instance method for confirming the sms verification code
  */
-UserSchema.methods.verify = function (code) {
+UserSchema.methods.verify = function(code) {
     return this.verificationCode === this.hashVerificationCode(code);
 };
 
-UserSchema.statics.generateVerificationCode = function () {
+UserSchema.statics.generateVerificationCode = function() {
     return Math.floor(100000 + Math.random() * 900000);
 };
 
 /**
  * Find possible not used username
  */
-UserSchema.statics.findUniqueUsername = function (username, suffix, callback) {
+UserSchema.statics.findUniqueUsername = function(username, suffix, callback) {
     let _this = this;
     let possibleUsername = username.toLowerCase() + (suffix || '');
 
-    _this.findOne({
-        username: possibleUsername
-    }, function (err, user) {
-        if (!err) {
-            if (!user) {
-                callback(possibleUsername);
+    _this.findOne(
+        {
+            username: possibleUsername
+        },
+        function(err, user) {
+            if (!err) {
+                if (!user) {
+                    callback(possibleUsername);
+                } else {
+                    return _this.findUniqueUsername(
+                        username,
+                        (suffix || 0) + 1,
+                        callback
+                    );
+                }
             } else {
-                return _this.findUniqueUsername(username, (suffix || 0) + 1, callback);
+                callback(null);
             }
-        } else {
-            callback(null);
         }
-    });
+    );
 };
 
 /**
@@ -279,8 +309,8 @@ UserSchema.statics.findUniqueUsername = function (username, suffix, callback) {
  * Returns a promise that resolves with the generated passphrase, or rejects with an error if something goes wrong.
  * NOTE: Passphrases are only tested against the required owasp strength tests, and not the optional tests.
  */
-UserSchema.statics.generateRandomPassphrase = function () {
-    return new Promise(function (resolve, reject) {
+UserSchema.statics.generateRandomPassphrase = function() {
+    return new Promise(function(resolve, reject) {
         let password = '';
         let repeatingCharacters = new RegExp('(.)\\1{2,}', 'g');
 
@@ -289,11 +319,11 @@ UserSchema.statics.generateRandomPassphrase = function () {
         while (password.length < 20 || repeatingCharacters.test(password)) {
             // build the random password
             password = generatePassword.generate({
-                length: Math.floor(Math.random() * (20)) + 20, // randomize length between 20 and 40 characters
+                length: Math.floor(Math.random() * 20) + 20, // randomize length between 20 and 40 characters
                 numbers: true,
                 symbols: false,
                 uppercase: true,
-                excludeSimilarCharacters: true,
+                excludeSimilarCharacters: true
             });
 
             // check if we need to remove any repeating characters.
@@ -301,9 +331,12 @@ UserSchema.statics.generateRandomPassphrase = function () {
         }
 
         // Send the rejection back if the passphrase fails to pass the strength test
-        if (owasp.test(password)
-            .requiredTestErrors.length) {
-            reject(new Error('An unexpected problem occured while generating the random passphrase'));
+        if (owasp.test(password).requiredTestErrors.length) {
+            reject(
+                new Error(
+                    'An unexpected problem occured while generating the random passphrase'
+                )
+            );
         } else {
             // resolve with the validated passphrase
             resolve(password);

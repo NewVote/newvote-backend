@@ -131,6 +131,12 @@ exports.topicByID = function(req, res, next, id) {
         });
     }
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).send({
+            message: 'Topic is invalid'
+        });
+    }
+
     Topic.findById(id)
         .populate('user', 'displayName')
         .populate('organizations')

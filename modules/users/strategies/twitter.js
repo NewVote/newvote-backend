@@ -16,7 +16,7 @@ module.exports = function (config) {
         passReqToCallback: true
     },
     function (req, token, tokenSecret, profile, done) {
-    // Set the provider data and include tokens
+        // Set the provider data and include tokens
         let providerData = profile._json;
         providerData.token = token;
         providerData.tokenSecret = tokenSecret;

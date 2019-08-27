@@ -14,9 +14,9 @@ if (testConfig.coverage) {
 }
 
 // Karma configuration
-module.exports = function (karmaConfig) {
+module.exports = function(karmaConfig) {
     karmaConfig.set({
-    // Frameworks to use
+        // Frameworks to use
         frameworks: ['jasmine'],
 
         preprocessors: {
@@ -33,13 +33,19 @@ module.exports = function (karmaConfig) {
         ngHtml2JsPreprocessor: {
             moduleName: 'mean',
 
-            cacheIdFromPath: function (filepath) {
+            cacheIdFromPath: function(filepath) {
                 return filepath;
-            },
+            }
         },
 
         // List of files / patterns to load in the browser
-        files: _.union(defaultAssets.client.lib.js, defaultAssets.client.lib.tests, defaultAssets.client.js, testAssets.tests.client, defaultAssets.client.views),
+        files: _.union(
+            defaultAssets.client.lib.js,
+            defaultAssets.client.lib.tests,
+            defaultAssets.client.js,
+            testAssets.tests.client,
+            defaultAssets.client.views
+        ),
 
         // Test results reporter to use
         // Possible values: 'dots', 'progress', 'junit', 'growl', 'coverage'
@@ -47,7 +53,7 @@ module.exports = function (karmaConfig) {
 
         // Configure the coverage reporter
         coverageReporter: {
-            dir : 'coverage/client',
+            dir: 'coverage/client',
             reporters: [
                 // Reporters not supporting the `file` property
                 { type: 'html', subdir: 'report-html' },

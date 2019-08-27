@@ -332,7 +332,7 @@ exports.oauthCallback = function(strategy) {
     return function(req, res, next) {
         // ;
         try {
-            const sessionRedirectURL = req.session.redirect_to;
+            var sessionRedirectURL = req.session.redirect_to;
             delete req.session.redirect_to;
         } catch (e) {
             // quietly now
@@ -428,7 +428,6 @@ exports.saveRapidProfile = function(req, profile, done) {
                         verified: true,
                         organizations: [organization._id]
                     });
-
                     // And save the user
                     return user.save();
                 });

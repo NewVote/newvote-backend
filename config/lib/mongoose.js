@@ -11,9 +11,9 @@ let config = require('../config'),
 mongoose.Promise = global.Promise;
 
 // Load the mongoose models
-module.exports.loadModels = function (callback) {
+module.exports.loadModels = function(callback) {
     // Globbing model files
-    config.files.server.models.forEach(function (modelPath) {
+    config.files.server.models.forEach(function(modelPath) {
         require(path.resolve(modelPath));
     });
 
@@ -21,16 +21,15 @@ module.exports.loadModels = function (callback) {
 };
 
 // Initialize Mongoose
-module.exports.connect = function (cb) {
+module.exports.connect = function(cb) {
     let _this = this;
 
-    var db = mongoose.connect(config.db.uri, config.db.options, function (err) {
-    // Log Error
+    const db = mongoose.connect(config.db.uri, config.db.options, function(err) {
+        // Log Error
         if (err) {
             console.error(chalk.red('Could not connect to MongoDB!'));
             console.log(err);
         } else {
-
             // Enabling mongoose debug mode if required
             mongoose.set('debug', config.db.debug);
 
@@ -40,8 +39,8 @@ module.exports.connect = function (cb) {
     });
 };
 
-module.exports.disconnect = function (cb) {
-    mongoose.disconnect(function (err) {
+module.exports.disconnect = function(cb) {
+    mongoose.disconnect(function(err) {
         console.info(chalk.yellow('Disconnected from MongoDB.'));
         cb(err);
     });
