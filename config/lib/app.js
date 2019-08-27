@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-var config = require('../config'),
+let config = require('../config'),
 	mongoose = require('./mongoose'),
 	express = require('./express'),
 	chalk = require('chalk'),
@@ -26,7 +26,7 @@ module.exports.loadModels = function loadModels() {
 module.exports.init = function init(callback) {
 	mongoose.connect(function (db) {
 		// Initialize express
-		var app = express.init(db);
+		let app = express.init(db);
 		if(callback) callback(app, db, config);
 	});
 };

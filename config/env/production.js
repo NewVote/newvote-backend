@@ -76,17 +76,17 @@ module.exports = {
 			}
 		}
 	},
-    mailchimp: {
+	mailchimp: {
   	  api: process.env.MAILCHIMP_API_KEY || 'MAILCHIMP_API_KEY',
   	  list: process.env.MAILCHIMP_LIST_ID || 'MAILCHIMP_LIST_ID'
-    },
+	},
 	smsBroadcast: {
 		username: process.env.SMS_USERNAME || '',
-        password: process.env.SMS_PASSWORD || ''
+		password: process.env.SMS_PASSWORD || ''
 	},
-    reCaptcha: {
-        secret: process.env.RECAPTCHA_SECRET || ''
-    },
+	reCaptcha: {
+		secret: process.env.RECAPTCHA_SECRET || ''
+	},
 	seedDB: {
 		seed: process.env.MONGO_SEED === 'true' ? true : false,
 		options: {

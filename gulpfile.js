@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-var _ = require('lodash'),
+let _ = require('lodash'),
 	defaultAssets = require('./config/assets/default'),
 	prodAssets = require('./config/assets/production'),
 	testAssets = require('./config/assets/test'),
@@ -114,7 +114,7 @@ gulp.task('watch', function (done) {
 
 // ESLint JS linting task
 gulp.task('lint', function () {
-	var assets = _.union(
+	let assets = _.union(
 		defaultAssets.server.gulpConfig,
 		defaultAssets.server.allJS
 	);
@@ -128,8 +128,8 @@ gulp.task('lint', function () {
 // Mocha tests task
 gulp.task('mocha', function (done) {
 	// Open mongoose connections
-	var mongoose = require('./config/lib/mongoose.js');
-	var error;
+	let mongoose = require('./config/lib/mongoose.js');
+	let error;
 
 	// Connect mongoose
 	mongoose.connect(function () {
@@ -167,7 +167,7 @@ gulp.task('karma', function (done) {
 // Drops the MongoDB database, used in e2e testing
 gulp.task('dropdb', function (done) {
 	// Use mongoose configuration
-	var mongoose = require('./config/lib/mongoose.js');
+	let mongoose = require('./config/lib/mongoose.js');
 
 	mongoose.connect(function (db) {
 		db.connection.db.dropDatabase(function (err) {
