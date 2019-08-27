@@ -326,7 +326,7 @@ describe('/api/votes/:voteId GET', async function () {
     //     newDbVote.should.have.property('voteValue');
     //     return newDbVote.voteValue.should.equal(parseInt(alteredVote.voteValue));   
     // })
-})
+// })
 
 // describe('/api/votes/:newVote._id DELETE', async function () {
 

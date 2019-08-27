@@ -33,15 +33,19 @@ let ProposalSchema = new Schema({
         type: Schema.ObjectId,
         ref: 'User'
     },
-    solutions: [{
-        type: Schema.ObjectId,
-        ref: 'Solution',
-        required: true
-    }],
-    goals: [{
-        type: Schema.ObjectId,
-        ref: 'Solution'
-    }],
+    solutions: [
+        {
+            type: Schema.ObjectId,
+            ref: 'Solution',
+            required: true
+        }
+    ],
+    goals: [
+        {
+            type: Schema.ObjectId,
+            ref: 'Solution'
+        }
+    ],
     votes: {
         up: Number,
         down: Number,
@@ -55,15 +59,19 @@ let ProposalSchema = new Schema({
         type: Boolean,
         default: false
     },
-    organizations:  {
+    organizations: {
         type: Schema.ObjectId,
         ref: 'Organization'
     },
     softDeleted: {
         type: Boolean,
         default: false
+    },
+    suggestion: {
+        type: Schema.ObjectId,
+        ref: 'Suggestion'
     }
 });
 
-ProposalSchema.index({ 'title': 'text', 'description': 'text' });
+ProposalSchema.index({ title: 'text', description: 'text' });
 mongoose.model('Proposal', ProposalSchema);

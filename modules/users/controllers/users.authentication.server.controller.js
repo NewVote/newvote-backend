@@ -3,9 +3,11 @@
 /**
  * Module dependencies.
  */
-let path = require('path'),
+const path = require('path'),
     config = require(path.resolve('./config/config')),
-    errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
+    errorHandler = require(path.resolve(
+        './modules/core/errors.server.controller'
+    )),
     _ = require('lodash'),
     mongoose = require('mongoose'),
     jwt = require('jsonwebtoken'),
@@ -21,66 +23,90 @@ let path = require('path'),
     async = require('async');
 
 // URLs for which user can't be redirected on signin
-let noReturnUrls = [
-    '/authentication/signin',
-    '/authentication/signup'
-];
+const noReturnUrls = ['/authentication/signin', '/authentication/signup'];
 
-let recaptcha = new Recaptcha({
+const recaptcha = new Recaptcha({
     secret: config.reCaptcha.secret,
     verbose: true
 });
 
-let addToMailingList = function (user) {
-
-    let mailchimp = new Mailchimp(config.mailchimp.api);
-    let MAILCHIMP_LIST_ID = config.mailchimp.list;
+const addToMailingList = function(user) {
+    const mailchimp = new Mailchimp(config.mailchimp.api);
+    const MAILCHIMP_LIST_ID = config.mailchimp.list;
 
     return mailchimp.post(`/lists/${MAILCHIMP_LIST_ID}/members`, {
         email_address: user.email,
         status: 'subscribed'
-    })
-}
+    });
+};
+
+exports.checkAuthStatus = function(req, res, next) {
+    passport.authenticate('check-status', { session: false }, function(
+        err,
+        user,
+        info
+    ) {
+        debugger;
+        if (err || !user) {
+            return res.status(400).send(info);
+        }
+
+        // Remove sensitive data before login
+        user.password = undefined;
+        user.salt = undefined;
+        user.verificationCode = undefined;
+
+        req.login(user, function(err) {
+            if (err) {
+                res.status(400).send(err);
+            } else {
+                const payload = {
+                    _id: user._id,
+                    roles: user.roles,
+                    verified: user.verified
+                };
+                const token = jwt.sign(payload, config.jwtSecret, {
+                    expiresIn: config.jwtExpiry
+                });
+                const creds = { user, token };
+                const opts = {
+                    domain: 'newvote.org',
+                    httpOnly: false,
+                    secure: false
+                };
+
+                res.cookie('credentials', JSON.stringify(creds), opts);
+                res.json(creds);
+            }
+        });
+    })(req, res, next);
+};
 
 /**
  * Signup
  */
-exports.signup = function (req, res) {
-
+exports.signup = function(req, res) {
+    // Init Variables
+    const user = new User(req.body);
     const { recaptchaResponse, email, password } = req.body;
     const verificationCode = req.params.verificationCode;
 
     if (!email || !password) {
-        return res.status(400)
-            .send({
-                message: 'Email / Password Missing'
-            });
+        return res.status(400).send({
+            message: 'Email / Password Missing'
+        });
     }
 
     // For security measurement we remove the roles from the req.body object
     delete req.body.roles;
 
-    // Init Variables
-    let user = new User(req.body);
-    let message = null;
-    // var recaptchaResponse = req.body.recaptchaResponse;
-
     //ensure captcha code is valid or return with an error
-    recaptcha.checkResponse(recaptchaResponse, function (err, response) {
+    recaptcha.checkResponse(recaptchaResponse, function(err, response) {
         if (err || !response.success) {
-            return res.status(400)
-                .send({
-                    message: 'Recaptcha verification failed.'
-                });
-        }
-
-        // if(!response.success) {
-        // 	return res.status(400)
-        // 		.send({
-        // 			message: 'CAPTCHA verification failed'
-        // 		});
-        // }
-        else {
+            return res.status(400).send({
+                message: 'Recaptcha verification failed.'
+            });
+        } else {
             //user is not a robot, captcha success, continue with sign up
             // Add missing user fields
             user.provider = 'local';
@@ -99,23 +125,26 @@ exports.signup = function (req, res) {
                                     // console.log('Added user to mailchimp');
                                 })
                                 .catch(err => {
-                                    console.log('Error saving to mailchimp: ', err);
-                                })
+                                    console.log(
+                                        'Error saving to mailchimp: ',
+                                        err
+                                    );
+                                });
                         } catch (err) {
                             console.log('Issue with mailchimp: ', err);
                         }
                         return loginUser(req, res, savedUser);
                     })
                     .catch(err => {
-                        return res.status(400)
-                            .send({
-                                message: errorHandler.getErrorMessage(err)
-                            });
-                    })
+                        return res.status(400).send({
+                            message: errorHandler.getErrorMessage(err)
+                        });
+                    });
             }
 
-            return user.save()
-                .then((doc) => {
+            return user
+                .save()
+                .then(doc => {
                     try {
                         addToMailingList(doc)
                             .then(results => {
@@ -123,7 +152,7 @@ exports.signup = function (req, res) {
                             })
                             .catch(err => {
                                 console.log('Error saving to mailchimp: ', err);
-                            })
+                            });
                     } catch (err) {
                         console.log('Issue with mailchimp: ', err);
                     }
@@ -132,18 +161,17 @@ exports.signup = function (req, res) {
                 })
                 .catch(err => {
                     console.log(err, 'this is err');
-                    return res.status(400)
-                        .send({
-                            message: errorHandler.getErrorMessage(err)
-                        });
-                })
+                    return res.status(400).send({
+                        message: errorHandler.getErrorMessage(err)
+                    });
+                });
         }
     });
 };
 
-let buildMessage = function (user, code, req) {
-    let messageString = '';
-    let url = req.protocol + '://' + req.get('host') + '/verify/' + code;
+const buildMessage = function(user, code, req) {
+    const messageString = '';
+    const url = req.protocol + '://' + req.get('host') + '/verify/' + code;
 
     messageString += `<h3> Welcome ${user.firstName} </h3>`;
     messageString += `<p>Thank you for joining the NewVote platform, you are almost ready to start having your say!
@@ -153,46 +181,123 @@ let buildMessage = function (user, code, req) {
     return messageString;
 };
 
-let sendEmail = function (user, pass, req) {
+const sendEmail = function(user, pass, req) {
     return transporter.sendMail({
         from: process.env.MAILER_FROM,
         to: user.email,
         subject: 'NewVote UQU Verification',
         html: buildMessage(user, pass, req)
-    })
-}
+    });
+};
 
 /**
  * Signin after passport authentication
  */
-exports.signin = function (req, res, next) {
-    passport.authenticate('local', { session: false }, function (err, user, info) {
+exports.signin = function(req, res, next) {
+    passport.authenticate('local', { session: false }, function(
+        err,
+        user,
+        info
+    ) {
         if (err || !user) {
-            res.status(400)
-                .send(info);
+            res.status(400).send(info);
         } else {
             // need to update user orgs in case they've voted on a new org
-            exports.updateOrgs(user);
+            // exports.updateOrgs(user);
 
-            User.populate(user, { path: 'country' })
-                .then(function (user) {
+            // User is already signed to another organization and is verifying with current org
+            if (req.cookies.credentials) {
+                let { credentials } = req.cookies;
+                credentials = JSON.parse(credentials);
 
-                    // Remove sensitive data before login
-                    user.password = undefined;
-                    user.salt = undefined;
-                    user.verificationCode = undefined;
+                return jwt.verify(credentials.token, config.jwtSecret, function(
+                    err,
+                    verifiedUser
+                ) {
+                    if (err) {
+                        res.clearCookie('credentials', {
+                            path: '/',
+                            domain: 'newvote.org'
+                        });
+                        throw 'Invalid token';
+                    }
 
-                    req.login(user, function (err) {
-                        if (err) {
-                            res.status(400)
-                                .send(err);
-                        } else {
-                            const payload = { _id: user._id, roles: user.roles, verified: user.verified };
-                            const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
-                            res.json({ user: user, token: token });
-                        }
+                    const organizationPromise = Organization.findOne({
+                        _id: req.organization._id
                     });
+                    const userPromise = User.findOne({ _id: verifiedUser._id });
+
+                    return Promise.all([organizationPromise, userPromise])
+                        .then(promises => {
+                            const [organization, user] = promises;
+                            user.organizations.push(organization._id);
+                            return user.save();
+                        })
+                        .then(savedUser => {
+                            savedUser.password = undefined;
+                            savedUser.salt = undefined;
+                            savedUser.verificationCode = undefined;
+                            res.clearCookie('credentials', {
+                                path: '/',
+                                domain: 'newvote.org'
+                            });
+
+                            // updated user so create new token
+                            const payload = {
+                                _id: savedUser._id,
+                                roles: savedUser.roles,
+                                verified: savedUser.verified
+                            };
+                            const token = jwt.sign(payload, config.jwtSecret, {
+                                expiresIn: config.jwtExpiry
+                            });
+                            const creds = { user, token };
+                            const opts = {
+                                domain: 'newvote.org',
+                                httpOnly: false,
+                                secure: false
+                            };
+
+                            res.cookie(
+                                'credentials',
+                                JSON.stringify(creds),
+                                opts
+                            );
+                            res.json(creds);
+                        });
                 });
+            }
+
+            User.populate(user, { path: 'country' }).then(function(user) {
+                // Remove sensitive data before login
+                user.password = undefined;
+                user.salt = undefined;
+                user.verificationCode = undefined;
+
+                req.login(user, function(err) {
+                    if (err) {
+                        res.status(400).send(err);
+                    } else {
+                        const payload = {
+                            _id: user._id,
+                            roles: user.roles,
+                            verified: user.verified
+                        };
+                        const token = jwt.sign(payload, config.jwtSecret, {
+                            expiresIn: config.jwtExpiry
+                        });
+                        const creds = { user, token };
+                        const opts = {
+                            domain: 'newvote.org',
+                            httpOnly: false,
+                            secure: false
+                        };
+
+                        res.cookie('credentials', JSON.stringify(creds), opts);
+                        res.json(creds);
+                    }
+                });
+            });
         }
     })(req, res, next);
 };
@@ -200,7 +305,7 @@ exports.signin = function (req, res, next) {
 /**
  * Signout
  */
-exports.signout = function (req, res) {
+exports.signout = function(req, res) {
     req.logout();
     res.redirect('/');
 };
@@ -208,8 +313,8 @@ exports.signout = function (req, res) {
 /**
  * OAuth provider call
  */
-exports.oauthCall = function (strategy, scope) {
-    return function (req, res, next) {
+exports.oauthCall = function(strategy, scope) {
+    return function(req, res, next) {
         // Set redirection path on session.
         // Do not redirect to a signin or signup page
         if (noReturnUrls.indexOf(req.query.redirect_to) === -1) {
@@ -223,8 +328,8 @@ exports.oauthCall = function (strategy, scope) {
 /**
  * OAuth callback
  */
-exports.oauthCallback = function (strategy) {
-    return function (req, res, next) {
+exports.oauthCallback = function(strategy) {
+    return function(req, res, next) {
         // ;
         try {
             const sessionRedirectURL = req.session.redirect_to;
@@ -233,38 +338,50 @@ exports.oauthCallback = function (strategy) {
             // quietly now
         }
 
-        passport.authenticate(strategy, function (err, user, redirectURL) {
+        passport.authenticate(strategy, function(err, user, redirectURL) {
             //   https://rapid.test.aaf.edu.au/jwt/authnrequest/research/4txVkEDrvjAH6PxxlCKZGg
             // need to generate url from org in request cookie here
-            let orgObject = req.organization
+            let orgObject = req.organization;
             let org = orgObject ? orgObject.url : 'home';
-            let host = ''
+            let host = '';
             if (config.node_env === 'development') {
-                host = `http://${org}.localhost.newvote.org:4200`
+                host = `http://${org}.localhost.newvote.org:4200`;
             } else {
-                host = `https://${org}.newvote.org`
+                host = `https://${org}.newvote.org`;
             }
 
             if (err) {
-                return res.redirect(host + '/auth/login?err=' + encodeURIComponent(errorHandler.getErrorMessage(err)));
+                return res.redirect(
+                    host +
+                        '/auth/login?err=' +
+                        encodeURIComponent(errorHandler.getErrorMessage(err))
+                );
             }
             if (!user) {
                 return res.redirect(host + '/auth/login?err="NO_USER"');
             }
-            req.login(user, function (err) {
+            req.login(user, function(err) {
                 if (err) {
                     return res.redirect(host + '/auth/login');
                 }
-                const payload = { _id: user._id, roles: user.roles, verified: user.verified };
-                const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
-                let creds = { user, token }
-                let opts = {
+                const payload = {
+                    _id: user._id,
+                    roles: user.roles,
+                    verified: user.verified
+                };
+                const token = jwt.sign(payload, config.jwtSecret, {
+                    expiresIn: config.jwtExpiry
+                });
+                const creds = { user, token };
+                const opts = {
                     domain: 'newvote.org',
                     httpOnly: false,
                     secure: false
-                }
-                res.cookie('credentials', JSON.stringify(creds), opts)
-                let redirect = redirectURL ? host + redirectURL : host + '/'
+                };
+                res.cookie('credentials', JSON.stringify(creds), opts);
+                const redirect = sessionRedirectURL
+                    ? host + sessionRedirectURL
+                    : host + '/';
                 return res.redirect(302, redirect);
             });
         })(req, res, next);
@@ -274,23 +391,31 @@ exports.oauthCallback = function (strategy) {
 /**
  * Helper function to create or update a user after AAF Rapid SSO auth
  */
-exports.saveRapidProfile = function (req, profile, done) {
-    const organization = req.organization;
-    if (!organization) {
-        console.error('no organization in request body')
-    }
+exports.saveRapidProfile = function(req, profile, done) {
+    const organizationPromise = Organization.findOne({
+        _id: req.organization._id
+    });
+    const userPromise = User.findOne(
+        { email: profile.mail },
+        '-salt -password -verificationCode'
+    );
 
-    console.log('looking up user: ', profile.mail);
-    User.findOne({ email: profile.mail }, '-salt -password -verificationCode', function (err, user) {
-        if (err) {
-            return done(err);
-        } else {
+    Promise.all([organizationPromise, userPromise])
+        .then(promises => {
+            const [organization, user] = promises;
+
             if (!user) {
-                console.log('no user, creating new account')
-                let possibleUsername = profile.cn || profile.displayname || profile.givenname + profile.surname || ((profile.mail) ? profile.mail.split('@')[0] : '');
+                console.log('no user, creating new account');
+                const possibleUsername =
+                    profile.cn ||
+                    profile.displayname ||
+                    profile.givenname + profile.surname ||
+                    (profile.mail ? profile.mail.split('@')[0] : '');
 
-                User.findUniqueUsername(possibleUsername, null, function (availableUsername) {
-                    console.log('generated username: ', availableUsername)
+                User.findUniqueUsername(possibleUsername, null, function(
+                    availableUsername
+                ) {
+                    console.log('generated username: ', availableUsername);
                     user = new User({
                         firstName: profile.givenname,
                         lastName: profile.surname,
@@ -305,87 +430,160 @@ exports.saveRapidProfile = function (req, profile, done) {
                     });
 
                     // And save the user
-                    user.save(function (err) {
-                        return done(err, user);
-                    });
+                    return user.save();
                 });
             } else {
                 if (organization) {
-                    const orgExists = user.organizations.find((e) => {
+                    const orgExists = user.organizations.find(e => {
                         if (e) {
-                            return e._id.equals(organization._id)
+                            return e._id.equals(organization._id);
                         }
                     });
                     if (!orgExists) user.organizations.push(organization._id);
                 }
 
-                console.log('found existing user')
+                console.log('found existing user');
                 // user exists update ITA and return user
                 if (user.jti && user.jti === profile.jti) {
-                    return done(new Error('ITA Match please login again'))
+                    return done(new Error('ITA Match please login again'));
                 }
-                user.jti = profile.jti
-                user.save()
-                    .then(user => {
-                        return done(err, user);
-                    })
+                user.jti = profile.jti;
+                return user.save();
             }
-        }
-    });
-}
+        })
+        .then(user => {
+            return done(null, user);
+        })
+        .catch(err => done(err));
+};
+// const organization = req.organization;
+// if(!organization){
+// 	console.error('no organization in request body')
+// }
+
+// console.log('looking up user: ', profile.mail);
+// User.findOne({ email: profile.mail }, '-salt -password -verificationCode', function (err, user) {
+// 	if (err) {
+// 		return done(err);
+// 	} else {
+// 		if (!user) {
+// 			console.log('no user, creating new account')
+// 			var possibleUsername = profile.cn || profile.displayname || profile.givenname + profile.surname || ((profile.mail) ? profile.mail.split('@')[0] : '');
+
+// 			User.findUniqueUsername(possibleUsername, null, function (availableUsername) {
+// 				console.log('generated username: ', availableUsername)
+// 				user = new User({
+// 					firstName: profile.givenname,
+// 					lastName: profile.surname,
+// 					username: profile.mail,
+// 					displayName: profile.displayname,
+// 					email: profile.mail,
+// 					provider: 'aaf',
+// 					ita: profile.ita,
+// 					roles: ['user'],
+// 					verified: true,
+// 					organizations: [organization._id]
+// 				});
+
+// 				// And save the user
+// 				user.save(function (err) {
+// 					return done(err, user);
+// 				});
+// 			});
+// 		} else {
+// 			if(organization) {
+// 				const orgExists = user.organizations.find((e) => {
+// 					if(e) {
+// 						return e._id.equals(organization._id)
+// 					}
+// 				});
+// 				if (!orgExists) user.organizations.push(organization._id);
+// 			}
+
+// 			console.log('found existing user')
+// 			// user exists update ITA and return user
+// 			if (user.jti && user.jti === profile.jti) {
+// 				return done(new Error('ITA Match please login again'))
+// 			}
+// 			user.jti = profile.jti
+// 			user.save()
+// 				.then(user => {
+// 					return done(err, user);
+// 				})
+// 		}
+// 	}
+// });
 
 /**
  * Helper function to save or update a OAuth user profile
  */
-exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
+exports.saveOAuthUserProfile = function(req, providerUserProfile, done) {
     const organization = req.organization;
     if (!req.user) {
         // Define a search query fields
-        let searchMainProviderIdentifierField = 'providerData.' + providerUserProfile.providerIdentifierField;
-        let searchAdditionalProviderIdentifierField = 'additionalProvidersData.' + providerUserProfile.provider + '.' + providerUserProfile.providerIdentifierField;
+        const searchMainProviderIdentifierField =
+            'providerData.' + providerUserProfile.providerIdentifierField;
+        const searchAdditionalProviderIdentifierField =
+            'additionalProvidersData.' +
+            providerUserProfile.provider +
+            '.' +
+            providerUserProfile.providerIdentifierField;
 
         // Define main provider search query
-        let mainProviderSearchQuery = {};
+        const mainProviderSearchQuery = {};
         mainProviderSearchQuery.provider = providerUserProfile.provider;
-        mainProviderSearchQuery[searchMainProviderIdentifierField] = providerUserProfile.providerData[providerUserProfile.providerIdentifierField];
+        mainProviderSearchQuery[searchMainProviderIdentifierField] =
+            providerUserProfile.providerData[
+                providerUserProfile.providerIdentifierField
+            ];
 
         // Define additional provider search query
-        let additionalProviderSearchQuery = {};
-        additionalProviderSearchQuery[searchAdditionalProviderIdentifierField] = providerUserProfile.providerData[providerUserProfile.providerIdentifierField];
+        const additionalProviderSearchQuery = {};
+        additionalProviderSearchQuery[searchAdditionalProviderIdentifierField] =
+            providerUserProfile.providerData[
+                providerUserProfile.providerIdentifierField
+            ];
 
         // Define a search query to find existing user with current provider profile
-        let searchQuery = {
+        const searchQuery = {
             $or: [mainProviderSearchQuery, additionalProviderSearchQuery]
         };
 
-        User.findOne(searchQuery, function (err, user) {
+        User.findOne(searchQuery, function(err, user) {
             if (err) {
                 return done(err);
             } else {
                 if (!user) {
-                    let possibleUsername = providerUserProfile.username || ((providerUserProfile.email) ? providerUserProfile.email.split('@')[0] : '');
+                    const possibleUsername =
+                        providerUserProfile.username ||
+                        (providerUserProfile.email
+                            ? providerUserProfile.email.split('@')[0]
+                            : '');
 
-                    User.findUniqueUsername(possibleUsername, null, function (availableUsername) {
+                    User.findUniqueUsername(possibleUsername, null, function(
+                        availableUsername
+                    ) {
                         user = new User({
                             firstName: providerUserProfile.firstName,
                             lastName: providerUserProfile.lastName,
                             username: availableUsername,
                             displayName: providerUserProfile.displayName,
                             email: providerUserProfile.email,
-                            profileImageURL: providerUserProfile.profileImageURL,
+                            profileImageURL:
+                                providerUserProfile.profileImageURL,
                             provider: providerUserProfile.provider,
                             providerData: providerUserProfile.providerData,
                             organizations: [organization._id]
                         });
 
                         // And save the user
-                        user.save(function (err) {
+                        user.save(function(err) {
                             return done(err, user);
                         });
                     });
                 } else {
-                    const orgExists = user.organizations.find((e) => {
-                        return e._id.equals(organization._id)
+                    const orgExists = res.organizations.find(e => {
+                        return e._id.equals(organization._id);
                     });
                     if (!orgExists) user.organizations.push(organization._id);
                     user.save();
@@ -395,32 +593,40 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
         });
     } else {
         // User is already logged in, join the provider data to the existing user
-        let user = req.user;
+        const user = req.user;
 
-        const orgExists = user.organizations.find((e) => {
-            return e._id.equals(organization._id)
+        const orgExists = res.organizations.find(e => {
+            return e._id.equals(organization._id);
         });
         if (!orgExists) user.organizations.push(organization._id);
 
         // Check if user exists, is not signed in using this provider, and doesn't have that provider data already configured
-        if (user.provider !== providerUserProfile.provider && (!user.additionalProvidersData || !user.additionalProvidersData[providerUserProfile.provider])) {
+        if (
+            user.provider !== providerUserProfile.provider &&
+            (!user.additionalProvidersData ||
+                !user.additionalProvidersData[providerUserProfile.provider])
+        ) {
             // Add the provider data to the additional provider data field
             if (!user.additionalProvidersData) {
                 user.additionalProvidersData = {};
             }
 
-            user.additionalProvidersData[providerUserProfile.provider] = providerUserProfile.providerData;
+            user.additionalProvidersData[providerUserProfile.provider] =
+                providerUserProfile.providerData;
 
             // Then tell mongoose that we've updated the additionalProvidersData field
             user.markModified('additionalProvidersData');
 
             // And save the user
-            user.save(function (err) {
+            user.save(function(err) {
                 return done(err, user, '/settings/accounts');
             });
         } else {
             user.save();
-            return done(new Error('User is already connected using this provider'), user);
+            return done(
+                new Error('User is already connected using this provider'),
+                user
+            );
         }
     }
 };
@@ -428,18 +634,16 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
 /**
  * Remove OAuth provider
  */
-exports.removeOAuthProvider = function (req, res, next) {
-    let user = req.user;
-    let provider = req.query.provider;
+exports.removeOAuthProvider = function(req, res, next) {
+    const user = req.user;
+    const provider = req.query.provider;
 
     if (!user) {
-        return res.status(401)
-            .json({
-                message: 'User is not authenticated'
-            });
+        return res.status(401).json({
+            message: 'User is not authenticated'
+        });
     } else if (!provider) {
-        return res.status(400)
-            .send();
+        return res.status(400).send();
     }
 
     // Delete the additional provider
@@ -450,17 +654,15 @@ exports.removeOAuthProvider = function (req, res, next) {
         user.markModified('additionalProvidersData');
     }
 
-    user.save(function (err) {
+    user.save(function(err) {
         if (err) {
-            return res.status(400)
-                .send({
-                    message: errorHandler.getErrorMessage(err)
-                });
+            return res.status(400).send({
+                message: errorHandler.getErrorMessage(err)
+            });
         } else {
-            req.login(user, function (err) {
+            req.login(user, function(err) {
                 if (err) {
-                    return res.status(400)
-                        .send(err);
+                    return res.status(400).send(err);
                 } else {
                     return res.json(user);
                 }
@@ -473,38 +675,37 @@ exports.removeOAuthProvider = function (req, res, next) {
  * Makes sure the user has the correct orgs listed
  * any time a user votes they are considered a member of an org
  **/
-exports.updateOrgs = function (loginData) {
+exports.updateOrgs = function(loginData) {
     // get the actual user from the db
-    User.findOne({ _id: loginData._id })
-        .then(user => {
-            if (user) {
-                // get all the votes for this user
-                Vote.find({ user })
-                    .populate('object')
-                    .then(votes => {
-                        if (votes) {
-                            // get a list of orgs from all of the votes
-                            let orgs = votes.reduce((accum, v) => {
-                                if (v.object.organizations) {
-                                    accum.push(v.object.organizations._id);
-                                }
-                                return accum;
-                            }, []);
-                            // merge list of orgs into users orgs
-                            orgs = orgs.concat(user.organizations);
-                            // make sure they are all unique
-                            orgs = _.uniqBy(orgs, 'generationTime');
+    User.findOne({ _id: loginData._id }).then(user => {
+        if (user) {
+            // get all the votes for this user
+            Vote.find({ user })
+                .populate('object')
+                .then(votes => {
+                    if (votes) {
+                        // get a list of orgs from all of the votes
+                        let orgs = votes.reduce((accum, v) => {
+                            if (v.object.organizations) {
+                                accum.push(v.object.organizations._id);
+                            }
+                            return accum;
+                        }, []);
+                        // merge list of orgs into users orgs
+                        orgs = orgs.concat(user.organizations);
+                        // make sure they are all unique
+                        orgs = _.uniqBy(orgs, 'generationTime');
 
-                            // now add them to the users orgs and save
-                            user.organizations = orgs;
-                            user.save();
-                        }
-                    })
-            }
-        })
-}
+                        // now add them to the users orgs and save
+                        user.organizations = orgs;
+                        user.save();
+                    }
+                });
+        }
+    });
+};
 
-exports.updateAllOrgs = function () {
+exports.updateAllOrgs = function() {
     User.find()
         .exec()
         .then(users => {
@@ -512,7 +713,6 @@ exports.updateAllOrgs = function () {
                 Vote.find({ user: user._id })
                     .populate('object')
                     .then(populatedVotes => {
-
                         let orgs = populatedVotes.reduce((accum, v) => {
                             if (v.object && v.object.organizations) {
                                 accum.push(v.object.organizations._id);
@@ -527,60 +727,65 @@ exports.updateAllOrgs = function () {
 
                         user.organizations = orgs;
                         user.save();
-                    })
-            })
-        })
-}
+                    });
+            });
+        });
+};
 
 function handleLeaderVerification(user, verificationCode) {
-
     const { email } = user;
 
     return FutureLeader.findOne({ email })
         .populate('organizations')
-        .then((leader) => {
-            if (!leader) throw ('Email does not match Verification Code');
-            if (!leader.verify(verificationCode)) throw ('Invalid Verification Code, please check and try again');
+        .then(leader => {
+            if (!leader) throw 'Email does not match Verification Code';
+            if (!leader.verify(verificationCode))
+                throw 'Invalid Verification Code, please check and try again';
 
             return leader;
         })
-        .then((leader) => {
+        .then(leader => {
             let { organizations } = leader;
 
             // leader has no organizations to be assigned to
             if (organizations.length === 0) {
                 leader.remove();
-                return user.save()
+                return user.save();
             }
 
-            organizations.forEach((org) => {
+            organizations.forEach(org => {
                 if (org.futureOwner && org.futureOwner.equals(leader._id)) {
                     org.owner = user._id;
                     org.futureOwner = null;
-                    return org.save()
+                    return org.save();
                 }
                 return org;
-            })
+            });
 
             user.organizations = organizations;
             // Future leader can be removed from database
             leader.remove();
             return user.save();
         })
-        .catch((err) => {
+        .catch(err => {
             console.log(err, 'this is err');
-            throw ('Error during verification');
-        })
+            throw 'Error during verification';
+        });
 }
 
 function loginUser(req, res, user) {
-    return req.login(user, function (err) {
+    return req.login(user, function(err) {
         if (err) {
-            return res.status(400)
-                .send(err);
+            return res.status(400).send(err);
         } else {
-            const payload = { _id: user._id, roles: user.roles, verified: user.verified };
-            const token = jwt.sign(payload, config.jwtSecret, { expiresIn: config.jwtExpiry });
+            const payload = {
+                _id: user._id,
+                roles: user.roles,
+                verified: user.verified
+            };
+            const token = jwt.sign(payload, config.jwtSecret, {
+                expiresIn: config.jwtExpiry
+            });
             return res.json({ user: user, token: token });
         }
     });

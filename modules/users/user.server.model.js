@@ -116,9 +116,9 @@ let UserSchema = new Schema({
         type: String,
         default: '',
         required: function () {
-            if (this.provider === 'local') {
+            if(this.provider === 'local') {
                 return true;
-            } else {
+            }else {
                 return false;
             }
         }
@@ -127,7 +127,7 @@ let UserSchema = new Schema({
         type: String,
         default: '',
         required: function () {
-            if (this.isNew) {
+            if(this.isNew) {
                 return false;
             }
         }
@@ -173,7 +173,11 @@ let UserSchema = new Schema({
     organizations: [{
         type: Schema.ObjectId,
         ref: 'Organization'
-    }]
+    }],
+    completedTour: {
+        type: Boolean,
+        default: false
+    }
 });
 
 /**

@@ -33,19 +33,25 @@ let SolutionSchema = new Schema({
         type: Schema.ObjectId,
         ref: 'User'
     },
-    comments: [{
-        type: Schema.ObjectId,
-        ref: 'Comment'
-    }],
-    issues: [{
-        type: Schema.ObjectId,
-        ref: 'Issue',
-        required: true
-    }],
-    proposals: [{
-        type: Schema.ObjectId,
-        ref: 'Proposal'
-    }],
+    comments: [
+        {
+            type: Schema.ObjectId,
+            ref: 'Comment'
+        }
+    ],
+    issues: [
+        {
+            type: Schema.ObjectId,
+            ref: 'Issue',
+            required: true
+        }
+    ],
+    proposals: [
+        {
+            type: Schema.ObjectId,
+            ref: 'Proposal'
+        }
+    ],
     votes: {
         up: Number,
         down: Number,
@@ -55,23 +61,29 @@ let SolutionSchema = new Schema({
             ref: 'Vote'
         }
     },
-    tags: [{
-        type: String,
-        trim: true
-    }],
+    tags: [
+        {
+            type: String,
+            trim: true
+        }
+    ],
     likert: {
         type: Boolean,
         default: false
     },
-    organizations:  {
+    organizations: {
         type: Schema.ObjectId,
         ref: 'Organization'
     },
     softDeleted: {
         type: Boolean,
         default: false
+    },
+    suggestion: {
+        type: Schema.ObjectId,
+        ref: 'Suggestion'
     }
 });
 
-SolutionSchema.index({ 'title': 'text', 'description': 'text' });
+SolutionSchema.index({ title: 'text', description: 'text' });
 mongoose.model('Solution', SolutionSchema);

@@ -73,4 +73,7 @@ module.exports = function (app) {
         .get(users.oauthCall('paypal'));
     app.route('/api/auth/paypal/callback')
         .get(users.oauthCallback('paypal'));
+
+    app.route('/api/auth/check-status')
+        .get(users.checkAuthStatus);
 };

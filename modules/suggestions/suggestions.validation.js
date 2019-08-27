@@ -5,6 +5,7 @@ const schema = {
     body: Joi.object().keys({
         created: Joi.date(),
         title: Joi.string().required(),
+        type: Joi.string().required(),
         description: Joi.string(),
         statements: Joi.string(),
         media: Joi.array(),
