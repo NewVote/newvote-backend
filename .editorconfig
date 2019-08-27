@@ -26,7 +26,8 @@ spaces_in_brackets = false
 # No Standard.  Please document a standard if different from .js
 [**.yml, **.css]
 trim_trailing_whitespace = true
-indent_style = tab
+indent_style = space
+indent_size = 4
 
 [**.html]
 trim_trailing_whitespace = true

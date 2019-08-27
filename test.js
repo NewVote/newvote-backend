@@ -3,11 +3,9 @@
 /**
  * Module dependencies.
  */
-var app;
+let path = require('path');
+let app = require(path.resolve('./config/lib/app'));
 
-var path = require('path');
-var app = require(path.resolve('./config/lib/app'));
-
-app.init(function () {
-  console.log('Initialized test automation');
+app.init(function() {
+    console.log('Initialized test automation');
 });
