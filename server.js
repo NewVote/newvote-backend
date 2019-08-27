@@ -15,11 +15,11 @@ const WORKERS = process.env.WEB_CONCURRENCY || 1;
  * Start the app
  */
 if(process.env.NODE_ENV === 'development'){
-	console.log('starting without throng');
-	app.start();
+    console.log('starting without throng');
+    app.start();
 }else {
-	throng({
-		workers: WORKERS,
-		lifetime: Infinity
-	}, app.start);
+    throng({
+        workers: WORKERS,
+        lifetime: Infinity
+    }, app.start);
 }

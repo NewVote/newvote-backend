@@ -4,77 +4,77 @@
  * Module dependencies.
  */
 let mongoose = require('mongoose'),
-	Schema = mongoose.Schema;
+    Schema = mongoose.Schema;
 
 /**
  * Article Schema
  */
 let SolutionSchema = new Schema({
-	created: {
-		type: Date,
-		default: Date.now
-	},
-	title: {
-		type: String,
-		trim: true,
-		required: 'Title cannot be blank'
-	},
-	description: {
-		type: String,
-		default: '',
-		trim: true
-	},
-	imageUrl: {
-		type: String,
-		default: 'assets/solution-default.png',
-		trim: true
-	},
-	user: {
-		type: Schema.ObjectId,
-		ref: 'User'
-	},
-	comments: [{
-		type: Schema.ObjectId,
-		ref: 'Comment'
-	}],
-	issues: [{
-		type: Schema.ObjectId,
-		ref: 'Issue',
-		required: true
-	}],
-	proposals: [{
-		type: Schema.ObjectId,
-		ref: 'Proposal'
-	}],
-	votes: {
-		up: Number,
-		down: Number,
-		total: Number,
-		currentUser: {
-			type: Schema.ObjectId,
-			ref: 'Vote'
-		}
-	},
-	tags: [{
-		type: String,
-		trim: true
-	}],
-	likert: {
-		type: Boolean,
-		default: false
-	},
-	organizations:  {
-		type: Schema.ObjectId,
-		ref: 'Organization'
-	},
-	softDeleted: {
-		type: Boolean,
-		default: false
-	},
-	suggestion: {
-		type: Schema.ObjectId,
-		ref: 'Suggestion'
-	}
+    created: {
+        type: Date,
+        default: Date.now
+    },
+    title: {
+        type: String,
+        trim: true,
+        required: 'Title cannot be blank'
+    },
+    description: {
+        type: String,
+        default: '',
+        trim: true
+    },
+    imageUrl: {
+        type: String,
+        default: 'assets/solution-default.png',
+        trim: true
+    },
+    user: {
+        type: Schema.ObjectId,
+        ref: 'User'
+    },
+    comments: [{
+        type: Schema.ObjectId,
+        ref: 'Comment'
+    }],
+    issues: [{
+        type: Schema.ObjectId,
+        ref: 'Issue',
+        required: true
+    }],
+    proposals: [{
+        type: Schema.ObjectId,
+        ref: 'Proposal'
+    }],
+    votes: {
+        up: Number,
+        down: Number,
+        total: Number,
+        currentUser: {
+            type: Schema.ObjectId,
+            ref: 'Vote'
+        }
+    },
+    tags: [{
+        type: String,
+        trim: true
+    }],
+    likert: {
+        type: Boolean,
+        default: false
+    },
+    organizations:  {
+        type: Schema.ObjectId,
+        ref: 'Organization'
+    },
+    softDeleted: {
+        type: Boolean,
+        default: false
+    },
+    suggestion: {
+        type: Schema.ObjectId,
+        ref: 'Suggestion'
+    }
 });
 
 SolutionSchema.index({ 'title': 'text', 'description': 'text' });
