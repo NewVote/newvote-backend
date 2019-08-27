@@ -226,7 +226,7 @@ function canAccessOrganization(req, object) {
             (organization.moderators &&
                 organization.moderators.some(mod => mod._id == user._id))
         ) {
-            return Promise.resolve();
+            return Promise.resolve(true);
         } else {
             console.error(
                 'failed to test user against admin owner or mod list'
