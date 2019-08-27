@@ -180,15 +180,21 @@ exports.list = function(req, res) {
     let showDeleted = req.query.showDeleted || null;
     let type = req.query.type || null;
     let parent = req.query.parent || null;
+    let user = req.query.user || null;
     
     if (parent) {
         parent = mongoose.Types.ObjectId(parent);
+    }
+
+    if (user) {
+        user = mongoose.Types.ObjectId(user);
     }
 
     let orgMatch = orgUrl ? { 'organizations.url': orgUrl } : {};
     let searchMatch = search ? { $text: { $search: search } } : {};
     let typeMatch = type ? { type: type } : {};
     let parentMatch = parent ? { parent: parent } : {};
+    let userMatch = user ? { user: user } : {};
 
     let showNonDeletedItemsMatch = {
         $or: [{ softDeleted: false }, { softDeleted: { $exists: false } }]
@@ -203,6 +209,7 @@ exports.list = function(req, res) {
         { $match: softDeleteMatch },
         { $match: typeMatch },
         { $match: parentMatch },
+        { $match: userMatch },
         {
             $lookup: {
                 from: 'organizations',
