@@ -119,10 +119,10 @@ let UserSchema = new Schema({
     password: {
         type: String,
         default: '',
-        required: function() {
-            if (this.provider === 'local') {
+        required: function () {
+            if(this.provider === 'local') {
                 return true;
-            } else {
+            }else {
                 return false;
             }
         }
@@ -130,8 +130,8 @@ let UserSchema = new Schema({
     verificationCode: {
         type: String,
         default: '',
-        required: function() {
-            if (this.isNew) {
+        required: function () {
+            if(this.isNew) {
                 return false;
             }
         }
@@ -176,12 +176,14 @@ let UserSchema = new Schema({
         type: Date
     },
     // for tracking org memberships
-    organizations: [
-        {
-            type: Schema.ObjectId,
-            ref: 'Organization'
-        }
-    ]
+    organizations: [{
+        type: Schema.ObjectId,
+        ref: 'Organization'
+    }],
+    completedTour: {
+        type: Boolean,
+        default: false
+    }
 });
 
 /**

@@ -12,7 +12,8 @@ let path = require('path'),
     errorHandler = require(path.resolve(
         './modules/core/errors.server.controller'
     )),
-    _ = require('lodash');
+    _ = require('lodash'),
+    seed = require('./seed/seed');
 
 /**
  * Create a proposal
@@ -249,3 +250,12 @@ function updateSchema(proposals) {
         }
     }
 }
+
+exports.seedData = function(organizationId, solutionId) {
+    const { seedData } = seed;
+    const newProposal = new Proposal(seedData);
+    newProposal.organizations = organizationId;
+    newProposal.solutions = [solutionId];
+    newProposal.save();
+    return newProposal;
+};

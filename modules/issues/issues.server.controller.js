@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-let path = require('path'),
+const path = require('path'),
     mongoose = require('mongoose'),
     Issue = mongoose.model('Issue'),
     IssuesController = require('./issues.server.controller'),
@@ -12,7 +12,8 @@ let path = require('path'),
     errorHandler = require(path.resolve(
         './modules/core/errors.server.controller'
     )),
-    _ = require('lodash');
+    _ = require('lodash'),
+    seed = require('./seed/seed');
 
 /**
  * Create a issue
@@ -256,4 +257,13 @@ exports.attachMetaData = function(issues, user) {
                 return issues;
             });
         });
+};
+
+exports.seedData = function(organizationId, topicId) {
+    const { seedData } = seed;
+    const newIssue = new Issue(seedData);
+    newIssue.organizations = organizationId;
+    newIssue.topics = [topicId];
+    newIssue.save();
+    return newIssue;
 };

@@ -13,7 +13,8 @@ let path = require('path'),
     )),
     votes = require('../votes/votes.server.controller'),
     proposals = require('../proposals/proposals.server.controller'),
-    _ = require('lodash');
+    _ = require('lodash'),
+    seed = require('./seed/seed');
 
 /**
  * Create a solution
@@ -253,3 +254,12 @@ function filterSoftDeleteProposals(solutions, showDeleted) {
         return solution;
     });
 }
+
+exports.seedData = function(organizationId, issueId) {
+    const { seedData } = seed;
+    const newSolution = new Solution(seedData);
+    newSolution.organizations = organizationId;
+    newSolution.issues = [issueId];
+    newSolution.save();
+    return newSolution;
+};

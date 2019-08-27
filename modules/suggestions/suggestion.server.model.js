@@ -34,11 +34,13 @@ let SuggestionSchema = new Schema({
         default: '',
         trim: true
     },
-    media: [{
-        type: String,
-        default: '',
-        trim: true,
-    }],
+    media: [
+        {
+            type: String,
+            default: '',
+            trim: true
+        }
+    ],
     user: {
         type: Schema.ObjectId,
         ref: 'User'
@@ -52,7 +54,8 @@ let SuggestionSchema = new Schema({
     parent: {
         type: Schema.ObjectId
     },
-    status: { // status: 1=approved 0=pending -1=declined
+    status: {
+        // status: 1=approved 0=pending -1=declined
         type: Number,
         default: 0
     },

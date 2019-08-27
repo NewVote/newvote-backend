@@ -1,6 +1,6 @@
 'use strict';
 
-module.exports = function (app) {
+module.exports = function(app) {
     // User Routes
     let path = require('path'),
         config = require(path.resolve('./config/config')),
@@ -31,7 +31,7 @@ module.exports = function (app) {
     //
     app.route('/api/users/count')
         .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }))
-        .get(users.count)
+        .get(users.count);
 
     app.route('/api/users')
         .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }))
@@ -48,6 +48,10 @@ module.exports = function (app) {
     app.route('/api/users/picture')
         .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }))
         .post(users.changeProfilePicture);
+
+    app.route('/api/users/tour/:userId')
+        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }))
+        .patch(users.patch);
 
     // Finish by binding the user middleware
     app.param('userId', users.userByID);
