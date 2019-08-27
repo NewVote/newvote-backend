@@ -6,9 +6,9 @@ let mongooseWrap = require('../config/lib/mongoose.js');
 mongooseWrap.loadModels();
 mongooseWrap.connect();
 
-var path = require('path');
-var config = require(path.resolve('./config/config'));
-var server = require('../config/lib/express').init();
+let path = require('path');
+let config = require(path.resolve('./config/config'));
+let server = require('../config/lib/express').init();
 
 // Seed data
 const { Seeder } = require('mongo-seeding');
