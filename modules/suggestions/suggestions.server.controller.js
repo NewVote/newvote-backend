@@ -179,10 +179,16 @@ exports.list = function(req, res) {
     let orgUrl = org ? org.url : null;
     let showDeleted = req.query.showDeleted || null;
     let type = req.query.type || null;
+    let parent = req.query.parent || null;
+    
+    if (parent) {
+        parent = mongoose.Types.ObjectId(parent);
+    }
 
     let orgMatch = orgUrl ? { 'organizations.url': orgUrl } : {};
     let searchMatch = search ? { $text: { $search: search } } : {};
     let typeMatch = type ? { type: type } : {};
+    let parentMatch = parent ? { parent: parent } : {};
 
     let showNonDeletedItemsMatch = {
         $or: [{ softDeleted: false }, { softDeleted: { $exists: false } }]
@@ -196,6 +202,7 @@ exports.list = function(req, res) {
         { $match: searchMatch },
         { $match: softDeleteMatch },
         { $match: typeMatch },
+        { $match: parentMatch },
         {
             $lookup: {
                 from: 'organizations',
@@ -209,7 +216,6 @@ exports.list = function(req, res) {
         { $sort: { created: -1 } }
     ]).exec(function(err, suggestions) {
         if (err) throw err;
-
         votes
             .attachVotes(suggestions, req.user, req.query.regions)
             .then(suggestions => res.json(suggestions))
