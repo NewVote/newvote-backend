@@ -46,7 +46,6 @@ exports.checkAuthStatus = function(req, res, next) {
         user,
         info
     ) {
-        debugger;
         if (err || !user) {
             return res.status(400).send(info);
         }
@@ -170,7 +169,7 @@ exports.signup = function(req, res) {
 };
 
 const buildMessage = function(user, code, req) {
-    const messageString = '';
+    let messageString = '';
     const url = req.protocol + '://' + req.get('host') + '/verify/' + code;
 
     messageString += `<h3> Welcome ${user.firstName} </h3>`;
@@ -402,7 +401,7 @@ exports.saveRapidProfile = function(req, profile, done) {
 
     Promise.all([organizationPromise, userPromise])
         .then(promises => {
-            const [organization, user] = promises;
+            let [organization, user] = promises;
 
             if (!user) {
                 console.log('no user, creating new account');
@@ -581,7 +580,7 @@ exports.saveOAuthUserProfile = function(req, providerUserProfile, done) {
                         });
                     });
                 } else {
-                    const orgExists = res.organizations.find(e => {
+                    const orgExists = user.organizations.find(e => {
                         return e._id.equals(organization._id);
                     });
                     if (!orgExists) user.organizations.push(organization._id);
@@ -594,7 +593,7 @@ exports.saveOAuthUserProfile = function(req, providerUserProfile, done) {
         // User is already logged in, join the provider data to the existing user
         const user = req.user;
 
-        const orgExists = res.organizations.find(e => {
+        const orgExists = user.organizations.find(e => {
             return e._id.equals(organization._id);
         });
         if (!orgExists) user.organizations.push(organization._id);
