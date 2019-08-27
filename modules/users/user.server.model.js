@@ -5,7 +5,7 @@
  */
 let mongoose = require('mongoose'),
     arrayUniquePlugin = require('mongoose-unique-array'),
- 	_ = require('lodash'),
+    _ = require('lodash'),
     Schema = mongoose.Schema,
     crypto = require('crypto'),
     validator = require('validator'),
@@ -116,9 +116,9 @@ let UserSchema = new Schema({
         type: String,
         default: '',
         required: function () {
-            if(this.provider === 'local') {
+            if (this.provider === 'local') {
                 return true;
-            }else {
+            } else {
                 return false;
             }
         }
@@ -127,7 +127,7 @@ let UserSchema = new Schema({
         type: String,
         default: '',
         required: function () {
-            if(this.isNew) {
+            if (this.isNew) {
                 return false;
             }
         }
@@ -180,7 +180,7 @@ let UserSchema = new Schema({
  * Hook a pre save method to hash the password
  */
 UserSchema.pre('save', function (next) {
-    if(this.password && this.isModified('password')) {
+    if (this.password && this.isModified('password')) {
         this.salt = crypto.randomBytes(16)
             .toString('base64');
         this.password = this.hashPassword(this.password);
@@ -193,9 +193,9 @@ UserSchema.pre('save', function (next) {
  * Hook a pre validate method to test the local password
  */
 UserSchema.pre('validate', function (next) {
-    if(this.provider === 'local' && this.password && this.isModified('password')) {
+    if (this.provider === 'local' && this.password && this.isModified('password')) {
         let result = owasp.test(this.password);
-        if(result.requiredTestErrors.length) {
+        if (result.requiredTestErrors.length) {
             let error = result.requiredTestErrors.join(' ');
             this.invalidate('password', error);
         }
@@ -208,7 +208,7 @@ UserSchema.pre('validate', function (next) {
  * Create instance method for hashing a password
  */
 UserSchema.methods.hashPassword = function (password) {
-    if(this.salt && password) {
+    if (this.salt && password) {
         return crypto.pbkdf2Sync(password, Buffer.from(this.salt, 'base64'), 100000, 64, 'SHA512')
             .toString('base64');
     } else {
@@ -227,7 +227,7 @@ UserSchema.methods.authenticate = function (password) {
  * Create instance method for hashing a verification code (sent by SMS)
  */
 UserSchema.methods.hashVerificationCode = function (code) {
-    if(this.salt && code) {
+    if (this.salt && code) {
         console.log('hashing code: ', code);
         return crypto.pbkdf2Sync(code.toString(), Buffer.from(this.salt, 'base64'), 100000, 64, 'SHA512')
             .toString('base64');
@@ -258,8 +258,8 @@ UserSchema.statics.findUniqueUsername = function (username, suffix, callback) {
     _this.findOne({
         username: possibleUsername
     }, function (err, user) {
-        if(!err) {
-            if(!user) {
+        if (!err) {
+            if (!user) {
                 callback(possibleUsername);
             } else {
                 return _this.findUniqueUsername(username, (suffix || 0) + 1, callback);
@@ -282,7 +282,7 @@ UserSchema.statics.generateRandomPassphrase = function () {
 
         // iterate until the we have a valid passphrase.
         // NOTE: Should rarely iterate more than once, but we need this to ensure no repeating characters are present.
-        while(password.length < 20 || repeatingCharacters.test(password)) {
+        while (password.length < 20 || repeatingCharacters.test(password)) {
             // build the random password
             password = generatePassword.generate({
                 length: Math.floor(Math.random() * (20)) + 20, // randomize length between 20 and 40 characters
@@ -297,7 +297,7 @@ UserSchema.statics.generateRandomPassphrase = function () {
         }
 
         // Send the rejection back if the passphrase fails to pass the strength test
-        if(owasp.test(password)
+        if (owasp.test(password)
             .requiredTestErrors.length) {
             reject(new Error('An unexpected problem occured while generating the random passphrase'));
         } else {

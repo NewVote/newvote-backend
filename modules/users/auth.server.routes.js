@@ -44,8 +44,8 @@ module.exports = function (app) {
     app.route('/api/auth/google')
         .get(users.oauthCall('google', {
             scope: [
-      'https://www.googleapis.com/auth/userinfo.profile',
-      'https://www.googleapis.com/auth/userinfo.email'
+                'https://www.googleapis.com/auth/userinfo.profile',
+                'https://www.googleapis.com/auth/userinfo.email'
             ]
         }));
     app.route('/api/auth/google/callback')
@@ -55,8 +55,8 @@ module.exports = function (app) {
     app.route('/api/auth/linkedin')
         .get(users.oauthCall('linkedin', {
             scope: [
-      'r_basicprofile',
-      'r_emailaddress'
+                'r_basicprofile',
+                'r_emailaddress'
             ]
         }));
     app.route('/api/auth/linkedin/callback')

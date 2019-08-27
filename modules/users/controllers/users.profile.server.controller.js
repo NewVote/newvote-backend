@@ -119,16 +119,15 @@ exports.count = function (req, res) {
     let orgUrl = org ? org.url : null;
     const orgMatch = orgUrl ? { 'organizations.url': orgUrl } : {};
     // do some kind of aggregate query that outputs the count
-    return User.aggregate([
-			{
-			    $lookup: {
-			        'from': 'organizations',
-			        'localField': 'organizations',
-			        'foreignField': '_id',
-			        'as': 'organizations'
-			    }
-			},
-			{ $match: orgMatch }
+    return User.aggregate([{
+        $lookup: {
+            'from': 'organizations',
+            'localField': 'organizations',
+            'foreignField': '_id',
+            'as': 'organizations'
+        }
+    },
+    { $match: orgMatch }
     ])
         .exec()
         .then((users) => {

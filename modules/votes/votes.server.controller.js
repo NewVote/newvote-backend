@@ -21,15 +21,15 @@ exports.create = function (req, res) {
         .then((vote) => {
             return res.json(vote);
         })
-        .catch((err) => { 
-            throw(err) 
+        .catch((err) => {
+            throw (err)
         });
 };
 
 exports.updateOrCreate = function (req, res) {
     let user = req.user;
     let object = req.body.object;
-	
+
     Vote.findOne({
         user: user,
         object: object
@@ -66,12 +66,12 @@ exports.update = function (req, res) {
         .then((vote) => {
             return res.json(vote);
         })
-        .catch((err) => { 
+        .catch((err) => {
             return res.status(400)
                 .send({
                     message: errorHandler.getErrorMessage(err)
                 });
-		 });
+        });
 };
 
 /**
@@ -190,11 +190,11 @@ exports.attachVotes = function (objects, user, regions) {
                                         $in: postCodes
                                     }
                                 },
-										{
-										    woodfordian: {
-										        $in: postCodes
-										    }
-										}
+                                {
+                                    woodfordian: {
+                                        $in: postCodes
+                                    }
+                                }
                                 ]
                             },
                             select: 'postalCode -_id'
@@ -230,9 +230,10 @@ function fixVoteTypes(vote) {
     if (vote.objectType === 'proposal') {
         console.log('found vote to fix');
         vote.objectType = 'Proposal';
-        vote.save().then(function(vote) {
-            console.log('vote updated: ', vote._id);
-        });
+        vote.save()
+            .then(function (vote) {
+                console.log('vote updated: ', vote._id);
+            });
     }
 }
 

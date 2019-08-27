@@ -96,22 +96,27 @@ exports.list = function (req, res) {
     } else {
         query = null;
     }
-    Endorsement.find(query).sort('-created').populate('user', 'displayName').populate('issues').populate('solutions').exec(function (err,endorsements) {
-        if (err) {
-            return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
-        } else {
-            votes.attachVotes(endorsements, req.user).then(function (endorsementArr) {
-                // console.log(endorsementArr);
-                res.json(endorsementArr);
-            }).catch(function (err) {
-                res.status(500).send({
+    Endorsement.find(query).sort('-created')
+        .populate('user', 'displayName')
+        .populate('issues')
+        .populate('solutions')
+        .exec(function (err,endorsements) {
+            if (err) {
+                return res.status(400).send({
                     message: errorHandler.getErrorMessage(err)
                 });
-            });
-        }
-    });
+            } else {
+                votes.attachVotes(endorsements, req.user).then(function (endorsementArr) {
+                // console.log(endorsementArr);
+                    res.json(endorsementArr);
+                })
+                    .catch(function (err) {
+                        res.status(500).send({
+                            message: errorHandler.getErrorMessage(err)
+                        });
+                    });
+            }
+        });
 };
 
 /**
@@ -125,17 +130,21 @@ exports.endorsementByID = function (req, res, next, id) {
         });
     }
 
-    Endorsement.findById(id).populate('user', 'displayName').populate('issues').populate('solutions').exec(function (err, endorsement) {
-        if (err) {
-            return next(err);
-        } else if (!endorsement) {
-            return res.status(404).send({
-                message: 'No endorsement with that identifier has been found'
-            });
-        }
-        votes.attachVotes([endorsement], req.user).then(function (endorsementArr) {
-            req.endorsement = endorsementArr[0];
-            next();
-        }).catch(next);
-    });
+    Endorsement.findById(id).populate('user', 'displayName')
+        .populate('issues')
+        .populate('solutions')
+        .exec(function (err, endorsement) {
+            if (err) {
+                return next(err);
+            } else if (!endorsement) {
+                return res.status(404).send({
+                    message: 'No endorsement with that identifier has been found'
+                });
+            }
+            votes.attachVotes([endorsement], req.user).then(function (endorsementArr) {
+                req.endorsement = endorsementArr[0];
+                next();
+            })
+                .catch(next);
+        });
 };

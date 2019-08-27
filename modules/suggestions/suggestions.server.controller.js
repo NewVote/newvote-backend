@@ -161,20 +161,20 @@ exports.list = function (req, res) {
     let softDeleteMatch = showDeleted ? showAllItemsMatch : showNonDeletedItemsMatch;
 
     Suggestion.aggregate([
-            { $match: searchMatch },
-            { $match: softDeleteMatch },
-            {
-                $lookup: {
-                    'from': 'organizations',
-                    'localField': 'organizations',
-                    'foreignField': '_id',
-                    'as': 'organizations'
+        { $match: searchMatch },
+        { $match: softDeleteMatch },
+        {
+            $lookup: {
+                'from': 'organizations',
+                'localField': 'organizations',
+                'foreignField': '_id',
+                'as': 'organizations'
 
-                }
-            },
-            { $match: orgMatch },
-            { $unwind: '$organizations' },
-            { $sort: { 'created': -1 } }
+            }
+        },
+        { $match: orgMatch },
+        { $unwind: '$organizations' },
+        { $sort: { 'created': -1 } }
     ])
         .exec(function (err, suggestions) {
             if (err) throw (err);

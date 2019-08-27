@@ -22,8 +22,8 @@ let path = require('path'),
 
 // URLs for which user can't be redirected on signin
 let noReturnUrls = [
-	'/authentication/signin',
-	'/authentication/signup'
+    '/authentication/signin',
+    '/authentication/signup'
 ];
 
 let recaptcha = new Recaptcha({
@@ -264,7 +264,7 @@ exports.oauthCallback = function (strategy) {
                     secure: false
                 }
                 res.cookie('credentials', JSON.stringify(creds), opts)
-                let redirect = sessionRedirectURL ? host + sessionRedirectURL : host + '/'
+                let redirect = redirectURL ? host + redirectURL : host + '/'
                 return res.redirect(302, redirect);
             });
         })(req, res, next);
@@ -384,7 +384,7 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
                         });
                     });
                 } else {
-                    const orgExists = res.organizations.find((e) => {
+                    const orgExists = user.organizations.find((e) => {
                         return e._id.equals(organization._id)
                     });
                     if (!orgExists) user.organizations.push(organization._id);
@@ -397,7 +397,7 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
         // User is already logged in, join the provider data to the existing user
         let user = req.user;
 
-        const orgExists = res.organizations.find((e) => {
+        const orgExists = user.organizations.find((e) => {
             return e._id.equals(organization._id)
         });
         if (!orgExists) user.organizations.push(organization._id);

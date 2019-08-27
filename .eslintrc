@@ -1,7 +1,8 @@
 {
   extends:                       "eslint:recommended",
   rules:                         {
-    indent:                      [2, 4, {'SwitchCase': 1, 'ArrayExpression': 'off'}],
+    indent:                      [2, 4, {'SwitchCase': 1, 'ObjectExpression': 1, 'ArrayExpression': 1}],
+    newline-per-chained-call:    [1],
     no-multi-spaces:             2,
     no-underscore-dangle:        0,
     no-use-before-define:        [1, 'nofunc'],
@@ -10,7 +11,6 @@
     no-empty-class:              0,
     object-curly-spacing:        [2, 'always'],
     quotes:                      [1, 'single', {'allowTemplateLiterals': true}],
-    space-in-parens:             [2, 'never'],
     no-var:                      1
   },
   env:                           {
@@ -28,6 +28,8 @@
     __TESTING__:                 true,
     beforeEach:                  true,
     expect:                      true,
+    before:                      true,
+    afterEach:                   true,
     describe:                    true,
     it:                          true,
     element:                     true,

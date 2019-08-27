@@ -180,10 +180,10 @@ exports.list = function (req, res) {
     let softDeleteMatch = showDeleted ? showAllItemsMatch : showNonDeletedItemsMatch;
 
     Organization.aggregate([
-		{ $match: query },
-		{ $match: softDeleteMatch },
-		{ $match: privateMatch },
-		{ $sort: { 'name': 1 } }
+        { $match: query },
+        { $match: softDeleteMatch },
+        { $match: privateMatch },
+        { $sort: { 'name': 1 } }
     ])
         .exec(function (err, organizations) {
             if(err) {

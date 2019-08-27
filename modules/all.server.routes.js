@@ -28,19 +28,19 @@ const { errors, celebrate } = celebrateWrap;
 
 // jwt module simply puts the user object into req.user if the token is valid
 // otherwise it just does nothing and the policy module handles the rest
-module.exports = function (app) {
-
+module.exports = function(app) {
     app.all('*', (req, res, next) => {
         // debugger
         // start wit the organization stored in the cookie and attempt to parse
-        const { organization: cookieOrg } = req.cookies
+        let organization = null
+        const { organization: cookieOrg } = req.cookies;
         try {
-            const organization = JSON.parse(cookieOrg)
+            organization = JSON.parse(cookieOrg);
         } catch (e) {
-            const organization = null
+            organization = null;
         }
         // var { org:orgUrl } = req.cookies // prefer the redirect cookie url over header
-        let orgUrl = req.cookies.org ? req.cookies.org : req.cookies.orgUrl // try "orgUrl" cookie instead of org if its undefined
+        let orgUrl = req.cookies.org ? req.cookies.org : req.cookies.orgUrl; // try "orgUrl" cookie instead of org if its undefined
         if (!orgUrl) {
             // still no orgUrl so try getting org from the referer in the request
             try {
@@ -50,13 +50,13 @@ module.exports = function (app) {
                 orgUrl = splitUrl[0];
             } catch (e) {
                 // usually fails after a redirect which has no header
-                console.error('No referer in header! Cannot look up an org')
+                console.error('No referer in header! Cannot look up an org');
             }
         }
 
         // clear the cookies as we dont need them anymore
-        res.clearCookie('orgUrl', { path: '/', domain: 'newvote.org' })
-        res.clearCookie('org', { path: '/', domain: 'newvote.org' })
+        res.clearCookie('orgUrl', { path: '/', domain: 'newvote.org' });
+        res.clearCookie('org', { path: '/', domain: 'newvote.org' });
 
         // try to use the full org object from the cookie first
         // make sure the url of the saved org matches the url of the page
@@ -65,143 +65,214 @@ module.exports = function (app) {
             return next();
         } else {
             // either no cookie org or urls dont match so its outdated and we need to fetch org again
-            organizations.organizationByUrl(orgUrl)
-                .then((organization) => {
-                    req.organization = organization;
-                    res.cookie('organization', JSON.stringify(organization), { domain: 'newvote.org', secure: false, overwrite: true });
-                    return next();
+            organizations.organizationByUrl(orgUrl).then(organization => {
+                req.organization = organization;
+                res.cookie('organization', JSON.stringify(organization), {
+                    domain: 'newvote.org',
+                    secure: false,
+                    overwrite: true
                 });
+                return next();
+            });
         }
     });
 
-
     // Articles collection routes
     app.route('/api/organizations')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        .all(
+            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+            policy.isAllowed
+        )
         .get(organizations.list)
-    // .post(celebrate(schema))
+        // .post(celebrate(schema))
         .post(organizations.create);
 
     app.route('/api/topics')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        .all(
+            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+            policy.isAllowed
+        )
         .get(topics.list)
         .post(topics.create);
 
     app.route('/api/issues')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        .all(
+            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+            policy.isAllowed
+        )
         .get(issues.list)
         .post(issues.create);
 
     app.route('/api/solutions')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        .all(
+            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+            policy.isAllowed
+        )
         .get(solutions.list)
         .post(solutions.create);
 
     app.route('/api/votes')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        .all(
+            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+            policy.isAllowed
+        )
         .get(votes.list)
         .post(votes.updateOrCreate);
 
     app.route('/api/proposals')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        .all(
+            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+            policy.isAllowed
+        )
         .get(proposals.list)
         .post(proposals.create);
 
     app.route('/api/suggestions')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        .all(
+            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+            policy.isAllowed
+        )
         .get(suggestions.list)
         .post(suggestions.create);
 
     app.route('/api/endorsement')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        .all(
+            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+            policy.isAllowed
+        )
         .get(endorsement.list)
         .post(endorsement.create);
 
     app.route('/api/media')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        .all(
+            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+            policy.isAllowed
+        )
         .get(media.list)
         .post(media.create);
 
     app.route('/api/regions')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        .all(
+            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+            policy.isAllowed
+        )
         .get(regions.list)
         .post(regions.create);
 
     app.route('/api/countries')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        .all(
+            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+            policy.isAllowed
+        )
         .get(countries.list);
 
     app.route('/api/meta/:uri')
-    // .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        // .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
         .get(media.getMeta);
 
     // Single article routes
     app.route('/api/topics/:topicId')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        .all(
+            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+            policy.isAllowed
+        )
         .get(topics.read)
         .put(topics.update)
         .delete(topics.delete);
 
     app.route('/api/organizations/:organizationId')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        .all(
+            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+            policy.isAllowed
+        )
         .get(organizations.read)
         .put(organizations.update)
         .delete(organizations.delete);
 
     app.route('/api/organizations/owner/:organizationId')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
-        .put(futureLeaders.update)
+        .all(
+            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+            policy.isAllowed
+        )
+        .put(futureLeaders.update);
 
     app.route('/api/issues/:issueId')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        .all(
+            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+            policy.isAllowed
+        )
         .get(issues.read)
         .put(issues.update)
         .delete(issues.delete);
 
     app.route('/api/solutions/:solutionId')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        .all(
+            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+            policy.isAllowed
+        )
         .get(solutions.read)
         .put(solutions.update)
         .delete(solutions.delete);
 
     app.route('/api/votes/:voteId')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        .all(
+            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+            policy.isAllowed
+        )
         .get(votes.read)
         .put(votes.update)
         .delete(votes.delete);
 
     app.route('/api/proposals/:proposalId')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        .all(
+            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+            policy.isAllowed
+        )
         .get(proposals.read)
         .put(proposals.update)
         .delete(proposals.delete);
 
     app.route('/api/suggestions/:suggestionId')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        .all(
+            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+            policy.isAllowed
+        )
         .get(suggestions.read)
         .put(suggestions.update)
         .delete(suggestions.delete);
 
     app.route('/api/endorsement/:endorsementId')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        .all(
+            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+            policy.isAllowed
+        )
         .get(endorsement.read)
         .put(endorsement.update)
         .delete(endorsement.delete);
 
     app.route('/api/media/:mediaId')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        .all(
+            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+            policy.isAllowed
+        )
         .get(media.read)
         .put(media.update)
         .delete(media.delete);
 
     app.route('/api/regions/:regionId')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        .all(
+            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+            policy.isAllowed
+        )
         .get(regions.read)
         .put(regions.update)
         .delete(regions.delete);
 
     app.route('/api/countries/:countryId')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        .all(
+            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+            policy.isAllowed
+        )
         .get(countries.read);
 
     // Finish by binding the article middleware
