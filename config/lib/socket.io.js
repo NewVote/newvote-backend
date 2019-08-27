@@ -16,7 +16,7 @@ let config = require('../config'),
 module.exports = function (app, db) {
     let server;
     if (config.secure && config.secure.ssl === true) {
-        // Load SSL key and certificate
+    // Load SSL key and certificate
         let privateKey = fs.readFileSync(path.resolve(config.secure.privateKey), 'utf8');
         let certificate = fs.readFileSync(path.resolve(config.secure.certificate), 'utf8');
         let options = {
@@ -54,7 +54,7 @@ module.exports = function (app, db) {
         // Create new HTTPS Server
         server = https.createServer(options, app);
     } else {
-        // Create a new HTTP server
+    // Create a new HTTP server
         server = http.createServer(app);
     }
     // Create a new Socket.io server
@@ -69,7 +69,7 @@ module.exports = function (app, db) {
 
     // Intercept Socket.io's handshake request
     io.use(function (socket, next) {
-        // Use the 'cookie-parser' module to parse the request cookies
+    // Use the 'cookie-parser' module to parse the request cookies
         cookieParser(config.sessionSecret)(socket.request, {}, function (err) {
             // Get the session id from the request cookies
             let sessionId = socket.request.signedCookies ? socket.request.signedCookies[config.sessionKey] : undefined;

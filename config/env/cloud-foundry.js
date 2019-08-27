@@ -26,7 +26,7 @@ module.exports = {
         }
     },
     log: {
-        // Can specify one of 'combined', 'common', 'dev', 'short', 'tiny'
+    // Can specify one of 'combined', 'common', 'dev', 'short', 'tiny'
         format: 'combined',
         // Stream defaults to process.stdout
         // By default we want logs to go to process.out so the Cloud Foundry Loggregator will collect them

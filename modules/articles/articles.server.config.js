@@ -9,6 +9,4 @@ let path = require('path'),
 /**
  * Module init function.
  */
-module.exports = function (app, db) {
-
-};
+module.exports = function(app, db) {};

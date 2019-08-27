@@ -12,7 +12,7 @@ let _ = require('lodash'),
 /**
  * Get files by glob patterns
  */
-let getGlobbedPaths = function(globPatterns, excludes) {
+const getGlobbedPaths = function(globPatterns, excludes) {
     // URL paths regex
     let urlRegex = new RegExp('^(?:[a-z]+:)?//', 'i');
 

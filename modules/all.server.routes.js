@@ -32,8 +32,8 @@ module.exports = function(app) {
     app.all('*', (req, res, next) => {
         // debugger
         // start wit the organization stored in the cookie and attempt to parse
-        const { organization: cookieOrg } = req.cookies;
         let organization = null
+        const { organization: cookieOrg } = req.cookies;
         try {
             organization = JSON.parse(cookieOrg);
         } catch (e) {

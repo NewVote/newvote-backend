@@ -10,20 +10,19 @@ let _ = require('lodash'),
 /**
  * User middleware
  */
-exports.userByID = function (req, res, next, id) {
+exports.userByID = function(req, res, next, id) {
     console.log('id in user middleware: ', id);
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400)
-            .send({
-                message: 'User is invalid'
-            });
+        return res.status(400).send({
+            message: 'User is invalid'
+        });
     }
 
     User.findOne({
         _id: id
     })
         .populate('country')
-        .exec(function (err, user) {
+        .exec(function(err, user) {
             if (err) {
                 return next(err);
             } else if (!user) {

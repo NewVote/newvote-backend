@@ -6,7 +6,9 @@
 let _ = require('lodash'),
     fs = require('fs'),
     path = require('path'),
-    errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
+    errorHandler = require(path.resolve(
+        './modules/core/errors.server.controller'
+    )),
     mongoose = require('mongoose'),
     multer = require('multer'),
     config = require(path.resolve('./config/config')),
@@ -15,7 +17,7 @@ let _ = require('lodash'),
 /**
  * Update user details
  */
-exports.update = function (req, res) {
+exports.update = function(req, res) {
     // Init Variables
     let user = req.user;
 
@@ -28,17 +30,15 @@ exports.update = function (req, res) {
         user.updated = Date.now();
         user.displayName = user.firstName + ' ' + user.lastName;
 
-        user.save(function (err) {
+        user.save(function(err) {
             if (err) {
-                return res.status(400)
-                    .send({
-                        message: errorHandler.getErrorMessage(err)
-                    });
+                return res.status(400).send({
+                    message: errorHandler.getErrorMessage(err)
+                });
             } else {
-                req.login(user, function (err) {
+                req.login(user, function(err) {
                     if (err) {
-                        res.status(400)
-                            .send(err);
+                        res.status(400).send(err);
                     } else {
                         res.json(user);
                     }
@@ -46,21 +46,21 @@ exports.update = function (req, res) {
             }
         });
     } else {
-        res.status(400)
-            .send({
-                message: 'User is not signed in'
-            });
+        res.status(400).send({
+            message: 'User is not signed in'
+        });
     }
 };
 
 /**
  * Update profile picture
  */
-exports.changeProfilePicture = function (req, res) {
+exports.changeProfilePicture = function(req, res) {
     let user = req.user;
     let message = null;
-    let upload = multer(config.uploads.profileUpload)
-        .single('newProfilePicture');
+    let upload = multer(config.uploads.profileUpload).single(
+        'newProfilePicture'
+    );
     let profileUploadFileFilter = require(path.resolve('./config/lib/multer'))
         .profileUploadFileFilter;
 
@@ -68,26 +68,24 @@ exports.changeProfilePicture = function (req, res) {
     upload.fileFilter = profileUploadFileFilter;
 
     if (user) {
-        upload(req, res, function (uploadError) {
+        upload(req, res, function(uploadError) {
             if (uploadError) {
-                return res.status(400)
-                    .send({
-                        message: 'Error occurred while uploading profile picture'
-                    });
+                return res.status(400).send({
+                    message: 'Error occurred while uploading profile picture'
+                });
             } else {
-                user.profileImageURL = config.uploads.profileUpload.dest + req.file.filename;
+                user.profileImageURL =
+                    config.uploads.profileUpload.dest + req.file.filename;
 
-                user.save(function (saveError) {
+                user.save(function(saveError) {
                     if (saveError) {
-                        return res.status(400)
-                            .send({
-                                message: errorHandler.getErrorMessage(saveError)
-                            });
+                        return res.status(400).send({
+                            message: errorHandler.getErrorMessage(saveError)
+                        });
                     } else {
-                        req.login(user, function (err) {
+                        req.login(user, function(err) {
                             if (err) {
-                                res.status(400)
-                                    .send(err);
+                                res.status(400).send(err);
                             } else {
                                 res.json(user);
                             }
@@ -97,41 +95,40 @@ exports.changeProfilePicture = function (req, res) {
             }
         });
     } else {
-        res.status(400)
-            .send({
-                message: 'User is not signed in'
-            });
+        res.status(400).send({
+            message: 'User is not signed in'
+        });
     }
 };
 
 /**
  * Send User
  */
-exports.me = function (req, res) {
+exports.me = function(req, res) {
     res.json(req.user || null);
 };
 
 /**
  * Get count of all users
  */
-exports.count = function (req, res) {
-    let org = req.organization
+exports.count = function(req, res) {
+    let org = req.organization;
     let orgUrl = org ? org.url : null;
     const orgMatch = orgUrl ? { 'organizations.url': orgUrl } : {};
     // do some kind of aggregate query that outputs the count
     return User.aggregate([
         {
             $lookup: {
-                'from': 'organizations',
-                'localField': 'organizations',
-                'foreignField': '_id',
-                'as': 'organizations'
+                from: 'organizations',
+                localField: 'organizations',
+                foreignField: '_id',
+                as: 'organizations'
             }
         },
         { $match: orgMatch }
     ])
         .exec()
-        .then((users) => {
+        .then(users => {
             return res.json(users.length);
         });
-}
+};
