@@ -14,7 +14,7 @@ const schema = {
         likert: Joi.boolean(),
         organizations: Joi.objectId(),
         softDeleted: Joi.boolean(),
-        suggestion: Joi.objectId()
+        suggestionTemplate: Joi.objectId()
     })
 }
 
