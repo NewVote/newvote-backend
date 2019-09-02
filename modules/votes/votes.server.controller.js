@@ -22,11 +22,33 @@ exports.create = function(req, res) {
     vote.user = req.user;
 
     vote.save()
-        .then(vote => {
+        .then((vote) => {
+            return Vote.find({ object: vote.object })
+        })
+        .then((votes) => {
+            const voteMetaData = {
+                up: 0,
+                down: 0,
+                total: 0,
+                _id: vote._id
+            };
+
+            voteMetaData.total = votes.length;
+            votes.forEach((item) => {
+                if (item.voteValue > 0) voteMetaData.up++
+                if (item.voteValue < 0) voteMetaData.down++
+            })
+
+            req.app.get('io').sockets.emit('vote', voteMetaData);
+            return vote;
+        })
+        .then((vote) => {
             return res.json(vote);
         })
         .catch(err => {
-            throw err;
+            return res.status(400).send({
+                message: errorHandler.getErrorMessage(err)
+            });
         });
 };
 
@@ -36,8 +58,6 @@ exports.updateOrCreate = async function(req, res) {
 
     const isVerified = await isUserSignedToOrg(organizationId, user);
    
-    req.app.get('io').sockets.emit('vote', 1);
-
     if (!isVerified) {
         return res.status(403).send({
             message:
@@ -77,9 +97,28 @@ exports.update = function(req, res) {
     _.extend(vote, req.body);
     // vote.title = req.body.title;
     // vote.content = req.body.content;
-
     vote.save()
-        .then(vote => {
+        .then((vote) => {
+            return Vote.find({ object: vote.object })
+        })
+        .then((votes) => {
+            const voteMetaData = {
+                up: 0,
+                down: 0,
+                total: 0,
+                _id: vote._id
+            };
+
+            voteMetaData.total = votes.length;
+            votes.forEach((item) => {
+                if (item.voteValue > 0) voteMetaData.up++
+                if (item.voteValue < 0) voteMetaData.down++
+            })
+
+            req.app.get('io').sockets.emit('vote', voteMetaData);
+            return vote;
+        })
+        .then((vote) => {
             return res.json(vote);
         })
         .catch(err => {
