@@ -14,7 +14,21 @@ let config = require('../config'),
 
 // Define the Socket.io configuration method
 module.exports = function (app, db) {
-    let server;
+    let server = http.createServer(app);
+    let io = socketio(server);
+
+    io.on('connection', function(socket) {
+        console.log('connected');
+    })
+
+    app.set('io', io);
+    
+    return server;
+};
+
+/*
+
+let server;
     if (config.secure && config.secure.ssl === true) {
     // Load SSL key and certificate
         let privateKey = fs.readFileSync(path.resolve(config.secure.privateKey), 'utf8');
@@ -100,10 +114,19 @@ module.exports = function (app, db) {
 
     // Add an event listener to the 'connection' event
     io.on('connection', function (socket) {
+        
         config.files.server.sockets.forEach(function (socketConfiguration) {
             require(path.resolve(socketConfiguration))(io, socket);
         });
+
+        socket.on('flag', function (msg) {
+            console.log(msg, 'this is msg');
+            socket.emit('vote', 'Hello')
+        })
     });
 
+    app.set('io', io);
+
     return server;
-};
+
+*/

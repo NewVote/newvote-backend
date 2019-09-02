@@ -22,7 +22,8 @@ let config = require('../config'),
     csrf = require('csurf'),
     cors = require('cors'),
     jwt = require('express-jwt'),
-    celebrateWrap = require('celebrate');
+    celebrateWrap = require('celebrate'),
+    socketio = require('socket.io');
 
 const { celebrate, errors } = celebrateWrap;
 
@@ -320,7 +321,7 @@ module.exports.init = function (db) {
     this.initErrorRoutes(app);
 
     // Configure Socket.io
-    // app = this.configureSocketIO(app, db);
+    app = this.configureSocketIO(app, db);
 
     return app;
 };

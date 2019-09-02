@@ -35,6 +35,8 @@ exports.updateOrCreate = async function(req, res) {
     const { object, organizationId } = req.body;
 
     const isVerified = await isUserSignedToOrg(organizationId, user);
+   
+    req.app.get('io').sockets.emit('vote', 1);
 
     if (!isVerified) {
         return res.status(403).send({
@@ -75,6 +77,7 @@ exports.update = function(req, res) {
     _.extend(vote, req.body);
     // vote.title = req.body.title;
     // vote.content = req.body.content;
+
     vote.save()
         .then(vote => {
             return res.json(vote);
@@ -315,6 +318,8 @@ function mapObjectWithVotes(objects, user, votes) {
         let up = 0;
         let down = 0;
         let total = 0;
+        let _id = object._id;
+
         object.votes = {};
 
         votes.forEach(function(vote) {
@@ -331,6 +336,7 @@ function mapObjectWithVotes(objects, user, votes) {
         });
 
         object.votes = {
+            _id,
             total: objVotes.length,
             currentUser: userVote,
             up: up,
