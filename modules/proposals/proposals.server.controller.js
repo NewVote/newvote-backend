@@ -33,7 +33,7 @@ exports.create = function(req, res) {
     // Return votes without an _id - as it cannot be deleted
     // _id being preset prevents copying and saving of vote data between collections
     const votePromise = Vote.find({
-        object: req.body.suggestion._id,
+        object: req.body.suggestionTemplate._id,
         objectType: 'Suggestion'
     }).select('-_id -created');
 

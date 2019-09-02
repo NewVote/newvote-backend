@@ -32,7 +32,7 @@ exports.create = function(req, res) {
     });
 
     const votePromise = Vote.find({
-        object: req.body.suggestion._id,
+        object: req.body.suggestionTemplate._id,
         objectType: 'Suggestion'
     }).select('-_id -created');
 
@@ -61,7 +61,6 @@ exports.create = function(req, res) {
             return res.json(solution);
         })
         .catch(err => {
-            console.log(err, 'this is catch err');
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });

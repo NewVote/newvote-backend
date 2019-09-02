@@ -260,17 +260,7 @@ function canAccessOrganization(req, object) {
             );
         }
     } else if (method === 'delete') {
-        if (req.organization != null) {
-            return Promise.resolve(object.owner._id == user._id);
-        } else {
-            return Promise.resolve(
-                (object.organizations.owner &&
-                    object.organizations.owner._id == user._id) ||
-                    (object.organizations.moderators &&
-                        object.organizations.moderators.some(
-                            mod => mod == user._id
-                        ))
-            );
-        }
+        // On delete requests on admins have access to delete requests
+        return Promise.resolve(false);
     }
 }

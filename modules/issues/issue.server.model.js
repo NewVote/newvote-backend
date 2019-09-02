@@ -58,7 +58,7 @@ let IssueSchema = new Schema({
         type: Boolean,
         default: false
     },
-    suggestion: {
+    suggestionTemplate: {
         type: Schema.ObjectId,
         ref: 'Suggestion'
     }
