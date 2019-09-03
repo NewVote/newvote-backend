@@ -12,6 +12,7 @@ let path = require('path'),
     errorHandler = require(path.resolve(
         './modules/core/errors.server.controller'
     )),
+    socket = '../helpers/socket',
     _ = require('lodash');
 
 /**
@@ -21,9 +22,6 @@ exports.create = function(req, res) {
     const org = JSON.parse(req.cookies.organization).url;
     let vote = new Vote(req.body);
     vote.user = req.user;
-
-    // IO instance is saved globally
-    const io = req.app.get('io');
 
     vote.save()
         .then((vote) => {
@@ -43,8 +41,8 @@ exports.create = function(req, res) {
             })
 
             voteMetaData.total = voteMetaData.up + voteMetaData.down;
-            
-            io.sockets.to(org).emit('vote', voteMetaData)
+            socket.send(req, voteMetaData, 'vote', org);
+           
             return vote;
         })
         .then((vote) => {
@@ -82,7 +80,6 @@ exports.updateOrCreate = async function(req, res) {
             return exports.update(req, res);
         })
         .catch(err => {
-            console.log(err, 'this is err');
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });
@@ -103,7 +100,6 @@ exports.update = function(req, res) {
     const org = JSON.parse(req.cookies.organization).url;
 
     // IO instance is saved globally
-    const io = req.app.get('io');
     let vote = req.vote;
     _.extend(vote, req.body);
     // vote.title = req.body.title;
@@ -126,7 +122,7 @@ exports.update = function(req, res) {
                 if (item.voteValue < 0) voteMetaData.down++
             })
 
-            io.sockets.to(org).emit('vote', voteMetaData)
+            socket.send(req, voteMetaData, 'vote', org);
             return vote;
         })
         .then((vote) => {
