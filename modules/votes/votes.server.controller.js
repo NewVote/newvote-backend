@@ -12,12 +12,13 @@ let path = require('path'),
     errorHandler = require(path.resolve(
         './modules/core/errors.server.controller'
     )),
-    socket = '../helpers/socket',
+    socket = require('../helpers/socket'),
     _ = require('lodash');
 
 /**
  * Create a vote
  */
+
 exports.create = function(req, res) {
     const org = JSON.parse(req.cookies.organization).url;
     let vote = new Vote(req.body);
