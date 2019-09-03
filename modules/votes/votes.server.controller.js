@@ -18,8 +18,12 @@ let path = require('path'),
  * Create a vote
  */
 exports.create = function(req, res) {
+    const org = JSON.parse(req.cookies.organization).url;
     let vote = new Vote(req.body);
     vote.user = req.user;
+
+    // IO instance is saved globally
+    const io = req.app.get('io');
 
     vote.save()
         .then((vote) => {
@@ -30,22 +34,24 @@ exports.create = function(req, res) {
                 up: 0,
                 down: 0,
                 total: 0,
-                _id: vote._id
+                _id: vote.object
             };
 
-            voteMetaData.total = votes.length;
             votes.forEach((item) => {
                 if (item.voteValue > 0) voteMetaData.up++
                 if (item.voteValue < 0) voteMetaData.down++
             })
 
-            req.app.get('io').sockets.emit('vote', voteMetaData);
+            voteMetaData.total = voteMetaData.up + voteMetaData.down;
+            
+            io.sockets.to(org).emit('vote', voteMetaData)
             return vote;
         })
         .then((vote) => {
             return res.json(vote);
         })
         .catch(err => {
+            console.log(err, 'this is err');
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });
@@ -76,6 +82,7 @@ exports.updateOrCreate = async function(req, res) {
             return exports.update(req, res);
         })
         .catch(err => {
+            console.log(err, 'this is err');
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });
@@ -93,6 +100,10 @@ exports.read = function(req, res) {
  * Update a vote
  */
 exports.update = function(req, res) {
+    const org = JSON.parse(req.cookies.organization).url;
+
+    // IO instance is saved globally
+    const io = req.app.get('io');
     let vote = req.vote;
     _.extend(vote, req.body);
     // vote.title = req.body.title;
@@ -106,7 +117,7 @@ exports.update = function(req, res) {
                 up: 0,
                 down: 0,
                 total: 0,
-                _id: vote._id
+                _id: vote.object
             };
 
             voteMetaData.total = votes.length;
@@ -115,13 +126,14 @@ exports.update = function(req, res) {
                 if (item.voteValue < 0) voteMetaData.down++
             })
 
-            req.app.get('io').sockets.emit('vote', voteMetaData);
+            io.sockets.to(org).emit('vote', voteMetaData)
             return vote;
         })
         .then((vote) => {
             return res.json(vote);
         })
         .catch(err => {
+            console.log(err, 'this is err');
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });

@@ -18,7 +18,10 @@ module.exports = function (app, db) {
     let io = socketio(server);
 
     io.on('connection', function(socket) {
-        console.log('connected');
+
+        socket.on('join org', function (org) {
+            socket.join(org);
+        });
     })
 
     app.set('io', io);
@@ -118,14 +121,7 @@ let server;
         config.files.server.sockets.forEach(function (socketConfiguration) {
             require(path.resolve(socketConfiguration))(io, socket);
         });
-
-        socket.on('flag', function (msg) {
-            console.log(msg, 'this is msg');
-            socket.emit('vote', 'Hello')
-        })
     });
-
-    app.set('io', io);
 
     return server;
 
