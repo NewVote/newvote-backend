@@ -50,7 +50,6 @@ exports.create = function(req, res) {
             return res.json(vote);
         })
         .catch(err => {
-            console.log(err, 'this is err');
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });
@@ -130,7 +129,6 @@ exports.update = function(req, res) {
             return res.json(vote);
         })
         .catch(err => {
-            console.log(err, 'this is err');
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });
