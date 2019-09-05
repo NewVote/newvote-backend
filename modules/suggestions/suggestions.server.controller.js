@@ -12,7 +12,7 @@ let path = require('path'),
     Solution = mongoose.model('Solution'),
     Proposal = mongoose.model('Proposal'),
     Vote = mongoose.model('Vote'),
-    votes = require('../votes/votes.server.controller'),
+    voteController = require('../votes/votes.server.controller'),
     errorHandler = require(path.resolve(
         './modules/core/errors.server.controller'
     )),
@@ -102,7 +102,12 @@ exports.create = function(req, res) {
                 }
             );
         })
-        .then(function() {
+        .then(() => {
+            // a new suggestion is returned without a vote object - breaks vote button component
+            return voteController.attachVotes([suggestion], req.user, req.query.regions)
+        })
+        .then((suggestion) => {
+            console.log(suggestion, 'this is suggestion');
             // console.log('mailer success: ', data);
             return res.status(200).json(suggestion);
         })
@@ -117,7 +122,7 @@ exports.create = function(req, res) {
  * Show the current suggestion
  */
 exports.read = function(req, res) {
-    votes
+    voteController
         .attachVotes([req.suggestion], req.user, req.query.regions)
         .then(function(suggestionArr) {
             const updatedSuggestion = suggestionArr[0];
@@ -223,7 +228,7 @@ exports.list = function(req, res) {
         { $sort: { created: -1 } }
     ]).exec(function(err, suggestions) {
         if (err) throw err;
-        votes
+        voteController
             .attachVotes(suggestions, req.user, req.query.regions)
             .then(suggestions => res.json(suggestions))
             .catch(err => {
