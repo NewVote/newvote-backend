@@ -106,10 +106,9 @@ exports.create = function(req, res) {
             // a new suggestion is returned without a vote object - breaks vote button component
             return voteController.attachVotes([suggestion], req.user, req.query.regions)
         })
-        .then((suggestion) => {
-            console.log(suggestion, 'this is suggestion');
+        .then((suggestions) => {
             // console.log('mailer success: ', data);
-            return res.status(200).json(suggestion);
+            return res.status(200).json(suggestions);
         })
         .catch(err => {
             return res.status(400).send({
@@ -139,20 +138,33 @@ exports.read = function(req, res) {
  * Update a suggestion
  */
 exports.update = function(req, res) {
+
+    // Client updates the vote object directly on store
+    // If sent to the backend the votes object on suggestion will not save voteValue
+    // in order to match data on client / backend - we remove the votes object & have the backend
+    // reAttach votes
+    if (req.body.votes) {
+        delete req.body.votes;
+    }
+
     let suggestion = req.suggestion;
     _.extend(suggestion, req.body);
+
     // suggestion.title = req.body.title;
     // suggestion.content = req.body.content;
-
-    suggestion.save(function(err) {
-        if (err) {
+    suggestion.save()
+        .then((res) => {
+            return voteController
+                .attachVotes([res], req.user, req.query.regions)
+        })
+        .then((data) => {
+            res.json(data[0]);
+        })
+        .catch((err) =>{
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });
-        } else {
-            res.json(suggestion);
-        }
-    });
+        })
 };
 
 /**

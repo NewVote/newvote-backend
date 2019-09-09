@@ -250,8 +250,6 @@ exports.attachMetaData = function(issues, user) {
                         lastCreated: lastCreated
                     };
 
-                    // console.log(issue.solutionMetaData);
-
                     return issue;
                 });
                 return issues;

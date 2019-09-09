@@ -391,7 +391,7 @@ function mapObjectWithVotes(objects, user, votes) {
 
         return object;
     });
-
+    
     return objects;
 }
 
