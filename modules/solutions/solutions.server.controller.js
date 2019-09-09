@@ -115,7 +115,9 @@ exports.update = function(req, res) {
             return voteController
                 .attachVotes([res], req.user, req.query.regions)
         })
-        .then(issue => res.json(issue[0]))
+        .then(solution => {
+            res.json(solution[0])
+        })
         .catch(err => {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
