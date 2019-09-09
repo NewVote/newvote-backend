@@ -8,6 +8,7 @@ let path = require('path'),
     Solution = mongoose.model('Solution'),
     Suggestion = mongoose.model('Suggestion'),
     Vote = mongoose.model('Vote'),
+    voteController = require('../votes/votes.server.controller'),
     errorHandler = require(path.resolve(
         './modules/core/errors.server.controller'
     )),
@@ -98,6 +99,11 @@ exports.read = function(req, res) {
  */
 exports.update = function(req, res) {
     delete req.body.__v;
+
+    if (req.body.votes) {
+        delete req.body.votes;
+    }
+
     let solution = req.solution;
     _.extend(solution, req.body);
     // solution.title = req.body.title;
@@ -105,12 +111,17 @@ exports.update = function(req, res) {
 
     solution
         .save()
-        .then(issue => res.json(issue))
+        .then((res) => {
+            return voteController
+                .attachVotes([res], req.user, req.query.regions)
+        })
+        .then(issue => res.json(issue[0]))
         .catch(err => {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });
         });
+
 };
 
 /**

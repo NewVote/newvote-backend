@@ -9,6 +9,7 @@ let path = require('path'),
     Vote = mongoose.model('Vote'),
     votes = require('../votes/votes.server.controller'),
     Solution = mongoose.model('Solution'),
+    voteController = require('../votes/votes.server.controller'),
     errorHandler = require(path.resolve(
         './modules/core/errors.server.controller'
     )),
@@ -88,20 +89,28 @@ exports.read = function(req, res) {
  */
 exports.update = function(req, res) {
     delete req.body.__v;
+
+    if (req.body.votes) {
+        delete req.body.votes;
+    }
+
     let proposal = req.proposal;
     _.extend(proposal, req.body);
     // proposal.title = req.body.title;
     // proposal.content = req.body.content;
     proposal.user = req.user;
-    proposal.save(function(err) {
-        if (err) {
+    proposal
+        .save()
+        .then((res) => {
+            return voteController
+                .attachVotes([res], req.user, req.query.regions)
+        })
+        .then(proposal => res.json(proposal[0]))
+        .catch(err => {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });
-        } else {
-            res.json(proposal);
-        }
-    });
+        });
 };
 
 /**
