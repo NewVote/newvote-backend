@@ -120,7 +120,6 @@ exports.update = function(req, res) {
     delete req.body._id;
     delete req.body.__v;
     
-
     // if a user is chosen from existing users then future owner has to be removed
     if (req.body.owner) {
         req.body.futureOwner = null;
@@ -137,7 +136,6 @@ exports.update = function(req, res) {
             let organization = _.assign(org, req.body);
 
             if (emails.length < 1) {
-                console.log('no emails');
                 organization.moderators = [];
                 return organization.save();
             }
