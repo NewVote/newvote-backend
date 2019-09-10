@@ -356,8 +356,9 @@ exports.oauthCallback = function(strategy) {
                         encodeURIComponent(errorHandler.getErrorMessage(err))
                 );
             }
+
             if (!user) {
-                return res.redirect(host + '/auth/login?err="NO_USER"');
+                return res.redirect(host + '/auth/login?err="400_JWT_SIGNATURE"');
             }
             req.login(user, function(err) {
                 if (err) {
@@ -391,6 +392,7 @@ exports.oauthCallback = function(strategy) {
  * Helper function to create or update a user after AAF Rapid SSO auth
  */
 exports.saveRapidProfile = function(req, profile, done) {
+
     const organizationPromise = Organization.findOne({
         _id: req.organization._id
     });
