@@ -114,15 +114,25 @@ gulp.task('watch', function (done) {
 
 // ESLint JS linting task
 gulp.task('lint', function () {
+
     let assets = _.union(
         defaultAssets.server.gulpConfig,
         defaultAssets.server.allJS
     );
 
-    return gulp.src(assets)
-        .pipe(plugins.eslint())
-        .pipe(plugins.eslint.format())
-        .pipe(plugins.eslint.failOnError());
+
+    let env = process.env.NODE_ENVIRONMENT
+    if (env === 'production') {
+        return gulp.src(assets)
+            .pipe(plugins.eslint())
+            .pipe(plugins.eslint.format())
+            .pipe(plugins.eslint.failOnError());
+    }
+    else {
+        return gulp.src(assets)
+            .pipe(plugins.eslint())
+            .pipe(plugins.eslint.format())
+    }
 });
 
 // Mocha tests task
