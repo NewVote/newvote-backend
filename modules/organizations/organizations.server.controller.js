@@ -113,56 +113,39 @@ exports.read = function(req, res) {
  * Update a organization
  */
 exports.update = function(req, res) {
-    let emails = req.body.moderators;
+    let moderatorArray = req.body.moderators;
 
     delete req.body.moderators;
     delete req.body.moderatorsControl;
+    delete req.body._id;
+    delete req.body.__v;
+    
 
     // if a user is chosen from existing users then future owner has to be removed
     if (req.body.owner) {
         req.body.futureOwner = null;
     }
 
-    const newModEmails = [];
-    const modIDs = emails.filter(e => {
-        if (mongoose.Types.ObjectId.isValid(e)) return e;
-        newModEmails.push(e);
-        return false;
-    });
+    const { emailArray, emailIdArray } = filterEmails(moderatorArray);
 
-    let organization = req.organization;
-    _.extend(organization, req.body);
+    const orgPromise = Organization.findOne({ _id: req.organization._id });
+    const userEmailPromise = User.find()
+        .or([{ email: { $in: emailArray } }, { _id: { $in: emailIdArray } }]);
 
-    // If moderators array is same size & there are no emails to append save org
-    if (!newModEmails && modIDs.length === req.organization.moderators.length) {
-        return organization.save(err => {
-            if (err) {
-                return res.status(400).send({
-                    message: errorHandler.getErrorMessage(err)
-                });
-            }
-            res.status(200).json(organization);
-        });
-    }
+    Promise.all([orgPromise, userEmailPromise])
+        .then(([org, emails]) => {
+            let organization = _.assign(org, req.body);
 
-    User.find({
-        email: {
-            $in: newModEmails
-        }
-    })
-        .select({ _id: 1 })
-        .then(docs => {
-            // save organization array as moderators might be removed
-            if (!docs.length) {
-                organization.moderators = [...modIDs];
+            if (emails.length < 1) {
+                console.log('no emails');
+                organization.moderators = [];
                 return organization.save();
             }
-            const getObjectIds = docs.map(user => user._id);
-            organization.moderators = [...modIDs, ...getObjectIds];
+            organization.moderators = emails;
             return organization.save();
         })
         .then(org => {
-            return res.status(200).json(organization);
+            return res.status(200).json(org);
         })
         .catch(err => {
             return res.status(400).send({
@@ -421,4 +404,26 @@ function seedNewOrganization(org) {
         ProposalPromise,
         SuggestionPromise
     ]);
+}
+
+function filterEmails (emails) {
+
+    if (!emails) {
+        return {
+            emailArray: false,
+            emailIdArray: false
+        };
+    }
+
+    const newModEmails = [];
+    const modIDs = emails.slice().filter(e => {
+        if (mongoose.Types.ObjectId.isValid(e)) return e;
+        newModEmails.push(e);
+        return false;
+    });
+
+    return {
+        emailArray: newModEmails,
+        emailIdArray: modIDs
+    };
 }
