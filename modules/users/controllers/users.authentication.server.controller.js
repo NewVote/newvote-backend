@@ -357,7 +357,7 @@ exports.oauthCallback = function(strategy) {
                 );
             }
             if (!user) {
-                return res.redirect(host + '/auth/login?err="NO_USER"');
+                return res.redirect(host + '/auth/login?err="400_JWT_SIGNATURE"');
             }
             req.login(user, function(err) {
                 if (err) {
