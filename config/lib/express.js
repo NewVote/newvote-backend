@@ -108,10 +108,9 @@ module.exports.initMiddleware = function (app) {
 
     // Request body parsing middleware should be above methodOverride
     app.use(bodyParser.urlencoded({
-        extended: true,
-        limit: '25mb'
+        extended: true
     }));
-    app.use(bodyParser.json({ limit: '25mb' }));
+    app.use(bodyParser.json());
 
     app.use(methodOverride());
 
