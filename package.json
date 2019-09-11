@@ -37,6 +37,7 @@
         "cors": "^2.8.5",
         "crypto": "0.0.3",
         "csurf": "^1.9.0",
+        "dotenv": "^8.1.0",
         "ejs": "^2.6.1",
         "express": "^4.16.3",
         "express-https-redirect": "^1.0.0",

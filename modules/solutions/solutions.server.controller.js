@@ -195,33 +195,43 @@ exports.list = function(req, res) {
         },
         { $sort: { created: -1 } }
     ]).exec(function(err, solutions) {
+
         if (err) {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });
-        } else {
-            votes
-                .attachVotes(solutions, req.user, req.query.regions)
-                .then(function(solutions) {
-                    proposals
-                        .attachProposals(solutions, req.user, req.query.regions)
-                        .then(solutions => {
-                            // ;
-                            res.json(
-                                filterSoftDeleteProposals(
-                                    solutions,
-                                    showDeleted
-                                )
-                            );
-                        });
-                })
-                .catch(function(err) {
-                    // console.log(err);
-                    res.status(500).send({
-                        message: errorHandler.getErrorMessage(err)
-                    });
-                });
         }
+
+        return res.json(solutions);
+
+        // if (err) {
+        // return res.status(400).send({
+        //     message: errorHandler.getErrorMessage(err)
+        // });
+        // } else {
+        //     votes
+        //         .attachVotes(solutions, req.user, req.query.regions)
+        //         .then(function(solutions) {
+        //             return res.json(solutions);
+        //             // proposals
+        //             //     .attachProposals(solutions, req.user, req.query.regions)
+        //             //     .then(solutions => {
+        //             //         // ;
+        //             //         res.json(
+        //             //             filterSoftDeleteProposals(
+        //             //                 solutions,
+        //             //                 showDeleted
+        //             //             )
+        //             //         );
+        //             //     });
+        //         })
+        //         .catch(function(err) {
+        //             // console.log(err);
+        //             res.status(500).send({
+        //                 message: errorHandler.getErrorMessage(err)
+        //             });
+        //         });
+        // }
     });
 };
 

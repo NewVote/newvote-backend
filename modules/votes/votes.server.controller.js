@@ -106,9 +106,11 @@ exports.update = function(req, res) {
     // vote.content = req.body.content;
     vote.save()
         .then((vote) => {
+            // search for all votes related to the updated object
             return Vote.find({ object: vote.object })
         })
         .then((votes) => {
+            // recalculate vote values
             const voteMetaData = {
                 up: 0,
                 down: 0,
@@ -123,10 +125,7 @@ exports.update = function(req, res) {
             })
 
             socket.send(req, voteMetaData, 'vote', org);
-            return vote;
-        })
-        .then((vote) => {
-            return res.json(vote);
+            return res.json(vote)
         })
         .catch(err => {
             return res.status(400).send({
