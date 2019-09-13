@@ -135,14 +135,18 @@ exports.update = function(req, res) {
 
     // If moderators array is same size & there are no emails to append save org
     if (!newModEmails && modIDs.length === req.organization.moderators.length) {
-        return organization.save(err => {
-            if (err) {
+        return organization.save()
+            .then((organization) => {
+                return Organization.populate(organization, { path: 'moderators' })
+            })
+            .then((organization) => {
+                return res.status(200).json(organization);
+            })
+            .catch((err) => {
                 return res.status(400).send({
                     message: errorHandler.getErrorMessage(err)
                 });
-            }
-            res.status(200).json(organization);
-        });
+            })
     }
 
     User.find({
@@ -161,14 +165,17 @@ exports.update = function(req, res) {
             organization.moderators = [...modIDs, ...getObjectIds];
             return organization.save();
         })
-        .then(org => {
+        .then((organization) => {
+            return Organization.populate(organization, { path: 'moderators' })
+        })
+        .then((organization) => {
             return res.status(200).json(organization);
         })
-        .catch(err => {
+        .catch((err) => {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });
-        });
+        })
 };
 
 /**
