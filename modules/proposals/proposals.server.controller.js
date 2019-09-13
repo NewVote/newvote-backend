@@ -25,6 +25,8 @@ exports.create = function(req, res) {
         delete req.body.imageUrl;
     }
 
+    debugger;
+
     const proposalPromise = new Promise((resolve, reject) => {
         let proposal = new Proposal(req.body);
         proposal.user = req.user;
@@ -33,10 +35,18 @@ exports.create = function(req, res) {
 
     // Return votes without an _id - as it cannot be deleted
     // _id being preset prevents copying and saving of vote data between collections
-    const votePromise = Vote.find({
-        object: req.body.suggestionTemplate._id,
-        objectType: 'Suggestion'
-    }).select('-_id -created');
+    const votePromise = new Promise((resolve, reject) => {
+        if (req.body.suggestionTemplate) {
+            return resolve(
+                Vote.find({
+                    object: req.body.suggestionTemplate._id || false,
+                    objectType: 'Suggestion'
+                }).select('-_id -created')
+            )
+        }
+
+        return resolve(false);
+    })
 
     Promise.all([proposalPromise, votePromise])
         .then(promises => {
@@ -44,13 +54,17 @@ exports.create = function(req, res) {
 
             if (!proposal) throw 'Proposal failed to save';
 
-            if (votes) {
-                const convertSuggestionVotesToProposal = votes.map(vote => {
-                    let newVote = new Vote(vote);
-                    newVote.objectType = 'Proposal';
-                    newVote.object = proposal._id;
-                    return newVote;
-                });
+            if (votes.length > 0) {
+                const convertSuggestionVotesToProposal = 
+                
+                votes
+                    .slice()
+                    .map(vote => {
+                        let newVote = new Vote(vote);
+                        newVote.objectType = 'Proposal';
+                        newVote.object = proposal._id;
+                        return newVote;
+                    });
 
                 Vote.insertMany(convertSuggestionVotesToProposal);
             }
