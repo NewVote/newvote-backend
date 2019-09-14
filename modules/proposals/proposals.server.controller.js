@@ -25,8 +25,6 @@ exports.create = function(req, res) {
         delete req.body.imageUrl;
     }
 
-    debugger;
-
     const proposalPromise = new Promise((resolve, reject) => {
         let proposal = new Proposal(req.body);
         proposal.user = req.user;
@@ -70,6 +68,10 @@ exports.create = function(req, res) {
             }
 
             return proposal.save();
+        })
+        .then((proposal) => {
+            // Attach empty vote object
+            return votes.attachVotes([proposal], req.user, req.query.regions)
         })
         .then(proposal => {
             return res.json(proposal);

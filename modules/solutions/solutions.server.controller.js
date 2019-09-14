@@ -65,6 +65,10 @@ exports.create = function(req, res) {
             }
 
             return solution.save();
+        })        
+        .then((solution) => {
+            // Attach empty vote object
+            return votes.attachVotes([solution], req.user, req.query.regions)
         })
         .then(solution => {
             return res.json(solution);
