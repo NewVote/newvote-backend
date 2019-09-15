@@ -94,7 +94,7 @@ exports.invokeRolesPolicies = function() {
                 },
                 {
                     // users can create and edit suggestions
-                    resources: ['/api/suggestions'],
+                    resources: ['/api/suggestions','/api/suggestions/:suggestionId'],
                     permissions: ['get', 'post', 'put']
                 }
             ]
@@ -237,7 +237,7 @@ function canAccessOrganization(req, object) {
             );
         }
     } else if (method === 'put') {
-        if (object.collection.name === 'organizations') {
+        if (object.collection &&  object.collection.name === 'organizations') {
             if (object.owner === null && !user.roles.includes('admin')) {
                 console.error('no owner on object and user is not admin');
                 Promise.reject(
