@@ -2,6 +2,7 @@
 /**
  * Module dependencies.
  */
+require('dotenv').config();
 require('newrelic');
 const throng = require('throng');
 const app = require('./config/lib/app');
