@@ -383,12 +383,15 @@ function checkOrgVotePermissions (organizationId, user) {
         .then((promises) => {
             const [organization, user] = promises;
 
-            if (!organization || !user) throw('Server Error')
+            if (!organization || !user) throw('Could not find user / organization data')
             if (organization.authType === 0) return true; 
 
             const providerData = user.providerData.find((provider) => {
-                // Filter through providers to find a single object
+                // Filter through providers to find the matching organization
+                return provider.organization === organization.url;
             })
+
+            if (providerData) throw('No Matching Provider data');
 
             return checkPermissions(providerData.edupersonscopedaffiliation, organization.voteRoles);
         })

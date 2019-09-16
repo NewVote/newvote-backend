@@ -96,7 +96,7 @@ exports.signup = function(req, res) {
         });
     }
 
-    // For security measurement we remove the roles from the req.body object
+    // For security measurement we remove the spice rackroles from the req.body object
     delete req.body.roles;
 
     //ensure captcha code is valid or return with an error
@@ -406,7 +406,9 @@ exports.saveRapidProfile = function(req, profile, done) {
             const { edupersontargetedid, edupersonscopedaffiliation } = profile;
 
             // extract aaf attributes from profile 
+            // add organization url to match against current organization for votes
             const providerData = {
+                organization: organization.url,
                 edupersontargetedid,
                 edupersonscopedaffiliation,
                 edupersonprincipalname: profile.edupersonprincipalname ? profile.edupersonprincipalname : ''
