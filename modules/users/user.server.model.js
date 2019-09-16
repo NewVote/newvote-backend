@@ -149,7 +149,7 @@ let UserSchema = new Schema({
     provider: {
         type: String
     },
-    providerData: {},
+    providerData: [],
     additionalProvidersData: {},
     roles: {
         type: [

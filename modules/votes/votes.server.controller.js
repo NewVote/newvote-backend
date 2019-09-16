@@ -35,12 +35,20 @@ exports.updateOrCreate = async function(req, res) {
     const { object, organizationId } = req.body;
 
     const isVerified = await isUserSignedToOrg(organizationId, user);
+    const hasVotePermission = await checkOrgVotePermissions(organizationId, user);
 
     if (!isVerified) {
         return res.status(403).send({
             message:
                 'You must verify with Community before being able to vote.',
             notCommunityVerified: true
+        });
+    }
+
+    if (!hasVotePermission) {
+        return res.status(403).send({
+            message:
+                'You do not have permission to vote on this organization'
         });
     }
 
@@ -364,4 +372,32 @@ function isUserSignedToOrg(currentOrgId, userObject) {
 
             return orgExists;
         });
+}
+
+function checkOrgVotePermissions (organizationId, user) {
+
+    const orgPromise = Organization.findById(organizationId);
+    const userPromise = User.findOne({ _id: user._id })
+
+    return Promise.all([orgPromise, userPromise])
+        .then((promises) => {
+            const [organization, user] = promises;
+
+            if (!organization || !user) throw('Server Error')
+            if (organization.authType === 0) return true; 
+
+            const providerData = user.providerData.find((provider) => {
+                // Filter through providers to find a single object
+            })
+
+            return checkPermissions(providerData.edupersonscopedaffiliation, organization.voteRoles);
+        })
+}
+
+function checkPermissions(userRole, organizationRoles) {
+    const filteredRole = organizationRoles.filter((roleObject) => {
+        return roleObject.role === userRole;
+    });
+
+    return filteredRole.active;
 }

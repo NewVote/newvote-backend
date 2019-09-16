@@ -403,6 +403,15 @@ exports.saveRapidProfile = function(req, profile, done) {
         .then(promises => {
             let [organization, user] = promises;
 
+            const { edupersontargetedid, edupersonscopedaffiliation } = profile;
+
+            // extract aaf attributes from profile 
+            const providerData = {
+                edupersontargetedid,
+                edupersonscopedaffiliation,
+                edupersonprincipalname: profile.edupersonprincipalname ? profile.edupersonprincipalname : ''
+            }
+
             if (!user) {
                 console.log('no user, creating new account');
                 const possibleUsername =
@@ -422,6 +431,7 @@ exports.saveRapidProfile = function(req, profile, done) {
                         displayName: profile.displayname,
                         email: profile.mail,
                         provider: 'aaf',
+                        providerData: [providerData],
                         ita: profile.ita,
                         roles: ['user'],
                         verified: true,
@@ -431,6 +441,13 @@ exports.saveRapidProfile = function(req, profile, done) {
                     return user.save();
                 });
             } else {
+                const userProviders = user.providerData.slice();
+                const providerExists = userProviders.some((provider) => {          
+                    return provider.edupersontargetedid === providerData.edupersontargetedid;
+                })
+
+                if (!providerExists) user.providerData.push(providerData);
+
                 if (organization) {
                     const orgExists = user.organizations.find(e => {
                         if (e) {
@@ -439,7 +456,6 @@ exports.saveRapidProfile = function(req, profile, done) {
                     });
                     if (!orgExists) user.organizations.push(organization._id);
                 }
-
                 console.log('found existing user');
                 // user exists update ITA and return user
                 if (user.jti && user.jti === profile.jti) {
@@ -454,63 +470,6 @@ exports.saveRapidProfile = function(req, profile, done) {
         })
         .catch(err => done(err));
 };
-// const organization = req.organization;
-// if(!organization){
-// 	console.error('no organization in request body')
-// }
-
-// console.log('looking up user: ', profile.mail);
-// User.findOne({ email: profile.mail }, '-salt -password -verificationCode', function (err, user) {
-// 	if (err) {
-// 		return done(err);
-// 	} else {
-// 		if (!user) {
-// 			console.log('no user, creating new account')
-// 			var possibleUsername = profile.cn || profile.displayname || profile.givenname + profile.surname || ((profile.mail) ? profile.mail.split('@')[0] : '');
-
-// 			User.findUniqueUsername(possibleUsername, null, function (availableUsername) {
-// 				console.log('generated username: ', availableUsername)
-// 				user = new User({
-// 					firstName: profile.givenname,
-// 					lastName: profile.surname,
-// 					username: profile.mail,
-// 					displayName: profile.displayname,
-// 					email: profile.mail,
-// 					provider: 'aaf',
-// 					ita: profile.ita,
-// 					roles: ['user'],
-// 					verified: true,
-// 					organizations: [organization._id]
-// 				});
-
-// 				// And save the user
-// 				user.save(function (err) {
-// 					return done(err, user);
-// 				});
-// 			});
-// 		} else {
-// 			if(organization) {
-// 				const orgExists = user.organizations.find((e) => {
-// 					if(e) {
-// 						return e._id.equals(organization._id)
-// 					}
-// 				});
-// 				if (!orgExists) user.organizations.push(organization._id);
-// 			}
-
-// 			console.log('found existing user')
-// 			// user exists update ITA and return user
-// 			if (user.jti && user.jti === profile.jti) {
-// 				return done(new Error('ITA Match please login again'))
-// 			}
-// 			user.jti = profile.jti
-// 			user.save()
-// 				.then(user => {
-// 					return done(err, user);
-// 				})
-// 		}
-// 	}
-// });
 
 /**
  * Helper function to save or update a OAuth user profile
