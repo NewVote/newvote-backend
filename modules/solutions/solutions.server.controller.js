@@ -31,16 +31,24 @@ exports.create = function(req, res) {
         resolve(solution);
     });
 
-    const votePromise = Vote.find({
-        object: req.body.suggestionTemplate._id,
-        objectType: 'Suggestion'
-    }).select('-_id -created');
+    const votePromise = new Promise((resolve, reject) => {
+        if (req.body.suggestionTemplate) {
+            return resolve(
+                Vote.find({
+                    object: req.body.suggestionTemplate._id || false,
+                    objectType: 'Suggestion'
+                }).select('-_id -created')
+            )
+        }
+
+        return resolve(false);
+    })
 
     Promise.all([solutionPromise, votePromise])
         .then(promises => {
             const [solution, votes] = promises;
 
-            if (!solution) throw 'Solution failed to save';
+            if (!solution) throw 'Solution failed to create';
 
             if (votes.length > 0) {
                 const convertSuggestionVotesToSolution = votes
