@@ -29,6 +29,17 @@ let _ = require('lodash'),
     spawn = require('child_process')
         .spawn,
     debug = true;
+    let dotenv = require('gulp-dotenv');
+    let rename = require('gulp-rename');
+    let config = require('./dist/env.json');
+
+gulp.task('dotenv', function (done) {
+    gulp.src('.env')
+        .pipe(dotenv())
+        .pipe(rename('env.json'))
+        .pipe(gulp.dest('dist'))
+    done();
+})
 
 // Set NODE_ENV to 'test'
 gulp.task('env:test', function (done) {
@@ -39,6 +50,9 @@ gulp.task('env:test', function (done) {
 // Set NODE_ENV to 'development'
 gulp.task('env:dev', function (done) {
     process.env.NODE_ENV = 'development';
+    process.env.RECAPTCHA_SECRET = config.RECAPTCHA_SECRET
+    process.env.RECAPTCHA_SECRET = config.RECAPTCHA_SECRET
+    process.env.JWT_SECRET = config.JWT_SECRET;
     done();
 });
 
