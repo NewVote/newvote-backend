@@ -405,10 +405,6 @@ async function checkOrgVotePermissions (organizationId, user) {
 
 function checkPermissions(userRole, organizationRoles) {
     const filteredRole = organizationRoles.find((roleObject) => {
-        console.log(roleObject, 'this is roleObject');
-        console.log(userRole, 'this is userRole');
-        
-
         return userRole.includes(roleObject.role);
     });
 
