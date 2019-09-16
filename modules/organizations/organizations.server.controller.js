@@ -136,21 +136,24 @@ exports.update = function(req, res) {
         .then(([org, emails]) => {
             let organization = _.assign(org, req.body);
 
-            if (emails.length < 1) {
+            if (!emails.length) {
                 organization.moderators = [];
                 return organization.save();
             }
             organization.moderators = emails;
             return organization.save();
         })
-        .then(org => {
-            return res.status(200).json(org);
+        .then((organization) => {
+            return Organization.populate(organization, { path: 'moderators' })
         })
-        .catch(err => {
+        .then((organization) => {
+            return res.status(200).json(organization);
+        })
+        .catch((err) => {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });
-        });
+        })
 };
 
 /**
@@ -425,4 +428,4 @@ function filterEmails (emails) {
         emailArray: newModEmails,
         emailIdArray: modIDs
     };
-} 
+}

@@ -7,7 +7,8 @@ let config = require('../config'),
     mongoose = require('./mongoose'),
     express = require('./express'),
     chalk = require('chalk'),
-    seed = require('./seed');
+    seed = require('./seed'),
+    socketio = require('socket.io');
 
 function seedDB() {
     if(config.seedDB && config.seedDB.seed) {
@@ -44,5 +45,7 @@ module.exports.start = function start() {
             console.log(chalk.green('App version:\t\t\t' + config.meanjs.version));
             console.log('--');
         });
+
+        
     });
 };

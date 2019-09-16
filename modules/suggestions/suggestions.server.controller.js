@@ -12,7 +12,7 @@ let path = require('path'),
     Solution = mongoose.model('Solution'),
     Proposal = mongoose.model('Proposal'),
     Vote = mongoose.model('Vote'),
-    votes = require('../votes/votes.server.controller'),
+    voteController = require('../votes/votes.server.controller'),
     errorHandler = require(path.resolve(
         './modules/core/errors.server.controller'
     )),
@@ -102,9 +102,13 @@ exports.create = function(req, res) {
                 }
             );
         })
-        .then(function() {
+        .then(() => {
+            // a new suggestion is returned without a vote object - breaks vote button component
+            return voteController.attachVotes([suggestion], req.user, req.query.regions)
+        })
+        .then((suggestions) => {
             // console.log('mailer success: ', data);
-            return res.status(200).json(suggestion);
+            return res.status(200).json(suggestions);
         })
         .catch(err => {
             return res.status(400).send({
@@ -117,7 +121,7 @@ exports.create = function(req, res) {
  * Show the current suggestion
  */
 exports.read = function(req, res) {
-    votes
+    voteController
         .attachVotes([req.suggestion], req.user, req.query.regions)
         .then(function(suggestionArr) {
             const updatedSuggestion = suggestionArr[0];
@@ -134,20 +138,33 @@ exports.read = function(req, res) {
  * Update a suggestion
  */
 exports.update = function(req, res) {
+
+    // Client updates the vote object directly on store
+    // If sent to the backend the votes object on suggestion will not save voteValue
+    // in order to match data on client / backend - we remove the votes object & have the backend
+    // reAttach votes
+    if (req.body.votes) {
+        delete req.body.votes;
+    }
+
     let suggestion = req.suggestion;
     _.extend(suggestion, req.body);
+
     // suggestion.title = req.body.title;
     // suggestion.content = req.body.content;
-
-    suggestion.save(function(err) {
-        if (err) {
+    suggestion.save()
+        .then((res) => {
+            return voteController
+                .attachVotes([res], req.user, req.query.regions)
+        })
+        .then((data) => {
+            res.json(data[0]);
+        })
+        .catch((err) =>{
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });
-        } else {
-            res.json(suggestion);
-        }
-    });
+        })
 };
 
 /**
@@ -223,7 +240,7 @@ exports.list = function(req, res) {
         { $sort: { created: -1 } }
     ]).exec(function(err, suggestions) {
         if (err) throw err;
-        votes
+        voteController
             .attachVotes(suggestions, req.user, req.query.regions)
             .then(suggestions => res.json(suggestions))
             .catch(err => {

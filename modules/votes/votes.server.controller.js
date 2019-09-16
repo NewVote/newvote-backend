@@ -12,21 +12,47 @@ let path = require('path'),
     errorHandler = require(path.resolve(
         './modules/core/errors.server.controller'
     )),
+    socket = require('../helpers/socket'),
     _ = require('lodash');
 
 /**
  * Create a vote
  */
+
 exports.create = function(req, res) {
+    const org = JSON.parse(req.cookies.organization).url;
     let vote = new Vote(req.body);
     vote.user = req.user;
 
     vote.save()
-        .then(vote => {
+        .then((vote) => {
+            return Vote.find({ object: vote.object })
+        })
+        .then((votes) => {
+            const voteMetaData = {
+                up: 0,
+                down: 0,
+                total: 0,
+                _id: vote.object
+            };
+
+            votes.forEach((item) => {
+                if (item.voteValue > 0) voteMetaData.up++
+                if (item.voteValue < 0) voteMetaData.down++
+            })
+
+            voteMetaData.total = voteMetaData.up + voteMetaData.down;
+            socket.send(req, voteMetaData, 'vote', org);
+           
+            return vote;
+        })
+        .then((vote) => {
             return res.json(vote);
         })
         .catch(err => {
-            throw err;
+            return res.status(400).send({
+                message: errorHandler.getErrorMessage(err)
+            });
         });
 };
 
@@ -35,7 +61,7 @@ exports.updateOrCreate = async function(req, res) {
     const { object, organizationId } = req.body;
 
     const isVerified = await isUserSignedToOrg(organizationId, user);
-
+   
     if (!isVerified) {
         return res.status(403).send({
             message:
@@ -71,13 +97,35 @@ exports.read = function(req, res) {
  * Update a vote
  */
 exports.update = function(req, res) {
+    const org = JSON.parse(req.cookies.organization).url;
+
+    // IO instance is saved globally
     let vote = req.vote;
     _.extend(vote, req.body);
     // vote.title = req.body.title;
     // vote.content = req.body.content;
     vote.save()
-        .then(vote => {
-            return res.json(vote);
+        .then((vote) => {
+            // search for all votes related to the updated object
+            return Vote.find({ object: vote.object })
+        })
+        .then((votes) => {
+            // recalculate vote values
+            const voteMetaData = {
+                up: 0,
+                down: 0,
+                total: 0,
+                _id: vote.object
+            };
+
+            voteMetaData.total = votes.length;
+            votes.forEach((item) => {
+                if (item.voteValue > 0) voteMetaData.up++
+                if (item.voteValue < 0) voteMetaData.down++
+            })
+
+            socket.send(req, voteMetaData, 'vote', org);
+            return res.json(vote)
         })
         .catch(err => {
             return res.status(400).send({
@@ -315,6 +363,8 @@ function mapObjectWithVotes(objects, user, votes) {
         let up = 0;
         let down = 0;
         let total = 0;
+        let _id = object._id;
+
         object.votes = {};
 
         votes.forEach(function(vote) {
@@ -331,6 +381,7 @@ function mapObjectWithVotes(objects, user, votes) {
         });
 
         object.votes = {
+            _id,
             total: objVotes.length,
             currentUser: userVote,
             up: up,
@@ -339,7 +390,7 @@ function mapObjectWithVotes(objects, user, votes) {
 
         return object;
     });
-
+    
     return objects;
 }
 

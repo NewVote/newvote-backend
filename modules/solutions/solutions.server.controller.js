@@ -8,6 +8,7 @@ let path = require('path'),
     Solution = mongoose.model('Solution'),
     Suggestion = mongoose.model('Suggestion'),
     Vote = mongoose.model('Vote'),
+    voteController = require('../votes/votes.server.controller'),
     errorHandler = require(path.resolve(
         './modules/core/errors.server.controller'
     )),
@@ -64,6 +65,10 @@ exports.create = function(req, res) {
             }
 
             return solution.save();
+        })        
+        .then((solution) => {
+            // Attach empty vote object
+            return votes.attachVotes([solution], req.user, req.query.regions)
         })
         .then(solution => {
             return res.json(solution);
@@ -106,6 +111,11 @@ exports.read = function(req, res) {
  */
 exports.update = function(req, res) {
     delete req.body.__v;
+
+    if (req.body.votes) {
+        delete req.body.votes;
+    }
+
     let solution = req.solution;
     _.extend(solution, req.body);
     // solution.title = req.body.title;
@@ -113,12 +123,19 @@ exports.update = function(req, res) {
 
     solution
         .save()
-        .then(issue => res.json(issue))
+        .then((res) => {
+            return voteController
+                .attachVotes([res], req.user, req.query.regions)
+        })
+        .then(solution => {
+            res.json(solution[0])
+        })
         .catch(err => {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });
         });
+
 };
 
 /**
@@ -190,35 +207,49 @@ exports.list = function(req, res) {
         },
         { $sort: { created: -1 } }
     ]).exec(function(err, solutions) {
+
         if (err) {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });
-        } else {
-            votes
-                .attachVotes(solutions, req.user, req.query.regions)
-                .then(function(solutions) {
-                    proposals
-                        .attachProposals(solutions, req.user, req.query.regions)
-                        .then(solutions => {
-                            // ;
-                            res.json(
-                                filterSoftDeleteProposals(
-                                    solutions,
-                                    showDeleted
-                                )
-                            );
-                        });
-                })
-                .catch(function(err) {
-                    // console.log(err);
-                    res.status(500).send({
-                        message: errorHandler.getErrorMessage(err)
-                    });
-                });
         }
+
+        votes
+            .attachVotes(solutions, req.user, req.query.regions)
+            .then(function(solutions) {
+                return res.json(solutions);
+            });
     });
 };
+
+// if (err) {
+// return res.status(400).send({
+//     message: errorHandler.getErrorMessage(err)
+// });
+// } else {
+//     votes
+//         .attachVotes(solutions, req.user, req.query.regions)
+//         .then(function(solutions) {
+//             return res.json(solutions);
+//             // proposals
+//             //     .attachProposals(solutions, req.user, req.query.regions)
+//             //     .then(solutions => {
+//             //         // ;
+//             //         res.json(
+//             //             filterSoftDeleteProposals(
+//             //                 solutions,
+//             //                 showDeleted
+//             //             )
+//             //         );
+//             //     });
+//         })
+//         .catch(function(err) {
+//             // console.log(err);
+//             res.status(500).send({
+//                 message: errorHandler.getErrorMessage(err)
+//             });
+//         });
+// }
 
 /**
  * Solution middleware
