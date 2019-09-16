@@ -90,8 +90,8 @@ let OrganizationSchema = new Schema({
         default: false
     },
     voteRoles: [{
-        role: String,
-        active: Boolean
+        role: { type: String },
+        active: { type: Boolean }
     }]
 });
 

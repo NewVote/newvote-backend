@@ -34,10 +34,11 @@ exports.updateOrCreate = async function(req, res) {
     let user = req.user;
     const { object, organizationId } = req.body;
 
-    const isVerified = await isUserSignedToOrg(organizationId, user);
-    const hasVotePermission = await checkOrgVotePermissions(organizationId, user);
-
-    if (!isVerified) {
+    try {
+        const isVerified = await isUserSignedToOrg(organizationId, user)
+        if (!isVerified) throw('User is not verified');
+       
+    } catch (error) {
         return res.status(403).send({
             message:
                 'You must verify with Community before being able to vote.',
@@ -45,7 +46,11 @@ exports.updateOrCreate = async function(req, res) {
         });
     }
 
-    if (!hasVotePermission) {
+    try {
+        const hasVotePermission = await checkOrgVotePermissions(organizationId, user);
+
+        if (!hasVotePermission) throw('User does not have permission');
+    } catch(err) {
         return res.status(403).send({
             message:
                 'You do not have permission to vote on this organization'
@@ -355,7 +360,7 @@ function isString(value) {
     return typeof value === 'string' || value instanceof String;
 }
 
-function isUserSignedToOrg(currentOrgId, userObject) {
+async function isUserSignedToOrg(currentOrgId, userObject) {
     return User.findById(userObject._id)
         .then(user => {
             if (!user) return false;
@@ -374,11 +379,11 @@ function isUserSignedToOrg(currentOrgId, userObject) {
         });
 }
 
-function checkOrgVotePermissions (organizationId, user) {
+async function checkOrgVotePermissions (organizationId, user) {
 
     const orgPromise = Organization.findById(organizationId);
     const userPromise = User.findOne({ _id: user._id })
-
+    
     return Promise.all([orgPromise, userPromise])
         .then((promises) => {
             const [organization, user] = promises;
@@ -391,16 +396,23 @@ function checkOrgVotePermissions (organizationId, user) {
                 return provider.organization === organization.url;
             })
 
-            if (providerData) throw('No Matching Provider data');
+            if (!providerData) throw('No Matching Provider data');
 
             return checkPermissions(providerData.edupersonscopedaffiliation, organization.voteRoles);
         })
+        .catch(err => { throw(err) });
 }
 
 function checkPermissions(userRole, organizationRoles) {
-    const filteredRole = organizationRoles.filter((roleObject) => {
-        return roleObject.role === userRole;
+    const filteredRole = organizationRoles.find((roleObject) => {
+        console.log(roleObject, 'this is roleObject');
+        console.log(userRole, 'this is userRole');
+        
+
+        return userRole.includes(roleObject.role);
     });
+
+    if (!filteredRole) throw('User does not have permission to vote');
 
     return filteredRole.active;
 }
