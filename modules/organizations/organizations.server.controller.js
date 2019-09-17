@@ -30,13 +30,15 @@ const path = require('path'),
 /**
  * Create a organization
  */
-exports.create = function(req, res) {
+exports.create = function (req, res) {
     let organization = new Organization(req.body);
     let userPromise;
     organization.user = req.user;
 
     let email;
-    const { moderators } = req.body;
+    const {
+        moderators
+    } = req.body;
 
     if (req.body.owner) {
         email = req.body.owner.email;
@@ -105,68 +107,61 @@ exports.create = function(req, res) {
 /**
  * Show the current organization
  */
-exports.read = function(req, res) {
+exports.read = function (req, res) {
     res.json(req.organization);
 };
 
 /**
  * Update a organization
  */
-exports.update = function(req, res) {
-    let emails = req.body.moderators;
+exports.update = function (req, res) {
+    let moderatorArray = req.body.moderators;
 
     delete req.body.moderators;
     delete req.body.moderatorsControl;
+
+    delete req.body._id;
+    delete req.body.__v;
 
     // if a user is chosen from existing users then future owner has to be removed
     if (req.body.owner) {
         req.body.futureOwner = null;
     }
 
-    const newModEmails = [];
-    const modIDs = emails.filter(e => {
-        if (mongoose.Types.ObjectId.isValid(e)) return e;
-        newModEmails.push(e);
-        return false;
+    const {
+        emailArray,
+        emailIdArray
+    } = filterEmails(moderatorArray);
+
+    const orgPromise = Organization.findOne({
+        _id: req.organization._id
     });
+    const userEmailPromise = User.find()
+        .or([{
+            email: {
+                $in: emailArray
+            }
+        }, {
+            _id: {
+                $in: emailIdArray
+            }
+        }]);
 
-    let organization = req.organization;
-    _.extend(organization, req.body);
+    Promise.all([orgPromise, userEmailPromise])
+        .then(([org, emails]) => {
+            let organization = _.assign(org, req.body);
 
-    // If moderators array is same size & there are no emails to append save org
-    if (!newModEmails && modIDs.length === req.organization.moderators.length) {
-        return organization.save()
-            .then((organization) => {
-                return Organization.populate(organization, { path: 'moderators' })
-            })
-            .then((organization) => {
-                return res.status(200).json(organization);
-            })
-            .catch((err) => {
-                return res.status(400).send({
-                    message: errorHandler.getErrorMessage(err)
-                });
-            })
-    }
-
-    User.find({
-        email: {
-            $in: newModEmails
-        }
-    })
-        .select({ _id: 1 })
-        .then(docs => {
-            // save organization array as moderators might be removed
-            if (!docs.length) {
-                organization.moderators = [...modIDs];
+            if (emails.length < 1) {
+                organization.moderators = [];
                 return organization.save();
             }
-            const getObjectIds = docs.map(user => user._id);
-            organization.moderators = [...modIDs, ...getObjectIds];
+            organization.moderators = emails;
             return organization.save();
         })
         .then((organization) => {
-            return Organization.populate(organization, { path: 'moderators' })
+            return Organization.populate(organization, {
+                path: 'moderators'
+            })
         })
         .then((organization) => {
             return res.status(200).json(organization);
@@ -181,10 +176,10 @@ exports.update = function(req, res) {
 /**
  * Delete an organization
  */
-exports.delete = function(req, res) {
+exports.delete = function (req, res) {
     let organization = req.organization;
 
-    organization.remove(function(err) {
+    organization.remove(function (err) {
         if (err) {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
@@ -198,30 +193,53 @@ exports.delete = function(req, res) {
 /**
  * List of Organizations
  */
-exports.list = function(req, res) {
-    let query = req.query.url ? { url: req.query.url } : {};
+exports.list = function (req, res) {
+    let query = req.query.url ? {
+        url: req.query.url
+    } : {};
     let showDeleted = req.query.showDeleted || 'null';
 
     let showPrivateOrgs = req.query.showPrivate || 'false';
     let showNonPrivates = {
-        $or: [{ privateOrg: false }, { privateOrg: { $exists: false } }]
+        $or: [{
+            privateOrg: false
+        }, {
+            privateOrg: {
+                $exists: false
+            }
+        }]
     };
     let privateMatch = showPrivateOrgs === 'true' ? {} : showNonPrivates;
 
     let showNonDeletedItemsMatch = {
-        $or: [{ softDeleted: false }, { softDeleted: { $exists: false } }]
+        $or: [{
+            softDeleted: false
+        }, {
+            softDeleted: {
+                $exists: false
+            }
+        }]
     };
     let showAllItemsMatch = {};
-    let softDeleteMatch = showDeleted
-        ? showAllItemsMatch
-        : showNonDeletedItemsMatch;
+    let softDeleteMatch = showDeleted ?
+        showAllItemsMatch :
+        showNonDeletedItemsMatch;
 
-    Organization.aggregate([
-        { $match: query },
-        { $match: softDeleteMatch },
-        { $match: privateMatch },
-        { $sort: { name: 1 } }
-    ]).exec(function(err, organizations) {
+    Organization.aggregate([{
+        $match: query
+    },
+    {
+        $match: softDeleteMatch
+    },
+    {
+        $match: privateMatch
+    },
+    {
+        $sort: {
+            name: 1
+        }
+    }
+    ]).exec(function (err, organizations) {
         if (err) {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
@@ -235,7 +253,7 @@ exports.list = function(req, res) {
 /**
  * Organization middleware
  */
-exports.organizationByID = function(req, res, next, id) {
+exports.organizationByID = function (req, res, next, id) {
     // Check whether an id is either an mongodb ObjectId or a url
     if (mongoose.Types.ObjectId.isValid(id)) {
         return Organization.findById(id)
@@ -252,11 +270,15 @@ exports.organizationByID = function(req, res, next, id) {
             .catch(err =>
                 res
                     .status(404)
-                    .send({ message: errorHandler.getErrorMessage(err) })
+                    .send({
+                        message: errorHandler.getErrorMessage(err)
+                    })
             );
     }
     // check whether organization is a string it's a string url
-    return Organization.findOne({ url: id })
+    return Organization.findOne({
+        url: id
+    })
         .populate('user', 'displayName')
         .populate('owner', '_id displayName firstName lastName email')
         .populate('moderators', '_id displayName firstName lastName email')
@@ -270,7 +292,9 @@ exports.organizationByID = function(req, res, next, id) {
         .catch(err => {
             return res
                 .status(404)
-                .send({ message: errorHandler.getErrorMessage(err) });
+                .send({
+                    message: errorHandler.getErrorMessage(err)
+                });
         });
 
     // .exec(function (err, organization) {
@@ -291,12 +315,14 @@ exports.organizationByID = function(req, res, next, id) {
     // 	});
 };
 
-exports.organizationByUrl = function(url) {
+exports.organizationByUrl = function (url) {
     if (!url) {
         return Promise.resolve(null);
     }
 
-    let query = { url };
+    let query = {
+        url
+    };
 
     return Organization.findOne(query)
         .populate('user', 'displayName')
@@ -306,12 +332,16 @@ exports.organizationByUrl = function(url) {
 };
 
 function findUserAndOrganization(email, moderators) {
-    let findUserPromise = User.findOne({ email }).then(user => {
+    let findUserPromise = User.findOne({
+        email
+    }).then(user => {
         if (!user) return false;
         return user;
     });
 
-    const doesNewLeaderExist = FutureLeader.findOne({ email }).then(leader => {
+    const doesNewLeaderExist = FutureLeader.findOne({
+        email
+    }).then(leader => {
         // if leader exists then future leader is on the database
         // if leader does exist we want to return leader
         if (leader) {
@@ -322,7 +352,9 @@ function findUserAndOrganization(email, moderators) {
             return false;
         }
         // if leader does not exist create a new leader
-        const owner = new FutureLeader({ email });
+        const owner = new FutureLeader({
+            email
+        });
         return owner;
     });
 
@@ -330,12 +362,14 @@ function findUserAndOrganization(email, moderators) {
         email: {
             $in: moderators
         }
-    }).select({ _id: 1 });
+    }).select({
+        _id: 1
+    });
 
     return Promise.all([findUserPromise, doesNewLeaderExist, findModerators]);
 }
 
-let buildMessage = function(code, req) {
+let buildMessage = function (code, req) {
     let messageString = '';
     let url = req.protocol + '://' + req.get('host') + '/auth/signup/' + code;
 
@@ -346,17 +380,16 @@ let buildMessage = function(code, req) {
     return messageString;
 };
 
-let sendEmail = function(user, pass, req) {
-    return transporter.sendMail(
-        {
-            from: process.env.MAILER_FROM,
-            to: user.email,
-            subject: 'NewVote UQU Verification',
-            html: buildMessage(pass, req)
-        },
-        (err, info) => {
-            console.log(info, 'error sending email');
-        }
+let sendEmail = function (user, pass, req) {
+    return transporter.sendMail({
+        from: process.env.MAILER_FROM,
+        to: user.email,
+        subject: 'NewVote UQU Verification',
+        html: buildMessage(pass, req)
+    },
+    (err, info) => {
+        console.log(info, 'error sending email');
+    }
     );
 };
 
@@ -405,7 +438,9 @@ function sendVerificationCodeViaEmail(req, user) {
 }
 
 function seedNewOrganization(org) {
-    const { _id: organizationId } = org;
+    const {
+        _id: organizationId
+    } = org;
 
     const TopicPromise = Promise.resolve(
         TopicController.seedTopic(organizationId)
@@ -428,4 +463,26 @@ function seedNewOrganization(org) {
         ProposalPromise,
         SuggestionPromise
     ]);
+}
+
+function filterEmails(emails) {
+
+    if (!emails) {
+        return {
+            emailArray: false,
+            emailIdArray: false
+        };
+    }
+
+    const newModEmails = [];
+    const modIDs = emails.slice().filter(e => {
+        if (mongoose.Types.ObjectId.isValid(e)) return e;
+        newModEmails.push(e);
+        return false;
+    });
+
+    return {
+        emailArray: newModEmails,
+        emailIdArray: modIDs
+    };
 }
