@@ -42,6 +42,7 @@ _site/
 logs/
 build/
 .env
+dist/
 
 # Sublime editor
 # ==============
