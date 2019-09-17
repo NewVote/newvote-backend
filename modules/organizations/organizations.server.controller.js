@@ -151,7 +151,7 @@ exports.update = function (req, res) {
         .then(([org, emails]) => {
             let organization = _.assign(org, req.body);
 
-            if (emails.length < 1) {
+            if (!emails.length) {
                 organization.moderators = [];
                 return organization.save();
             }
