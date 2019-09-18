@@ -17,7 +17,7 @@ let path = require('path'),
 /**
  * Create a vote
  */
-exports.create = function(req, res) {
+exports.create = function (req, res) {
     let vote = new Vote(req.body);
     vote.user = req.user;
 
@@ -30,18 +30,20 @@ exports.create = function(req, res) {
         });
 };
 
-exports.updateOrCreate = async function(req, res) {
+exports.updateOrCreate = async function (req, res) {
     let user = req.user;
-    const { object, organizationId } = req.body;
+    const {
+        object,
+        organizationId
+    } = req.body;
 
     try {
         const isVerified = await isUserSignedToOrg(organizationId, user)
-        if (!isVerified) throw('User is not verified');
-       
+        if (!isVerified) throw ('User is not verified');
+
     } catch (error) {
         return res.status(403).send({
-            message:
-                'You must verify with Community before being able to vote.',
+            message: 'You must verify with Community before being able to vote.',
             notCommunityVerified: true
         });
     }
@@ -49,11 +51,10 @@ exports.updateOrCreate = async function(req, res) {
     try {
         const hasVotePermission = await checkOrgVotePermissions(organizationId, user);
 
-        if (!hasVotePermission) throw('User does not have permission');
-    } catch(err) {
+        if (!hasVotePermission) throw ('User does not have permission');
+    } catch (err) {
         return res.status(403).send({
-            message:
-                'You do not have permission to vote on this organization'
+            message: 'You do not have permission to vote on this organization'
         });
     }
 
@@ -76,14 +77,14 @@ exports.updateOrCreate = async function(req, res) {
 /**
  * Show the current vote
  */
-exports.read = function(req, res) {
+exports.read = function (req, res) {
     res.json(req.vote);
 };
 
 /**
  * Update a vote
  */
-exports.update = function(req, res) {
+exports.update = function (req, res) {
     let vote = req.vote;
     _.extend(vote, req.body);
     // vote.title = req.body.title;
@@ -102,10 +103,10 @@ exports.update = function(req, res) {
 /**
  * Delete an vote
  */
-exports.delete = function(req, res) {
+exports.delete = function (req, res) {
     let vote = req.vote;
 
-    vote.remove(function(err) {
+    vote.remove(function (err) {
         if (err) {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
@@ -119,42 +120,38 @@ exports.delete = function(req, res) {
 /**
  * List of Votes
  */
-exports.list = function(req, res) {
+exports.list = function (req, res) {
     let regionIds = req.query.regionId;
 
     if (regionIds) {
         getPostcodes(regionIds).then(
-            function(postCodes) {
+            function (postCodes) {
                 console.log(postCodes);
                 // Find votes submitted from users with those postcodes
-                getVotesResponse(
-                    {},
-                    {
-                        path: 'user',
-                        match: {
-                            postalCode: {
-                                $in: postCodes
-                            }
-                        },
-                        select: 'postalCode -_id'
+                getVotesResponse({}, {
+                    path: 'user',
+                    match: {
+                        postalCode: {
+                            $in: postCodes
+                        }
                     },
-                    res
+                    select: 'postalCode -_id'
+                },
+                res
                 );
             },
-            function(err) {
+            function (err) {
                 return res.status(400).send({
                     message: errorHandler.getErrorMessage(err)
                 });
             }
         );
     } else {
-        getVotesResponse(
-            {},
-            {
-                path: 'user',
-                select: 'postalCode -_id'
-            },
-            res
+        getVotesResponse({}, {
+            path: 'user',
+            select: 'postalCode -_id'
+        },
+        res
         );
     }
 };
@@ -162,7 +159,7 @@ exports.list = function(req, res) {
 /**
  * Vote middleware
  */
-exports.voteByID = function(req, res, next, id) {
+exports.voteByID = function (req, res, next, id) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).send({
             message: 'Vote is invalid'
@@ -171,7 +168,7 @@ exports.voteByID = function(req, res, next, id) {
 
     Vote.findById(id)
         .populate('user', 'displayName')
-        .exec(function(err, vote) {
+        .exec(function (err, vote) {
             if (err) {
                 return next(err);
             } else if (!vote) {
@@ -184,13 +181,13 @@ exports.voteByID = function(req, res, next, id) {
         });
 };
 
-exports.attachVotes = function(objects, user, regions) {
+exports.attachVotes = function (objects, user, regions) {
     if (!objects) return Promise.resolve(objects);
-    let objectIds = objects.map(function(object) {
+    let objectIds = objects.map(function (object) {
         return object._id;
     });
 
-    return Promise.resolve(regions).then(function(regionString) {
+    return Promise.resolve(regions).then(function (regionString) {
         if (regionString) {
             let regionIds = [];
 
@@ -198,52 +195,47 @@ exports.attachVotes = function(objects, user, regions) {
                 let region = JSON.parse(regionString);
                 regionIds.push(region._id);
             } else {
-                regionIds = regionString.map(function(regionObj) {
+                regionIds = regionString.map(function (regionObj) {
                     let region = JSON.parse(regionObj);
                     return region._id;
                 });
             }
 
-            return getPostcodes(regionIds).then(function(postCodes) {
+            return getPostcodes(regionIds).then(function (postCodes) {
                 // Find votes submitted from users with those postcodes
-                return getVotes(
-                    {
-                        object: {
-                            $in: objectIds
-                        }
-                    },
-                    {
-                        path: 'user',
-                        match: {
-                            $or: [
-                                {
-                                    postalCode: {
-                                        $in: postCodes
-                                    }
-                                },
-                                {
-                                    woodfordian: {
-                                        $in: postCodes
-                                    }
-                                }
-                            ]
-                        },
-                        select: 'postalCode -_id'
+                return getVotes({
+                    object: {
+                        $in: objectIds
                     }
-                ).then(function(votes) {
+                }, {
+                    path: 'user',
+                    match: {
+                        $or: [{
+                            postalCode: {
+                                $in: postCodes
+                            }
+                        },
+                        {
+                            woodfordian: {
+                                $in: postCodes
+                            }
+                        }
+                        ]
+                    },
+                    select: 'postalCode -_id'
+                }).then(function (votes) {
                     return mapObjectWithVotes(objects, user, votes);
                 });
             });
         } else {
-            return getVotes(
-                {
-                    object: {
-                        $in: objectIds
-                    }
-                },
-                null
-            ).then(function(votes) {
-                votes.forEach(function(vote) {
+            return getVotes({
+                object: {
+                    $in: objectIds
+                }
+            },
+            null
+            ).then(function (votes) {
+                votes.forEach(function (vote) {
                     fixVoteTypes(vote);
                 });
                 return mapObjectWithVotes(objects, user, votes);
@@ -260,7 +252,7 @@ function fixVoteTypes(vote) {
     if (vote.objectType === 'proposal') {
         console.log('found vote to fix');
         vote.objectType = 'Proposal';
-        vote.save().then(function(vote) {
+        vote.save().then(function (vote) {
             console.log('vote updated: ', vote._id);
         });
     }
@@ -268,10 +260,10 @@ function fixVoteTypes(vote) {
 
 function getVotesResponse(findQuery, populateQuery, res) {
     getVotes(findQuery, populateQuery).then(
-        function(votes) {
+        function (votes) {
             res.json(votes);
         },
-        function(err) {
+        function (err) {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });
@@ -284,8 +276,8 @@ function getVotes(findQuery, populateQuery) {
         return Vote.find(findQuery)
             .populate(populateQuery)
             .exec()
-            .then(function(votes) {
-                votes = votes.filter(function(vote) {
+            .then(function (votes) {
+                votes = votes.filter(function (vote) {
                     if (vote.user) return vote;
                 });
                 return votes;
@@ -293,8 +285,8 @@ function getVotes(findQuery, populateQuery) {
     } else {
         return Vote.find(findQuery)
             .exec()
-            .then(function(votes) {
-                votes = votes.filter(function(vote) {
+            .then(function (votes) {
+                votes = votes.filter(function (vote) {
                     if (vote.user) return vote;
                 });
                 return votes;
@@ -309,7 +301,7 @@ function getPostcodes(regionIds) {
         }
     })
         .exec()
-        .then(function(regions) {
+        .then(function (regions) {
             // Get postcodes from all regions
             let postCodes = [];
             let region;
@@ -321,7 +313,7 @@ function getPostcodes(regionIds) {
 }
 
 function mapObjectWithVotes(objects, user, votes) {
-    objects = objects.map(function(object) {
+    objects = objects.map(function (object) {
         // object = object.toObject(); //to be able to set props on the mongoose object
         let objVotes = [];
         let userVote = null;
@@ -330,7 +322,7 @@ function mapObjectWithVotes(objects, user, votes) {
         let total = 0;
         object.votes = {};
 
-        votes.forEach(function(vote) {
+        votes.forEach(function (vote) {
             if (vote.object.toString() === object._id.toString()) {
                 objVotes.push(vote);
                 if (user && vote.user.toString() === user._id.toString()) {
@@ -379,28 +371,29 @@ async function isUserSignedToOrg(currentOrgId, userObject) {
         });
 }
 
-async function checkOrgVotePermissions (organizationId, user) {
+async function checkOrgVotePermissions(organizationId, user) {
 
     const orgPromise = Organization.findById(organizationId);
-    const userPromise = User.findOne({ _id: user._id })
-    
+    const userPromise = User.findOne({
+        _id: user._id
+    })
+
     return Promise.all([orgPromise, userPromise])
         .then((promises) => {
             const [organization, user] = promises;
 
-            if (!organization || !user) throw('Could not find user / organization data')
-            if (organization.authType === 0) return true; 
+            if (!organization || !user) throw ('Could not find user / organization data')
+            if (organization.authType === 0) return true;
 
-            const providerData = user.providerData.find((provider) => {
-                // Filter through providers to find the matching organization
-                return provider.organization === organization.url;
-            })
+            const providerData = user.providerData[organization.url];
 
-            if (!providerData) throw('No Matching Provider data');
+            if (!providerData) throw ('No Matching Provider data');
 
             return checkPermissions(providerData.edupersonscopedaffiliation, organization.voteRoles);
         })
-        .catch(err => { throw(err) });
+        .catch(err => {
+            throw (err)
+        });
 }
 
 function checkPermissions(userRole, organizationRoles) {
@@ -408,7 +401,7 @@ function checkPermissions(userRole, organizationRoles) {
         return userRole.includes(roleObject.role);
     });
 
-    if (!filteredRole) throw('User does not have permission to vote');
+    if (!filteredRole) throw ('User does not have permission to vote');
 
     return filteredRole.active;
 }
