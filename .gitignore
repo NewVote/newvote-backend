@@ -42,10 +42,7 @@ _site/
 logs/
 build/
 .env
-<<<<<<< HEAD
 dist/
-=======
->>>>>>> master
 
 # Sublime editor
 # ==============

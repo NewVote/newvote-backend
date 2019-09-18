@@ -20,7 +20,7 @@ let path = require('path'),
 /**
  * Create a solution
  */
-exports.create = function(req, res) {
+exports.create = function (req, res) {
     // if the string is empty revert to default on model
     if (!req.body.imageUrl) {
         delete req.body.imageUrl;
@@ -65,7 +65,7 @@ exports.create = function(req, res) {
             }
 
             return solution.save();
-        })        
+        })
         .then((solution) => {
             // Attach empty vote object
             return votes.attachVotes([solution], req.user, req.query.regions)
@@ -83,11 +83,11 @@ exports.create = function(req, res) {
 /**
  * Show the current solution
  */
-exports.read = function(req, res) {
+exports.read = function (req, res) {
     let showDeleted = req.query.showDeleted || null;
     votes
         .attachVotes([req.solution], req.user, req.query.regions)
-        .then(function(solutionArr) {
+        .then(function (solutionArr) {
             proposals
                 .attachProposals(solutionArr, req.user, req.query.regions)
                 .then(solutions => {
@@ -109,7 +109,7 @@ exports.read = function(req, res) {
 /**
  * Update a solution
  */
-exports.update = function(req, res) {
+exports.update = function (req, res) {
     delete req.body.__v;
 
     if (req.body.votes) {
@@ -141,10 +141,13 @@ exports.update = function(req, res) {
 /**
  * Delete an solution
  */
-exports.delete = function(req, res) {
+exports.delete = function (req, res) {
     let solution = req.solution;
 
-    Vote.deleteMany({ object: req.solution._id, objectType: 'Solution' })
+    Vote.deleteMany({
+        object: req.solution._id,
+        objectType: 'Solution'
+    })
         .then(votes => {
             return solution.remove();
         })
@@ -161,7 +164,7 @@ exports.delete = function(req, res) {
 /**
  * List of Solutions
  */
-exports.list = function(req, res) {
+exports.list = function (req, res) {
     let query = {};
     let issueId = req.query.issueId || null;
     let search = req.query.search || null;
@@ -169,44 +172,69 @@ exports.list = function(req, res) {
     let orgUrl = org ? org.url : null;
     let showDeleted = req.query.showDeleted || null;
 
-    let orgMatch = orgUrl ? { 'organizations.url': orgUrl } : {};
-    let issueMatch = issueId
-        ? { issues: mongoose.Types.ObjectId(issueId) }
-        : {};
-    let searchMatch = search ? { $text: { $search: search } } : {};
+    let orgMatch = orgUrl ? {
+        'organizations.url': orgUrl
+    } : {};
+    let issueMatch = issueId ? {
+        issues: mongoose.Types.ObjectId(issueId)
+    } : {};
+    let searchMatch = search ? {
+        $text: {
+            $search: search
+        }
+    } : {};
 
     let showNonDeletedItemsMatch = {
-        $or: [{ softDeleted: false }, { softDeleted: { $exists: false } }]
+        $or: [{
+            softDeleted: false
+        }, {
+            softDeleted: {
+                $exists: false
+            }
+        }]
     };
     let showAllItemsMatch = {};
-    let softDeleteMatch = showDeleted
-        ? showAllItemsMatch
-        : showNonDeletedItemsMatch;
+    let softDeleteMatch = showDeleted ?
+        showAllItemsMatch :
+        showNonDeletedItemsMatch;
 
-    Solution.aggregate([
-        { $match: searchMatch },
-        { $match: softDeleteMatch },
-        { $match: issueMatch },
-        {
-            $lookup: {
-                from: 'organizations',
-                localField: 'organizations',
-                foreignField: '_id',
-                as: 'organizations'
-            }
-        },
-        { $match: orgMatch },
-        { $unwind: '$organizations' },
-        {
-            $lookup: {
-                from: 'issues',
-                localField: 'issues',
-                foreignField: '_id',
-                as: 'issues'
-            }
-        },
-        { $sort: { created: -1 } }
-    ]).exec(function(err, solutions) {
+    Solution.aggregate([{
+        $match: searchMatch
+    },
+    {
+        $match: softDeleteMatch
+    },
+    {
+        $match: issueMatch
+    },
+    {
+        $lookup: {
+            from: 'organizations',
+            localField: 'organizations',
+            foreignField: '_id',
+            as: 'organizations'
+        }
+    },
+    {
+        $match: orgMatch
+    },
+    {
+        $unwind: '$organizations'
+    },
+    {
+        $lookup: {
+            from: 'issues',
+            localField: 'issues',
+            foreignField: '_id',
+            as: 'issues'
+        }
+    },
+    {
+        $sort: {
+            created: -1
+        }
+    }
+    ]).exec(function (err, solutions) {
 
         if (err) {
             return res.status(400).send({
@@ -216,7 +244,7 @@ exports.list = function(req, res) {
 
         votes
             .attachVotes(solutions, req.user, req.query.regions)
-            .then(function(solutions) {
+            .then(function (solutions) {
                 return res.json(solutions);
             });
     });
@@ -254,7 +282,7 @@ exports.list = function(req, res) {
 /**
  * Solution middleware
  */
-exports.solutionByID = function(req, res, next, id) {
+exports.solutionByID = function (req, res, next, id) {
     console.log('solutionById user: ', req.user);
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).send({
@@ -266,7 +294,7 @@ exports.solutionByID = function(req, res, next, id) {
         .populate('user', 'displayName')
         .populate('issues')
         .populate('organizations')
-        .exec(function(err, solution) {
+        .exec(function (err, solution) {
             if (err) {
                 return next(err);
             } else if (!solution) {
@@ -293,8 +321,10 @@ function filterSoftDeleteProposals(solutions, showDeleted) {
     });
 }
 
-exports.seedData = function(organizationId, issueId) {
-    const { seedData } = seed;
+exports.seedData = function (organizationId, issueId) {
+    const {
+        seedData
+    } = seed;
     const newSolution = new Solution(seedData);
     newSolution.organizations = organizationId;
     newSolution.issues = [issueId];

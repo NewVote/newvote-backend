@@ -20,14 +20,15 @@ let path = require('path'),
  */
 
 exports.create = function (req, res) {
-    const org = JSON.parse(req.cookies.organization)
-        .url;
+    const org = JSON.parse(req.cookies.organization).url;
     let vote = new Vote(req.body);
     vote.user = req.user;
 
     vote.save()
         .then((vote) => {
-            return Vote.find({ object: vote.object })
+            return Vote.find({
+                object: vote.object
+            })
         })
         .then((votes) => {
             const voteMetaData = {
@@ -60,7 +61,10 @@ exports.create = function (req, res) {
 
 exports.updateOrCreate = async function (req, res) {
     let user = req.user;
-    const { object, organizationId } = req.body;
+    const {
+        object,
+        organizationId
+    } = req.body;
 
     const isVerified = await isUserSignedToOrg(organizationId, user);
 
@@ -111,7 +115,9 @@ exports.update = function (req, res) {
     vote.save()
         .then((vote) => {
             // search for all votes related to the updated object
-            return Vote.find({ object: vote.object })
+            return Vote.find({
+                object: vote.object
+            })
         })
         .then((votes) => {
             // recalculate vote values
