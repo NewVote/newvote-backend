@@ -431,11 +431,13 @@ exports.saveRapidProfile = function (req, profile, done) {
             let [organization, user] = promises;
 
             const {
+                edupersoncid,
                 edupersontargetedid,
                 edupersonscopedaffiliation
             } = profile;
 
             const aafAttributes = {
+                edupersoncid,
                 edupersontargetedid,
                 edupersonscopedaffiliation,
                 edupersonprincipalname: profile.edupersonprincipalname ? profile.edupersonprincipalname : ''
@@ -476,6 +478,8 @@ exports.saveRapidProfile = function (req, profile, done) {
                     return user.save();
                 });
             } else {
+
+                if (!user.providerData) user.providerData = {}
                 const userProviders = user.providerData;
                 const providerExists = userProviders[organization.url];
 
