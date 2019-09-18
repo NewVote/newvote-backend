@@ -23,14 +23,14 @@ owasp.config({
 /**
  * A Validation function for local strategy properties
  */
-let validateLocalStrategyProperty = function(property) {
+let validateLocalStrategyProperty = function (property) {
     return (this.provider !== 'local' && !this.updated) || property.length;
 };
 
 /**
  * A Validation function for checking UQ emails
  */
-let validateUQEmail = function(email) {
+let validateUQEmail = function (email) {
     let regex = /^[a-zA-Z0-9_.+-]+@(?:(?:[a-zA-Z0-9-]+\.)?[a-zA-Z]+\.)?(uqconnect|uq)\.(edu|net)\.au$/;
     let pass = email.match(regex) != null;
     return pass;
@@ -38,7 +38,7 @@ let validateUQEmail = function(email) {
 /**
  * A Validation function for local strategy email
  */
-let validateLocalStrategyEmail = function(email) {
+let validateLocalStrategyEmail = function (email) {
     return (
         (this.provider !== 'local' && !this.updated) ||
         (validator.isEmail(email) && validateUQEmail(email)) ||
@@ -120,9 +120,9 @@ let UserSchema = new Schema({
         type: String,
         default: '',
         required: function () {
-            if(this.provider === 'local') {
+            if (this.provider === 'local') {
                 return true;
-            }else {
+            } else {
                 return false;
             }
         }
@@ -131,7 +131,7 @@ let UserSchema = new Schema({
         type: String,
         default: '',
         required: function () {
-            if(this.isNew) {
+            if (this.isNew) {
                 return false;
             }
         }
@@ -149,15 +149,13 @@ let UserSchema = new Schema({
     provider: {
         type: String
     },
-    providerData: [],
+    providerData: {},
     additionalProvidersData: {},
     roles: {
-        type: [
-            {
-                type: String,
-                enum: ['guest', 'user', 'admin', 'endorser']
-            }
-        ],
+        type: [{
+            type: String,
+            enum: ['guest', 'user', 'admin', 'endorser']
+        }],
         default: ['guest'],
         required: 'Please provide at least one role'
     },
@@ -189,7 +187,7 @@ let UserSchema = new Schema({
 /**
  * Hook a pre save method to hash the password
  */
-UserSchema.pre('save', function(next) {
+UserSchema.pre('save', function (next) {
     if (this.password && this.isModified('password')) {
         this.salt = crypto.randomBytes(16).toString('base64');
         this.password = this.hashPassword(this.password);
@@ -201,7 +199,7 @@ UserSchema.pre('save', function(next) {
 /**
  * Hook a pre validate method to test the local password
  */
-UserSchema.pre('validate', function(next) {
+UserSchema.pre('validate', function (next) {
     if (
         this.provider === 'local' &&
         this.password &&
@@ -220,7 +218,7 @@ UserSchema.pre('validate', function(next) {
 /**
  * Create instance method for hashing a password
  */
-UserSchema.methods.hashPassword = function(password) {
+UserSchema.methods.hashPassword = function (password) {
     if (this.salt && password) {
         return crypto
             .pbkdf2Sync(
@@ -239,14 +237,14 @@ UserSchema.methods.hashPassword = function(password) {
 /**
  * Create instance method for authenticating user
  */
-UserSchema.methods.authenticate = function(password) {
+UserSchema.methods.authenticate = function (password) {
     return this.password === this.hashPassword(password);
 };
 
 /**
  * Create instance method for hashing a verification code (sent by SMS)
  */
-UserSchema.methods.hashVerificationCode = function(code) {
+UserSchema.methods.hashVerificationCode = function (code) {
     if (this.salt && code) {
         console.log('hashing code: ', code);
         return crypto
@@ -267,40 +265,39 @@ UserSchema.methods.hashVerificationCode = function(code) {
 /**
  * Create instance method for confirming the sms verification code
  */
-UserSchema.methods.verify = function(code) {
+UserSchema.methods.verify = function (code) {
     return this.verificationCode === this.hashVerificationCode(code);
 };
 
-UserSchema.statics.generateVerificationCode = function() {
+UserSchema.statics.generateVerificationCode = function () {
     return Math.floor(100000 + Math.random() * 900000);
 };
 
 /**
  * Find possible not used username
  */
-UserSchema.statics.findUniqueUsername = function(username, suffix, callback) {
+UserSchema.statics.findUniqueUsername = function (username, suffix, callback) {
     let _this = this;
     let possibleUsername = username.toLowerCase() + (suffix || '');
 
-    _this.findOne(
-        {
-            username: possibleUsername
-        },
-        function(err, user) {
-            if (!err) {
-                if (!user) {
-                    callback(possibleUsername);
-                } else {
-                    return _this.findUniqueUsername(
-                        username,
-                        (suffix || 0) + 1,
-                        callback
-                    );
-                }
+    _this.findOne({
+        username: possibleUsername
+    },
+    function (err, user) {
+        if (!err) {
+            if (!user) {
+                callback(possibleUsername);
             } else {
-                callback(null);
+                return _this.findUniqueUsername(
+                    username,
+                    (suffix || 0) + 1,
+                    callback
+                );
             }
+        } else {
+            callback(null);
         }
+    }
     );
 };
 
@@ -309,8 +306,8 @@ UserSchema.statics.findUniqueUsername = function(username, suffix, callback) {
  * Returns a promise that resolves with the generated passphrase, or rejects with an error if something goes wrong.
  * NOTE: Passphrases are only tested against the required owasp strength tests, and not the optional tests.
  */
-UserSchema.statics.generateRandomPassphrase = function() {
-    return new Promise(function(resolve, reject) {
+UserSchema.statics.generateRandomPassphrase = function () {
+    return new Promise(function (resolve, reject) {
         let password = '';
         let repeatingCharacters = new RegExp('(.)\\1{2,}', 'g');
 
