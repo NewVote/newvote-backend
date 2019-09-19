@@ -53,19 +53,26 @@ exports.read = function (req, res) {
  * Update a media
  */
 exports.update = function (req, res) {
+    // client side media with attached vote object clashes with server version of media
+    // remove current User or save will fail
+    delete req.body.votes.currentUser;
+
     let media = req.media;
     _.extend(media, req.body);
 
-    media.save(function (err) {
-        if (err) {
+    media.save()
+        .then((doc) => {
+            return votes.attachVotes([doc], req.user)
+        })
+        .then((media) => {
+            return res.json(media[0]);
+        })
+        .catch((err) => {
             return res.status(400)
                 .send({
                     message: errorHandler.getErrorMessage(err)
                 });
-        } else {
-            res.json(media);
-        }
-    });
+        })
 };
 
 /**
