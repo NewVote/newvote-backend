@@ -128,11 +128,11 @@ exports.update = function (req, res) {
                 _id: vote.object
             };
 
-            voteMetaData.total = votes.length;
             votes.forEach((item) => {
                 if (item.voteValue > 0) voteMetaData.up++
                 if (item.voteValue < 0) voteMetaData.down++
             })
+            voteMetaData.total = voteMetaData.up + voteMetaData.down
 
             socket.send(req, voteMetaData, 'vote', org);
             return res.json(vote)
@@ -396,7 +396,7 @@ function mapObjectWithVotes(objects, user, votes) {
 
         object.votes = {
             _id,
-            total: objVotes.length,
+            total: up + down,
             currentUser: userVote,
             up: up,
             down: down
