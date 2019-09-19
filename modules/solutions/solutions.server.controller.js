@@ -71,7 +71,7 @@ exports.create = function (req, res) {
             return votes.attachVotes([solution], req.user, req.query.regions)
         })
         .then(solution => {
-            return res.json(solution);
+            return res.json(solution[0]);
         })
         .catch(err => {
             return res.status(400).send({
