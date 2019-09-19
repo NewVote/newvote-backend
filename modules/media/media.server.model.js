@@ -59,7 +59,11 @@ let MediaSchema = new Schema({
     organizations: {
         type: Schema.ObjectId,
         ref: 'Organization'
-    }
+    },
+    softDeleted: {
+        type: Boolean,
+        default: false
+    },
 });
 
 mongoose.model('Media', MediaSchema);
