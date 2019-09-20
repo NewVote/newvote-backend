@@ -18,9 +18,7 @@ module.exports = function (app, db) {
     let io = socketio(server);
 
     io.on('connection', function (socket) {
-        console.log('CONNECTION');
         socket.on('join org', function (org) {
-            console.log('Joined Org');
             socket.join(org);
         });
 
