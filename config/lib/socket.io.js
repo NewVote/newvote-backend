@@ -23,6 +23,8 @@ module.exports = function (app, db) {
             console.log('Joined Org');
             socket.join(org);
         });
+
+        socket.on('disconnect', () => console.log('CLOSE'))
     })
 
     app.set('io', io);
