@@ -305,6 +305,7 @@ exports.signin = function (req, res, next) {
                     if (err) {
                         res.status(400).send(err);
                     } else {
+                        console.log(user, 'this is user');
                         console.log('logged in');
                         console.log('NO COOKIE')
                         const payload = {
@@ -324,7 +325,7 @@ exports.signin = function (req, res, next) {
                             token
                         };
                         const opts = {
-                            domain: 'newvote.org',
+                            domain: '*.newvote.org',
                             httpOnly: false,
                             secure: false
                         };
