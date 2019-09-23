@@ -40,87 +40,84 @@ let objectRoutes = [
 /**
  * Invoke Articles Permissions
  */
-exports.invokeRolesPolicies = function() {
-    acl.allow([
-        {
-            roles: ['admin'],
-            allows: [
-                {
-                    resources: collectionRoutes,
-                    permissions: '*'
-                },
-                {
-                    resources: objectRoutes,
-                    permissions: '*'
-                }
-            ]
+exports.invokeRolesPolicies = function () {
+    acl.allow([{
+        roles: ['admin'],
+        allows: [{
+            resources: collectionRoutes,
+            permissions: '*'
         },
         {
-            roles: ['endorser'],
-            allows: [
-                {
-                    resources: collectionRoutes,
-                    permissions: ['get']
-                },
-                {
-                    resources: objectRoutes,
-                    permissions: ['get']
-                },
-                {
-                    resources: [
-                        '/api/votes',
-                        '/api/suggestions',
-                        '/api/endorsement'
-                    ],
-                    permissions: ['get', 'post']
-                }
-            ]
-        },
-        {
-            roles: ['user'],
-            allows: [
-                {
-                    resources: collectionRoutes,
-                    permissions: ['get']
-                },
-                {
-                    resources: objectRoutes,
-                    permissions: ['get']
-                },
-                {
-                    // users can create votes
-                    resources: ['/api/votes'],
-                    permissions: ['get', 'post']
-                },
-                {
-                    // users can create and edit suggestions
-                    resources: ['/api/suggestions','/api/suggestions/:suggestionId'],
-                    permissions: ['get', 'post', 'put']
-                }
-            ]
-        },
-        {
-            roles: ['guest'],
-            allows: [
-                {
-                    resources: collectionRoutes,
-                    permissions: ['get']
-                },
-                {
-                    resources: objectRoutes,
-                    permissions: ['get']
-                }
-            ]
+            resources: objectRoutes,
+            permissions: '*'
         }
+        ]
+    },
+    {
+        roles: ['endorser'],
+        allows: [{
+            resources: collectionRoutes,
+            permissions: ['get']
+        },
+        {
+            resources: objectRoutes,
+            permissions: ['get']
+        },
+        {
+            resources: [
+                '/api/votes',
+                '/api/suggestions',
+                '/api/endorsement'
+            ],
+            permissions: ['get', 'post']
+        }
+        ]
+    },
+    {
+        roles: ['user'],
+        allows: [{
+            resources: collectionRoutes,
+            permissions: ['get']
+        },
+        {
+            resources: objectRoutes,
+            permissions: ['get']
+        },
+        {
+            // users can create votes
+            resources: ['/api/votes'],
+            permissions: ['get', 'post']
+        },
+        {
+            // users can create and edit suggestions
+            resources: ['/api/suggestions', '/api/suggestions/:suggestionId'],
+            permissions: ['get', 'post', 'put']
+        }
+        ]
+    },
+    {
+        roles: ['guest'],
+        allows: [{
+            resources: collectionRoutes,
+            permissions: ['get']
+        },
+        {
+            resources: objectRoutes,
+            permissions: ['get']
+        }
+        ]
+    }
     ]);
 };
 
 /**
  * Check If Articles Policy Allows
  */
-exports.isAllowed = function(req, res, next) {
+exports.isAllowed = function (req, res, next) {
     let roles = req.user ? req.user.roles : ['guest'];
     let user = req.user;
+
+    console.log(user, 'this is user on isALLOWED');
 
     // If an article is being processed and the current user created it then allow any manipulation
     let object =
@@ -142,7 +139,7 @@ exports.isAllowed = function(req, res, next) {
         roles,
         req.route.path,
         req.method.toLowerCase(),
-        function(err, isAllowed) {
+        function (err, isAllowed) {
             if (err) {
                 // An authorization error occurred.
                 return res.status(500).send('Unexpected authorization error');
@@ -253,10 +250,10 @@ function canAccessOrganization(req, object) {
             return Promise.resolve(
                 (object.organizations.owner &&
                     object.organizations.owner._id == user._id) ||
-                    (object.organizations.moderators &&
-                        object.organizations.moderators.some(
-                            mod => mod == user._id
-                        ))
+                (object.organizations.moderators &&
+                    object.organizations.moderators.some(
+                        mod => mod == user._id
+                    ))
             );
         }
     } else if (method === 'delete') {
