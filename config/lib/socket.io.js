@@ -17,18 +17,18 @@ module.exports = function (app, db) {
     let server = http.createServer(app);
     let io = socketio(server, {
         transports: ['websocket'],
-        timeout: '8000'
+        // timeout: '8000'
     });
 
     const redis = require('socket.io-redis');
 
     io.adapter(redis(process.env.REDIS_URL))
-    io.set('close timeout', 8000);
-    io.set('heartbeat timeout', 8000);
+    // io.set('close timeout', 8000);
+    // io.set('heartbeat timeout', 8000);
 
-    io.of('/').adapter.on('error', function () {
-        console.log('redis ERROR');
-    })
+    // io.of('/').adapter.on('error', function () {
+    //     console.log('redis ERROR');
+    // })
 
     io.on('connection', function (socket) {
         console.log('CONNECTING');
