@@ -19,11 +19,10 @@ if (process.env.NODE_ENV === 'development') {
     console.log('starting without throng');
     app.start();
 } else {
-    // throng({
-    //     workers: WORKERS,
-    //     lifetime: Infinity
-    // },
-    // app.start
-    // );
-    sticky(app.start)
+    throng({
+        workers: WORKERS,
+        lifetime: Infinity
+    },
+    app.start
+    );
 }
