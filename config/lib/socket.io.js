@@ -16,6 +16,9 @@ let config = require('../config'),
 module.exports = function (app, db) {
     let server = http.createServer(app);
     let io = socketio(server);
+    const redis = require('socket.io-redis');
+
+    io.adapter(redis())
 
     io.on('connection', function (socket) {
         socket.on('join org', function (org) {
