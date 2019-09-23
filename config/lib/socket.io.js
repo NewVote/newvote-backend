@@ -20,7 +20,7 @@ module.exports = function (app, db) {
 
     io.adapter(redis({
         host: process.env.SOCKET_HOST || 'localhost',
-        port: process.env.SOCKET_PORT || 8080
+        // port: process.env.SOCKET_PORT || 8080
     }))
 
     io.on('connection', function (socket) {
