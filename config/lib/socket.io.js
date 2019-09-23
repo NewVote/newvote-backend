@@ -19,6 +19,9 @@ module.exports = function (app, db) {
     const redis = require('socket.io-redis');
 
     io.adapter(redis(process.env.REDIS_URL))
+    io.set({
+        transports: ['websocket']
+    });
 
     const newvote = io.of('/newvote');
     newvote.on('connection', function (socket) {
@@ -31,14 +34,10 @@ module.exports = function (app, db) {
             })
         });
 
-
         socket.on('disconnect', () => console.log('CLOSE'))
 
     })
 
-    io.on('connection', function (socket) {
-
-    })
 
     app.set('io', io);
 
