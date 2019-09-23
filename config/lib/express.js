@@ -24,7 +24,7 @@ let config = require('../config'),
     jwt = require('express-jwt'),
     celebrateWrap = require('celebrate'),
 
-    let {
+    const {
         celebrate,
         errors
     } = celebrateWrap;

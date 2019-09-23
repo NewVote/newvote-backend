@@ -15,7 +15,10 @@ let config = require('../config'),
 // Define the Socket.io configuration method
 module.exports = function (app, db) {
     let server = http.createServer(app);
-    let io = socketio(server);
+    let io = socketio(server, {
+        transports: ['websocket'],
+    });
+
     const redis = require('socket.io-redis');
 
     io.adapter(redis(process.env.REDIS_URL))
