@@ -36,7 +36,7 @@ module.exports.init = function init(callback) {
 module.exports.start = function start() {
     module.exports.init(function (app, db, config) {
         // Start the app by listening on <port>
-        sticky.listen(app, config.port, function () {
+        app.listen(config.port, function () {
             // Logging initialization
             console.log('--');
             console.log(chalk.green(config.app.title));
