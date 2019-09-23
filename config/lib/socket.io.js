@@ -19,7 +19,7 @@ module.exports = function (app, db) {
     const redis = require('socket.io-redis');
 
     io.adapter(redis({
-        host: process.env.SOCKET_HOST || 'localhost',
+        host: process.env.REDIS_URL || 'localhost',
         // port: process.env.SOCKET_PORT || 8080
     }))
 
