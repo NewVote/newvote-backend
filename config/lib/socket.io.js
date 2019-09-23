@@ -23,6 +23,16 @@ module.exports = function (app, db) {
 
     io.adapter(redis(process.env.REDIS_URL))
 
+    io.adapter.on('error', function () {
+        console.log('there was an error on adaptop');
+    })
+
+    io.on('connection', function (socket) {
+        console.log('CONNECTING');
+
+        console.log(socket, 'this is socket');
+    })
+
     const newvote = io.of('/newvote');
     newvote.on('connection', function (socket) {
         console.log('CONNECTED');
