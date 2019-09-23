@@ -10,17 +10,18 @@ let config = require('../config'),
     passport = require('passport'),
     socketio = require('socket.io'),
     session = require('express-session'),
-    MongoStore = require('connect-mongo')(session),
-    sticky = require('sticky-session');
+    MongoStore = require('connect-mongo')(session);
+
 // Define the Socket.io configuration method
 module.exports = function (app, db) {
-
-    const redis = require('socket.io-redis');
-
     let server = http.createServer(app);
     let io = socketio(server);
+    const redis = require('socket.io-redis');
 
-    io.adapter(redis())
+    io.adapter(redis({
+        host: process.env.SOCKET_HOST || 'localhost',
+        // port: process.env.SOCKET_PORT || 8080
+    }))
 
     io.on('connection', function (socket) {
         socket.on('join org', function (org) {
