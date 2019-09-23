@@ -10,13 +10,15 @@ let config = require('../config'),
     passport = require('passport'),
     socketio = require('socket.io'),
     session = require('express-session'),
-    MongoStore = require('connect-mongo')(session);
-
+    MongoStore = require('connect-mongo')(session),
+    sticky = require('sticky-session');
 // Define the Socket.io configuration method
 module.exports = function (app, db) {
+
+    const redis = require('socket.io-redis');
+
     let server = http.createServer(app);
     let io = socketio(server);
-    const redis = require('socket.io-redis');
 
     io.adapter(redis())
 
