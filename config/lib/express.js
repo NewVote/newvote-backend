@@ -23,13 +23,11 @@ let config = require('../config'),
     cors = require('cors'),
     jwt = require('express-jwt'),
     celebrateWrap = require('celebrate'),
-    socketio = require('socket.io'),
-    sticky = require('sticky-session');
 
-const {
-    celebrate,
-    errors
-} = celebrateWrap;
+    let {
+        celebrate,
+        errors
+    } = celebrateWrap;
 
 /**
  * Initialize local variables
