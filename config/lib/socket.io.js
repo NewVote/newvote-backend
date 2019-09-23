@@ -19,13 +19,18 @@ module.exports = function (app, db) {
     const redis = require('socket.io-redis');
 
     io.adapter(redis(process.env.REDIS_URL))
-    io.set({
-        transports: ['websocket']
+
+    const adapter = require('socket.io-redis')(process.env.REDIS_URL);
+    adapter.pubClient.on('error', function () {
+        console.log('PUB EROR')
+    });
+    adapter.subClient.on('error', function () {
+        console.log('SUB ERROR')
     });
 
     const newvote = io.of('/newvote');
     newvote.on('connection', function (socket) {
-
+        console.log('CONNECTED');
         socket.on('join org', function (org) {
             socket.join(org);
 
