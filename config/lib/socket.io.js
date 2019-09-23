@@ -23,8 +23,8 @@ module.exports = function (app, db) {
 
     io.adapter(redis(process.env.REDIS_URL))
 
-    io.adapter.on('error', function () {
-        console.log('there was an error on adaptop');
+    io.of('/'), adapter.on('error', function () {
+        console.log('redis ERROR');
     })
 
     io.on('connection', function (socket) {
