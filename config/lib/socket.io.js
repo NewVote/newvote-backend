@@ -34,22 +34,32 @@ module.exports = function (app, db) {
         console.log('CONNECTING');
 
         console.log(socket, 'this is socket');
-    })
 
-    const newvote = io.of('/newvote');
-    newvote.on('connection', function (socket) {
-        console.log('CONNECTED');
         socket.on('join org', function (org) {
             socket.join(org);
-
-            newvote.adapter.clients([org], (err, clients) => {
-                console.log(clients, 'this is clients');
-            })
+            console.log('joined org');
+            // newvote.adapter.clients([org], (err, clients) => {
+            //     console.log(clients, 'this is clients');
+            // })
         });
-
         socket.on('disconnect', () => console.log('CLOSE'))
 
     })
+
+    // const newvote = io.of('/newvote');
+    // newvote.on('connection', function (socket) {
+    //     console.log('CONNECTED');
+    //     socket.on('join org', function (org) {
+    //         socket.join(org);
+
+    //         // newvote.adapter.clients([org], (err, clients) => {
+    //         //     console.log(clients, 'this is clients');
+    //         // })
+    //     });
+
+    //     socket.on('disconnect', () => console.log('CLOSE'))
+
+    // })
 
 
     app.set('io', io);
