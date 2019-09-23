@@ -22,12 +22,12 @@ let config = require('../config'),
     csrf = require('csurf'),
     cors = require('cors'),
     jwt = require('express-jwt'),
-    celebrateWrap = require('celebrate'),
+    celebrateWrap = require('celebrate');
 
-    const {
-        celebrate,
-        errors
-    } = celebrateWrap;
+const {
+    celebrate,
+    errors
+} = celebrateWrap;
 
 /**
  * Initialize local variables
