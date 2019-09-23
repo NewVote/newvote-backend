@@ -20,12 +20,24 @@ module.exports = function (app, db) {
 
     io.adapter(redis(process.env.REDIS_URL))
 
-    io.on('connection', function (socket) {
+    const newvote = io.of('/newvote');
+    newvote.on('connection', function (socket) {
+
         socket.on('join org', function (org) {
             socket.join(org);
+
+            newvote.adapter.clients([org], (err, clients) => {
+                console.log(clients, 'this is clients');
+            })
         });
 
+
         socket.on('disconnect', () => console.log('CLOSE'))
+
+    })
+
+    io.on('connection', function (socket) {
+
     })
 
     app.set('io', io);
