@@ -36,7 +36,7 @@ module.exports.init = function init(callback) {
 module.exports.start = function start() {
     module.exports.init(function (app, db, config) {
         // Start the app by listening on <port>
-        require(app, {
+        require('sticky-cluster')(app, {
             port: config.port
         })
         // app.listen(config.port, function () {
