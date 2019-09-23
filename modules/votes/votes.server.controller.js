@@ -12,36 +12,68 @@ let path = require('path'),
     errorHandler = require(path.resolve(
         './modules/core/errors.server.controller'
     )),
+    socket = require('../helpers/socket'),
     _ = require('lodash');
 
 /**
  * Create a vote
  */
-exports.create = function(req, res) {
+
+exports.create = function (req, res) {
+    const org = JSON.parse(req.cookies.organization).url;
     let vote = new Vote(req.body);
     vote.user = req.user;
 
     vote.save()
-        .then(vote => {
+        .then((vote) => {
+            return Vote.find({
+                object: vote.object
+            })
+        })
+        .then((votes) => {
+            const voteMetaData = {
+                up: 0,
+                down: 0,
+                total: 0,
+                _id: vote.object
+            };
+
+            votes.forEach((item) => {
+                if (item.voteValue > 0) voteMetaData.up++
+                if (item.voteValue < 0) voteMetaData.down++
+            })
+
+            voteMetaData.total = voteMetaData.up + voteMetaData.down;
+            socket.send(req, voteMetaData, 'vote', org);
+
+            return vote;
+        })
+        .then((vote) => {
             return res.json(vote);
         })
         .catch(err => {
-            throw err;
+            return res.status(400)
+                .send({
+                    message: errorHandler.getErrorMessage(err)
+                });
         });
 };
 
-exports.updateOrCreate = async function(req, res) {
+exports.updateOrCreate = async function (req, res) {
     let user = req.user;
-    const { object, organizationId } = req.body;
+    const {
+        object,
+        organizationId
+    } = req.body;
 
     const isVerified = await isUserSignedToOrg(organizationId, user);
 
     if (!isVerified) {
-        return res.status(403).send({
-            message:
-                'You must verify with Community before being able to vote.',
-            notCommunityVerified: true
-        });
+        return res.status(403)
+            .send({
+                message: 'You must verify with Community before being able to vote.',
+                notCommunityVerified: true
+            });
     }
 
     Vote.findOne({
@@ -54,49 +86,77 @@ exports.updateOrCreate = async function(req, res) {
             return exports.update(req, res);
         })
         .catch(err => {
-            return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
+            return res.status(400)
+                .send({
+                    message: errorHandler.getErrorMessage(err)
+                });
         });
 };
 
 /**
  * Show the current vote
  */
-exports.read = function(req, res) {
+exports.read = function (req, res) {
     res.json(req.vote);
 };
 
 /**
  * Update a vote
  */
-exports.update = function(req, res) {
+exports.update = function (req, res) {
+    const org = JSON.parse(req.cookies.organization)
+        .url;
+
+    // IO instance is saved globally
     let vote = req.vote;
     _.extend(vote, req.body);
     // vote.title = req.body.title;
     // vote.content = req.body.content;
     vote.save()
-        .then(vote => {
-            return res.json(vote);
+        .then((vote) => {
+            // search for all votes related to the updated object
+            return Vote.find({
+                object: vote.object
+            })
+        })
+        .then((votes) => {
+            // recalculate vote values
+            const voteMetaData = {
+                up: 0,
+                down: 0,
+                total: 0,
+                _id: vote.object
+            };
+
+            votes.forEach((item) => {
+                if (item.voteValue > 0) voteMetaData.up++
+                if (item.voteValue < 0) voteMetaData.down++
+            })
+            voteMetaData.total = voteMetaData.up + voteMetaData.down
+
+            socket.send(req, voteMetaData, 'vote', org);
+            return res.json(vote)
         })
         .catch(err => {
-            return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
+            return res.status(400)
+                .send({
+                    message: errorHandler.getErrorMessage(err)
+                });
         });
 };
 
 /**
  * Delete an vote
  */
-exports.delete = function(req, res) {
+exports.delete = function (req, res) {
     let vote = req.vote;
 
-    vote.remove(function(err) {
+    vote.remove(function (err) {
         if (err) {
-            return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
+            return res.status(400)
+                .send({
+                    message: errorHandler.getErrorMessage(err)
+                });
         } else {
             res.json(vote);
         }
@@ -106,17 +166,16 @@ exports.delete = function(req, res) {
 /**
  * List of Votes
  */
-exports.list = function(req, res) {
+exports.list = function (req, res) {
     let regionIds = req.query.regionId;
 
     if (regionIds) {
-        getPostcodes(regionIds).then(
-            function(postCodes) {
-                console.log(postCodes);
-                // Find votes submitted from users with those postcodes
-                getVotesResponse(
-                    {},
-                    {
+        getPostcodes(regionIds)
+            .then(
+                function (postCodes) {
+                    console.log(postCodes);
+                    // Find votes submitted from users with those postcodes
+                    getVotesResponse({}, {
                         path: 'user',
                         match: {
                             postalCode: {
@@ -126,22 +185,21 @@ exports.list = function(req, res) {
                         select: 'postalCode -_id'
                     },
                     res
-                );
-            },
-            function(err) {
-                return res.status(400).send({
-                    message: errorHandler.getErrorMessage(err)
-                });
-            }
-        );
+                    );
+                },
+                function (err) {
+                    return res.status(400)
+                        .send({
+                            message: errorHandler.getErrorMessage(err)
+                        });
+                }
+            );
     } else {
-        getVotesResponse(
-            {},
-            {
-                path: 'user',
-                select: 'postalCode -_id'
-            },
-            res
+        getVotesResponse({}, {
+            path: 'user',
+            select: 'postalCode -_id'
+        },
+        res
         );
     }
 };
@@ -149,61 +207,62 @@ exports.list = function(req, res) {
 /**
  * Vote middleware
  */
-exports.voteByID = function(req, res, next, id) {
+exports.voteByID = function (req, res, next, id) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).send({
-            message: 'Vote is invalid'
-        });
+        return res.status(400)
+            .send({
+                message: 'Vote is invalid'
+            });
     }
 
     Vote.findById(id)
         .populate('user', 'displayName')
-        .exec(function(err, vote) {
+        .exec(function (err, vote) {
             if (err) {
                 return next(err);
             } else if (!vote) {
-                return res.status(404).send({
-                    message: 'No vote with that identifier has been found'
-                });
+                return res.status(404)
+                    .send({
+                        message: 'No vote with that identifier has been found'
+                    });
             }
             req.vote = vote;
             next();
         });
 };
 
-exports.attachVotes = function(objects, user, regions) {
+exports.attachVotes = function (objects, user, regions) {
     if (!objects) return Promise.resolve(objects);
-    let objectIds = objects.map(function(object) {
+    let objectIds = objects.map(function (object) {
         return object._id;
     });
 
-    return Promise.resolve(regions).then(function(regionString) {
-        if (regionString) {
-            let regionIds = [];
+    return Promise.resolve(regions)
+        .then(function (regionString) {
+            if (regionString) {
+                let regionIds = [];
 
-            if (isString(regionString)) {
-                let region = JSON.parse(regionString);
-                regionIds.push(region._id);
-            } else {
-                regionIds = regionString.map(function(regionObj) {
-                    let region = JSON.parse(regionObj);
-                    return region._id;
-                });
-            }
+                if (isString(regionString)) {
+                    let region = JSON.parse(regionString);
+                    regionIds.push(region._id);
+                } else {
+                    regionIds = regionString.map(function (regionObj) {
+                        let region = JSON.parse(regionObj);
+                        return region._id;
+                    });
+                }
 
-            return getPostcodes(regionIds).then(function(postCodes) {
-                // Find votes submitted from users with those postcodes
-                return getVotes(
-                    {
-                        object: {
-                            $in: objectIds
-                        }
-                    },
-                    {
-                        path: 'user',
-                        match: {
-                            $or: [
-                                {
+                return getPostcodes(regionIds)
+                    .then(function (postCodes) {
+                        // Find votes submitted from users with those postcodes
+                        return getVotes({
+                            object: {
+                                $in: objectIds
+                            }
+                        }, {
+                            path: 'user',
+                            match: {
+                                $or: [{
                                     postalCode: {
                                         $in: postCodes
                                     }
@@ -213,30 +272,30 @@ exports.attachVotes = function(objects, user, regions) {
                                         $in: postCodes
                                     }
                                 }
-                            ]
-                        },
-                        select: 'postalCode -_id'
-                    }
-                ).then(function(votes) {
-                    return mapObjectWithVotes(objects, user, votes);
-                });
-            });
-        } else {
-            return getVotes(
-                {
+                                ]
+                            },
+                            select: 'postalCode -_id'
+                        })
+                            .then(function (votes) {
+                                return mapObjectWithVotes(objects, user, votes);
+                            });
+                    });
+            } else {
+                return getVotes({
                     object: {
                         $in: objectIds
                     }
                 },
                 null
-            ).then(function(votes) {
-                votes.forEach(function(vote) {
-                    fixVoteTypes(vote);
-                });
-                return mapObjectWithVotes(objects, user, votes);
-            });
-        }
-    });
+                )
+                    .then(function (votes) {
+                        votes.forEach(function (vote) {
+                            fixVoteTypes(vote);
+                        });
+                        return mapObjectWithVotes(objects, user, votes);
+                    });
+            }
+        });
 };
 
 // Local functions
@@ -247,23 +306,26 @@ function fixVoteTypes(vote) {
     if (vote.objectType === 'proposal') {
         console.log('found vote to fix');
         vote.objectType = 'Proposal';
-        vote.save().then(function(vote) {
-            console.log('vote updated: ', vote._id);
-        });
+        vote.save()
+            .then(function (vote) {
+                console.log('vote updated: ', vote._id);
+            });
     }
 }
 
 function getVotesResponse(findQuery, populateQuery, res) {
-    getVotes(findQuery, populateQuery).then(
-        function(votes) {
-            res.json(votes);
-        },
-        function(err) {
-            return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
-        }
-    );
+    getVotes(findQuery, populateQuery)
+        .then(
+            function (votes) {
+                res.json(votes);
+            },
+            function (err) {
+                return res.status(400)
+                    .send({
+                        message: errorHandler.getErrorMessage(err)
+                    });
+            }
+        );
 }
 
 function getVotes(findQuery, populateQuery) {
@@ -271,8 +333,8 @@ function getVotes(findQuery, populateQuery) {
         return Vote.find(findQuery)
             .populate(populateQuery)
             .exec()
-            .then(function(votes) {
-                votes = votes.filter(function(vote) {
+            .then(function (votes) {
+                votes = votes.filter(function (vote) {
                     if (vote.user) return vote;
                 });
                 return votes;
@@ -280,8 +342,8 @@ function getVotes(findQuery, populateQuery) {
     } else {
         return Vote.find(findQuery)
             .exec()
-            .then(function(votes) {
-                votes = votes.filter(function(vote) {
+            .then(function (votes) {
+                votes = votes.filter(function (vote) {
                     if (vote.user) return vote;
                 });
                 return votes;
@@ -296,7 +358,7 @@ function getPostcodes(regionIds) {
         }
     })
         .exec()
-        .then(function(regions) {
+        .then(function (regions) {
             // Get postcodes from all regions
             let postCodes = [];
             let region;
@@ -308,16 +370,18 @@ function getPostcodes(regionIds) {
 }
 
 function mapObjectWithVotes(objects, user, votes) {
-    objects = objects.map(function(object) {
+    objects = objects.map(function (object) {
         // object = object.toObject(); //to be able to set props on the mongoose object
         let objVotes = [];
         let userVote = null;
         let up = 0;
         let down = 0;
         let total = 0;
+        let _id = object._id;
+
         object.votes = {};
 
-        votes.forEach(function(vote) {
+        votes.forEach(function (vote) {
             if (vote.object.toString() === object._id.toString()) {
                 objVotes.push(vote);
                 if (user && vote.user.toString() === user._id.toString()) {
@@ -331,7 +395,8 @@ function mapObjectWithVotes(objects, user, votes) {
         });
 
         object.votes = {
-            total: objVotes.length,
+            _id,
+            total: up + down,
             currentUser: userVote,
             up: up,
             down: down
@@ -359,6 +424,7 @@ function isUserSignedToOrg(currentOrgId, userObject) {
         .then(organizations => {
             if (!organizations) return false;
             const orgExists = organizations.find(org => {
+                if (!org) return false
                 return org.equals(currentOrgId);
             });
 

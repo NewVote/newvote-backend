@@ -9,6 +9,7 @@ let path = require('path'),
     Vote = mongoose.model('Vote'),
     votes = require('../votes/votes.server.controller'),
     Solution = mongoose.model('Solution'),
+    voteController = require('../votes/votes.server.controller'),
     errorHandler = require(path.resolve(
         './modules/core/errors.server.controller'
     )),
@@ -18,7 +19,7 @@ let path = require('path'),
 /**
  * Create a proposal
  */
-exports.create = function(req, res) {
+exports.create = function (req, res) {
     // if the string is empty revert to default on model
     if (!req.body.imageUrl) {
         delete req.body.imageUrl;
@@ -51,21 +52,29 @@ exports.create = function(req, res) {
 
             if (!proposal) throw 'Proposal failed to save';
 
-            if (votes) {
-                const convertSuggestionVotesToProposal = votes.map(vote => {
-                    let newVote = new Vote(vote);
-                    newVote.objectType = 'Proposal';
-                    newVote.object = proposal._id;
-                    return newVote;
-                });
+            if (votes.length > 0) {
+                const convertSuggestionVotesToProposal =
+
+                    votes
+                        .slice()
+                        .map(vote => {
+                            let newVote = new Vote(vote);
+                            newVote.objectType = 'Proposal';
+                            newVote.object = proposal._id;
+                            return newVote;
+                        });
 
                 Vote.insertMany(convertSuggestionVotesToProposal);
             }
 
             return proposal.save();
         })
+        .then((proposal) => {
+            // Attach empty vote object
+            return votes.attachVotes([proposal], req.user, req.query.regions)
+        })
         .then(proposal => {
-            return res.json(proposal);
+            return res.json(proposal[0]);
         })
         .catch(err => {
             return res.status(400).send({
@@ -77,10 +86,10 @@ exports.create = function(req, res) {
 /**
  * Show the current proposal
  */
-exports.read = function(req, res) {
+exports.read = function (req, res) {
     votes
         .attachVotes([req.proposal], req.user, req.query.regions)
-        .then(function(proposalArr) {
+        .then(function (proposalArr) {
             const updatedProposal = proposalArr[0];
             res.json(updatedProposal);
         })
@@ -94,31 +103,42 @@ exports.read = function(req, res) {
 /**
  * Update a proposal
  */
-exports.update = function(req, res) {
+exports.update = function (req, res) {
     delete req.body.__v;
+
+    if (req.body.votes) {
+        delete req.body.votes;
+    }
+
     let proposal = req.proposal;
     _.extend(proposal, req.body);
     // proposal.title = req.body.title;
     // proposal.content = req.body.content;
     proposal.user = req.user;
-    proposal.save(function(err) {
-        if (err) {
+    proposal
+        .save()
+        .then((res) => {
+            return voteController
+                .attachVotes([res], req.user, req.query.regions)
+        })
+        .then(proposal => res.json(proposal[0]))
+        .catch(err => {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });
-        } else {
-            res.json(proposal);
-        }
-    });
+        });
 };
 
 /**
  * Delete an proposal
  */
-exports.delete = function(req, res) {
+exports.delete = function (req, res) {
     let proposal = req.proposal;
 
-    Vote.deleteMany({ object: req.proposal._id, objectType: 'Proposal' })
+    Vote.deleteMany({
+        object: req.proposal._id,
+        objectType: 'Proposal'
+    })
         .then(votes => {
             return proposal.remove();
         })
@@ -135,51 +155,76 @@ exports.delete = function(req, res) {
 /**
  * List of Proposals
  */
-exports.list = function(req, res) {
+exports.list = function (req, res) {
     let solutionId = req.query.solutionId || null;
     let search = req.query.search || null;
     let org = req.organization;
     let orgUrl = org ? org.url : null;
     let showDeleted = req.query.showDeleted || null;
 
-    let orgMatch = orgUrl ? { 'organizations.url': orgUrl } : {};
-    let solutionMatch = solutionId
-        ? { solutions: mongoose.Types.ObjectId(solutionId) }
-        : {};
-    let searchMatch = search ? { $text: { $search: search } } : {};
+    let orgMatch = orgUrl ? {
+        'organizations.url': orgUrl
+    } : {};
+    let solutionMatch = solutionId ? {
+        solutions: mongoose.Types.ObjectId(solutionId)
+    } : {};
+    let searchMatch = search ? {
+        $text: {
+            $search: search
+        }
+    } : {};
 
     let showNonDeletedItemsMatch = {
-        $or: [{ softDeleted: false }, { softDeleted: { $exists: false } }]
+        $or: [{
+            softDeleted: false
+        }, {
+            softDeleted: {
+                $exists: false
+            }
+        }]
     };
     let showAllItemsMatch = {};
-    let softDeleteMatch = showDeleted
-        ? showAllItemsMatch
-        : showNonDeletedItemsMatch;
+    let softDeleteMatch = showDeleted ?
+        showAllItemsMatch :
+        showNonDeletedItemsMatch;
 
-    Proposal.aggregate([
-        { $match: searchMatch },
-        { $match: softDeleteMatch },
-        { $match: solutionMatch },
-        {
-            $lookup: {
-                from: 'organizations',
-                localField: 'organizations',
-                foreignField: '_id',
-                as: 'organizations'
-            }
-        },
-        {
-            $lookup: {
-                from: 'solutions',
-                localField: 'solutions',
-                foreignField: '_id',
-                as: 'solutions'
-            }
-        },
-        { $match: orgMatch },
-        { $unwind: '$organizations' },
-        { $sort: { created: -1 } }
-    ]).exec(function(err, proposals) {
+    Proposal.aggregate([{
+        $match: searchMatch
+    },
+    {
+        $match: softDeleteMatch
+    },
+    {
+        $match: solutionMatch
+    },
+    {
+        $lookup: {
+            from: 'organizations',
+            localField: 'organizations',
+            foreignField: '_id',
+            as: 'organizations'
+        }
+    },
+    {
+        $lookup: {
+            from: 'solutions',
+            localField: 'solutions',
+            foreignField: '_id',
+            as: 'solutions'
+        }
+    },
+    {
+        $match: orgMatch
+    },
+    {
+        $unwind: '$organizations'
+    },
+    {
+        $sort: {
+            created: -1
+        }
+    }
+    ]).exec(function (err, proposals) {
         if (err) {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
@@ -187,10 +232,10 @@ exports.list = function(req, res) {
         } else {
             votes
                 .attachVotes(proposals, req.user, req.query.regions)
-                .then(function(proposals) {
+                .then(function (proposals) {
                     res.json(proposals);
                 })
-                .catch(function(err) {
+                .catch(function (err) {
                     res.status(500).send({
                         message: errorHandler.getErrorMessage(err)
                     });
@@ -202,7 +247,7 @@ exports.list = function(req, res) {
 /**
  * Proposal middleware
  */
-exports.proposalByID = function(req, res, next, id) {
+exports.proposalByID = function (req, res, next, id) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).send({
             message: 'Proposal is invalid'
@@ -214,7 +259,7 @@ exports.proposalByID = function(req, res, next, id) {
         .populate('solutions')
         .populate('solution')
         .populate('organizations')
-        .exec(function(err, proposal) {
+        .exec(function (err, proposal) {
             if (err) {
                 return next(err);
             } else if (!proposal) {
@@ -227,10 +272,12 @@ exports.proposalByID = function(req, res, next, id) {
         });
 };
 
-exports.attachProposals = function(objects, user, regions) {
+exports.attachProposals = function (objects, user, regions) {
     // ;
     const promises = objects.map(obj => {
-        return Proposal.find({ solutions: obj._id })
+        return Proposal.find({
+            solutions: obj._id
+        })
             .populate('solutions')
             .then(props => {
                 return votes.attachVotes(props, user, regions).then(props => {
@@ -259,8 +306,10 @@ function updateSchema(proposals) {
     }
 }
 
-exports.seedData = function(organizationId, solutionId) {
-    const { seedData } = seed;
+exports.seedData = function (organizationId, solutionId) {
+    const {
+        seedData
+    } = seed;
     const newProposal = new Proposal(seedData);
     newProposal.organizations = organizationId;
     newProposal.solutions = [solutionId];

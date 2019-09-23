@@ -236,10 +236,6 @@ exports.signin = function(req, res, next) {
                             savedUser.password = undefined;
                             savedUser.salt = undefined;
                             savedUser.verificationCode = undefined;
-                            res.clearCookie('credentials', {
-                                path: '/',
-                                domain: 'newvote.org'
-                            });
 
                             // updated user so create new token
                             const payload = {
@@ -251,11 +247,12 @@ exports.signin = function(req, res, next) {
                                 expiresIn: config.jwtExpiry
                             });
                             const creds = { user, token };
+
                             const opts = {
                                 domain: 'newvote.org',
-                                httpOnly: false,
-                                secure: false
-                            };
+                                secure: false,
+                                overwrite: true
+                            }
 
                             res.cookie(
                                 'credentials',

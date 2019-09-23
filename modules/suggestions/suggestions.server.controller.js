@@ -12,7 +12,7 @@ let path = require('path'),
     Solution = mongoose.model('Solution'),
     Proposal = mongoose.model('Proposal'),
     Vote = mongoose.model('Vote'),
-    votes = require('../votes/votes.server.controller'),
+    voteController = require('../votes/votes.server.controller'),
     errorHandler = require(path.resolve(
         './modules/core/errors.server.controller'
     )),
@@ -22,7 +22,7 @@ let path = require('path'),
     seed = require('./seed/seed');
 
 // TODO: Use a server side templating language to use a html file for this
-let buildMessage = function(suggestion, req) {
+let buildMessage = function (suggestion, req) {
     let messageString = '';
     let url = req.protocol + '://' + req.get('host');
     if (!suggestion.parent) {
@@ -59,7 +59,7 @@ let buildMessage = function(suggestion, req) {
 /**
  * Create a suggestion
  */
-exports.create = function(req, res) {
+exports.create = function (req, res) {
     let suggestion = new Suggestion(req.body);
 
     if (!suggestion.parent) {
@@ -89,22 +89,24 @@ exports.create = function(req, res) {
             const [suggestionPromise, orgPromise] = promises;
             if (!orgPromise || !suggestionPromise) return false;
 
-            return transporter.sendMail(
-                {
-                    from: process.env.MAILER_FROM,
-                    to: orgPromise.owner.email,
-                    subject:
-                        'New suggestion created on your NewVote community!',
-                    html: buildMessage(suggestion, req)
-                },
-                (err, info) => {
-                    return false;
-                }
+            return transporter.sendMail({
+                from: process.env.MAILER_FROM,
+                to: orgPromise.owner.email,
+                subject: 'New suggestion created on your NewVote community!',
+                html: buildMessage(suggestion, req)
+            },
+            (err, info) => {
+                return false;
+            }
             );
         })
-        .then(function() {
+        .then(() => {
+            // a new suggestion is returned without a vote object - breaks vote button component
+            return voteController.attachVotes([suggestion], req.user, req.query.regions)
+        })
+        .then((suggestions) => {
             // console.log('mailer success: ', data);
-            return res.status(200).json(suggestion);
+            return res.status(200).json(suggestions[0]);
         })
         .catch(err => {
             return res.status(400).send({
@@ -116,10 +118,10 @@ exports.create = function(req, res) {
 /**
  * Show the current suggestion
  */
-exports.read = function(req, res) {
-    votes
+exports.read = function (req, res) {
+    voteController
         .attachVotes([req.suggestion], req.user, req.query.regions)
-        .then(function(suggestionArr) {
+        .then(function (suggestionArr) {
             const updatedSuggestion = suggestionArr[0];
             res.json(updatedSuggestion);
         })
@@ -133,30 +135,46 @@ exports.read = function(req, res) {
 /**
  * Update a suggestion
  */
-exports.update = function(req, res) {
+exports.update = function (req, res) {
+
+    // Client updates the vote object directly on store
+    // If sent to the backend the votes object on suggestion will not save voteValue
+    // in order to match data on client / backend - we remove the votes object & have the backend
+    // reAttach votes
+    if (req.body.votes) {
+        delete req.body.votes;
+    }
+
     let suggestion = req.suggestion;
     _.extend(suggestion, req.body);
+
     // suggestion.title = req.body.title;
     // suggestion.content = req.body.content;
-
-    suggestion.save(function(err) {
-        if (err) {
+    suggestion.save()
+        .then((res) => {
+            return voteController
+                .attachVotes([res], req.user, req.query.regions)
+        })
+        .then((data) => {
+            res.json(data[0]);
+        })
+        .catch((err) => {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });
-        } else {
-            res.json(suggestion);
-        }
-    });
+        })
 };
 
 /**
  * Delete an suggestion
  */
-exports.delete = function(req, res) {
+exports.delete = function (req, res) {
     let suggestion = req.suggestion;
 
-    Vote.deleteMany({ object: req.suggestion._id, objectType: 'Suggestion' })
+    Vote.deleteMany({
+        object: req.suggestion._id,
+        objectType: 'Suggestion'
+    })
         .then(votes => {
             return suggestion.remove();
         })
@@ -173,7 +191,7 @@ exports.delete = function(req, res) {
 /**
  * List of Suggestions
  */
-exports.list = function(req, res) {
+exports.list = function (req, res) {
     let search = req.query.search || null;
     let org = req.organization;
     let orgUrl = org ? org.url : null;
@@ -181,7 +199,7 @@ exports.list = function(req, res) {
     let type = req.query.type || null;
     let parent = req.query.parent || null;
     let user = req.query.user || null;
-    
+
     if (parent) {
         parent = mongoose.Types.ObjectId(parent);
     }
@@ -190,40 +208,75 @@ exports.list = function(req, res) {
         user = mongoose.Types.ObjectId(user);
     }
 
-    let orgMatch = orgUrl ? { 'organizations.url': orgUrl } : {};
-    let searchMatch = search ? { $text: { $search: search } } : {};
-    let typeMatch = type ? { type: type } : {};
-    let parentMatch = parent ? { parent: parent } : {};
-    let userMatch = user ? { user: user } : {};
+    let orgMatch = orgUrl ? {
+        'organizations.url': orgUrl
+    } : {};
+    let searchMatch = search ? {
+        $text: {
+            $search: search
+        }
+    } : {};
+    let typeMatch = type ? {
+        type: type
+    } : {};
+    let parentMatch = parent ? {
+        parent: parent
+    } : {};
+    let userMatch = user ? {
+        user: user
+    } : {};
 
     let showNonDeletedItemsMatch = {
-        $or: [{ softDeleted: false }, { softDeleted: { $exists: false } }]
+        $or: [{
+            softDeleted: false
+        }, {
+            softDeleted: {
+                $exists: false
+            }
+        }]
     };
     let showAllItemsMatch = {};
-    let softDeleteMatch = showDeleted
-        ? showAllItemsMatch
-        : showNonDeletedItemsMatch;
+    let softDeleteMatch = showDeleted ?
+        showAllItemsMatch :
+        showNonDeletedItemsMatch;
 
-    Suggestion.aggregate([
-        { $match: searchMatch },
-        { $match: softDeleteMatch },
-        { $match: typeMatch },
-        { $match: parentMatch },
-        { $match: userMatch },
-        {
-            $lookup: {
-                from: 'organizations',
-                localField: 'organizations',
-                foreignField: '_id',
-                as: 'organizations'
-            }
-        },
-        { $match: orgMatch },
-        { $unwind: '$organizations' },
-        { $sort: { created: -1 } }
-    ]).exec(function(err, suggestions) {
+    Suggestion.aggregate([{
+        $match: searchMatch
+    },
+    {
+        $match: softDeleteMatch
+    },
+    {
+        $match: typeMatch
+    },
+    {
+        $match: parentMatch
+    },
+    {
+        $match: userMatch
+    },
+    {
+        $lookup: {
+            from: 'organizations',
+            localField: 'organizations',
+            foreignField: '_id',
+            as: 'organizations'
+        }
+    },
+    {
+        $match: orgMatch
+    },
+    {
+        $unwind: '$organizations'
+    },
+    {
+        $sort: {
+            created: -1
+        }
+    }
+    ]).exec(function (err, suggestions) {
         if (err) throw err;
-        votes
+        voteController
             .attachVotes(suggestions, req.user, req.query.regions)
             .then(suggestions => res.json(suggestions))
             .catch(err => {
@@ -235,7 +288,7 @@ exports.list = function(req, res) {
 /**
  * Suggestion middleware
  */
-exports.suggestionByID = function(req, res, next, id) {
+exports.suggestionByID = function (req, res, next, id) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).send({
             message: 'Suggestion is invalid'
@@ -245,7 +298,7 @@ exports.suggestionByID = function(req, res, next, id) {
     Suggestion.findById(id)
         .populate('user', 'displayName')
         .populate('organizations')
-        .exec(function(err, suggestion) {
+        .exec(function (err, suggestion) {
             if (err) {
                 return next(err);
             } else if (!suggestion) {
@@ -258,8 +311,10 @@ exports.suggestionByID = function(req, res, next, id) {
         });
 };
 
-exports.seedData = function(organizationId) {
-    const { seedData } = seed;
+exports.seedData = function (organizationId) {
+    const {
+        seedData
+    } = seed;
     const newSuggestion = new Suggestion(seedData);
     newSuggestion.organizations = organizationId;
     newSuggestion.save();
