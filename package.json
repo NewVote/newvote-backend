@@ -78,6 +78,7 @@
         "serve-favicon": "^2.5.0",
         "socket.io": "^2.2.0",
         "socket.io-redis": "^5.2.0",
+        "sticky-session": "^1.1.2",
         "throng": "^4.0.0",
         "validator": "^3.41.2"
     },
