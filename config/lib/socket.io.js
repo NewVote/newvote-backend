@@ -16,51 +16,21 @@ let config = require('../config'),
 module.exports = function (app, db) {
     let server = http.createServer(app);
     let io = socketio(server, {
-        // transports: ['websocket'],
-        // timeout: '8000'
+        transports: ['websocket'],
     });
 
     const redis = require('socket.io-redis');
 
     io.adapter(redis(process.env.REDIS_URL))
-    // io.set('close timeout', 8000);
-    // io.set('heartbeat timeout', 8000);
-
-    // io.of('/').adapter.on('error', function () {
-    //     console.log('redis ERROR');
-    // })
 
     io.on('connection', function (socket) {
-        console.log('CONNECTING');
-
-        console.log(socket, 'this is socket');
-
         socket.on('join org', function (org) {
             socket.join(org);
-            console.log('joined org');
-            // newvote.adapter.clients([org], (err, clients) => {
-            //     console.log(clients, 'this is clients');
-            // })
+
         });
         socket.on('disconnect', () => console.log('CLOSE'))
 
     })
-
-    // const newvote = io.of('/newvote');
-    // newvote.on('connection', function (socket) {
-    //     console.log('CONNECTED');
-    //     socket.on('join org', function (org) {
-    //         socket.join(org);
-
-    //         // newvote.adapter.clients([org], (err, clients) => {
-    //         //     console.log(clients, 'this is clients');
-    //         // })
-    //     });
-
-    //     socket.on('disconnect', () => console.log('CLOSE'))
-
-    // })
-
 
     app.set('io', io);
 
