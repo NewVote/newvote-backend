@@ -23,7 +23,8 @@ let config = require('../config'),
     cors = require('cors'),
     jwt = require('express-jwt'),
     celebrateWrap = require('celebrate'),
-    socketio = require('socket.io');
+    socketio = require('socket.io'),
+    sticky = require('sticky-session');
 
 const {
     celebrate,

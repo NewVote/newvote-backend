@@ -18,10 +18,7 @@ module.exports = function (app, db) {
     let io = socketio(server);
     const redis = require('socket.io-redis');
 
-    io.adapter(redis({
-        host: process.env.REDIS_URL || 'localhost',
-        // port: process.env.SOCKET_PORT || 8080
-    }))
+    io.adapter(redis())
 
     io.on('connection', function (socket) {
         socket.on('join org', function (org) {

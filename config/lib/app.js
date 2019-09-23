@@ -8,10 +8,11 @@ let config = require('../config'),
     express = require('./express'),
     chalk = require('chalk'),
     seed = require('./seed'),
-    socketio = require('socket.io');
+    socketio = require('socket.io'),
+    sticky = require('sticky-session');
 
 function seedDB() {
-    if(config.seedDB && config.seedDB.seed) {
+    if (config.seedDB && config.seedDB.seed) {
         console.log(chalk.bold.red('Warning:  Database seeding is turned on'));
         seed.start();
     }
@@ -28,14 +29,14 @@ module.exports.init = function init(callback) {
     mongoose.connect(function (db) {
         // Initialize express
         let app = express.init(db);
-        if(callback) callback(app, db, config);
+        if (callback) callback(app, db, config);
     });
 };
 
 module.exports.start = function start() {
     module.exports.init(function (app, db, config) {
         // Start the app by listening on <port>
-        app.listen(config.port, function () {
+        sticky.listen(app, config.port, function () {
             // Logging initialization
             console.log('--');
             console.log(chalk.green(config.app.title));
@@ -45,7 +46,5 @@ module.exports.start = function start() {
             console.log(chalk.green('App version:\t\t\t' + config.meanjs.version));
             console.log('--');
         });
-
-        
     });
 };
