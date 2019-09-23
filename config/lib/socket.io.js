@@ -23,7 +23,7 @@ module.exports = function (app, db) {
 
     io.adapter(redis(process.env.REDIS_URL))
 
-    io.of('/'), adapter.on('error', function () {
+    io.of('/').adapter.on('error', function () {
         console.log('redis ERROR');
     })
 
