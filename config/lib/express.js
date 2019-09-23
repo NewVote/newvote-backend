@@ -22,9 +22,7 @@ let config = require('../config'),
     csrf = require('csurf'),
     cors = require('cors'),
     jwt = require('express-jwt'),
-    celebrateWrap = require('celebrate'),
-    socketio = require('socket.io'),
-    sticky = require('sticky-session');
+    celebrateWrap = require('celebrate');
 
 const {
     celebrate,

@@ -15,7 +15,10 @@ let config = require('../config'),
 // Define the Socket.io configuration method
 module.exports = function (app, db) {
     let server = http.createServer(app);
-    let io = socketio(server);
+    let io = socketio(server, {
+        transports: ['websocket'],
+    });
+
     const redis = require('socket.io-redis');
 
     io.adapter(redis(process.env.REDIS_URL))
@@ -23,9 +26,10 @@ module.exports = function (app, db) {
     io.on('connection', function (socket) {
         socket.on('join org', function (org) {
             socket.join(org);
-        });
 
+        });
         socket.on('disconnect', () => console.log('CLOSE'))
+
     })
 
     app.set('io', io);

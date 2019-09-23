@@ -5,7 +5,6 @@
 require('newrelic');
 const throng = require('throng');
 const app = require('./config/lib/app');
-const sticky = require('sticky-session');
 
 /**
  * Module variables.
@@ -19,10 +18,23 @@ if (process.env.NODE_ENV === 'development') {
     console.log('starting without throng');
     app.start();
 } else {
-    throng({
-        workers: WORKERS,
-        lifetime: Infinity
-    },
-    app.start
-    );
+
+    require('sticky-cluster')(
+        function (callback) {
+            app.init(function (app, db, config) {
+
+                callback(app);
+            })
+        }, {
+            concurrency: WORKERS,
+            port: process.env.PORT
+        }
+
+    )
+    // throng({
+    //     workers: WORKERS,
+    //     lifetime: Infinity
+    // },
+    // app.start
+    // );
 }
