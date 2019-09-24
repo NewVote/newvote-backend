@@ -7,11 +7,10 @@ let config = require('../config'),
     mongoose = require('./mongoose'),
     express = require('./express'),
     chalk = require('chalk'),
-    seed = require('./seed'),
-    socketio = require('socket.io');
+    seed = require('./seed');
 
 function seedDB() {
-    if(config.seedDB && config.seedDB.seed) {
+    if (config.seedDB && config.seedDB.seed) {
         console.log(chalk.bold.red('Warning:  Database seeding is turned on'));
         seed.start();
     }
@@ -28,13 +27,14 @@ module.exports.init = function init(callback) {
     mongoose.connect(function (db) {
         // Initialize express
         let app = express.init(db);
-        if(callback) callback(app, db, config);
+        if (callback) callback(app, db, config);
     });
 };
 
 module.exports.start = function start() {
     module.exports.init(function (app, db, config) {
         // Start the app by listening on <port>
+
         app.listen(config.port, function () {
             // Logging initialization
             console.log('--');
@@ -45,7 +45,5 @@ module.exports.start = function start() {
             console.log(chalk.green('App version:\t\t\t' + config.meanjs.version));
             console.log('--');
         });
-
-        
     });
 };
