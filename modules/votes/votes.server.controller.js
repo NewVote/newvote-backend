@@ -19,6 +19,7 @@ let path = require('path'),
  * Create a vote
  */
 exports.create = function (req, res) {
+    const org = JSON.parse(req.cookies.organization).url;
     let vote = new Vote(req.body);
     vote.user = req.user;
 
@@ -113,6 +114,7 @@ exports.read = function (req, res) {
  * Update a vote
  */
 exports.update = function (req, res) {
+    const org = JSON.parse(req.cookies.organization).url;
     let vote = req.vote;
     _.extend(vote, req.body);
     // vote.title = req.body.title;
@@ -143,6 +145,7 @@ exports.update = function (req, res) {
             return res.json(vote)
         })
         .catch(err => {
+            console.log(err, 'this is err');
             return res.status(400)
                 .send({
                     message: errorHandler.getErrorMessage(err)
