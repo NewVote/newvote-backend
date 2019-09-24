@@ -88,7 +88,11 @@ let OrganizationSchema = new Schema({
         type: Boolean,
         required: true,
         default: false
-    }
+    },
+    voteRoles: [{
+        role: { type: String },
+        active: { type: Boolean }
+    }]
 });
 
 mongoose.model('Organization', OrganizationSchema);

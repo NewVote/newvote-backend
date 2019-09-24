@@ -22,10 +22,12 @@ let config = require('../config'),
     csrf = require('csurf'),
     cors = require('cors'),
     jwt = require('express-jwt'),
-    celebrateWrap = require('celebrate'),
-    socketio = require('socket.io');
+    celebrateWrap = require('celebrate');
 
-const { celebrate, errors } = celebrateWrap;
+const {
+    celebrate,
+    errors
+} = celebrateWrap;
 
 /**
  * Initialize local variables
@@ -34,7 +36,7 @@ module.exports.initLocalVariables = function (app) {
     // Setting application local variables
     app.locals.title = config.app.title;
     app.locals.description = config.app.description;
-    if(config.secure && config.secure.ssl === true) {
+    if (config.secure && config.secure.ssl === true) {
         app.locals.secure = config.secure.ssl;
     }
     app.locals.keywords = config.app.keywords;
@@ -49,7 +51,7 @@ module.exports.initLocalVariables = function (app) {
     app.locals.config = false;
     app.locals.isPrerender = false;
     app.locals.safeJSON = function (data) {
-        if(data) {
+        if (data) {
             return JSON.stringify(data);
         } else {
             return 'false';
@@ -99,10 +101,10 @@ module.exports.initMiddleware = function (app) {
     app.use(morgan(logger.getFormat(), logger.getOptions()));
 
     // Environment dependent middleware
-    if(process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'development') {
         // Disable views cache
         app.set('view cache', false);
-    } else if(process.env.NODE_ENV === 'production') {
+    } else if (process.env.NODE_ENV === 'production') {
         app.locals.cache = 'memory';
     }
 
@@ -117,7 +119,7 @@ module.exports.initMiddleware = function (app) {
     app.use(cookieParser());
     app.use(flash());
 
-	
+
     // set up csurf
     // app.use(csrf({
     // 	cookie: {
@@ -136,7 +138,7 @@ module.exports.initMiddleware = function (app) {
     // });
 
     // https redirect
-    if(process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === 'production') {
         app.use('/', httpsRedirect());
     }
 
@@ -249,8 +251,10 @@ module.exports.initErrorRoutes = function (app) {
         if (err.joi) {
             return next(err);
         }
-		
-        return res.status(500).json({ message: 'Server error' })
+
+        return res.status(500).json({
+            message: 'Server error'
+        })
     })
 
     app.use(errors());
@@ -268,7 +272,7 @@ module.exports.initErrorRoutes = function (app) {
     // 	res.redirect('/server-error');
     // });
 
-	
+
 };
 
 /**

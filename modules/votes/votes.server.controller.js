@@ -18,9 +18,7 @@ let path = require('path'),
 /**
  * Create a vote
  */
-
 exports.create = function (req, res) {
-    const org = JSON.parse(req.cookies.organization).url;
     let vote = new Vote(req.body);
     vote.user = req.user;
 
@@ -66,14 +64,25 @@ exports.updateOrCreate = async function (req, res) {
         organizationId
     } = req.body;
 
-    const isVerified = await isUserSignedToOrg(organizationId, user);
+    try {
+        const isVerified = await isUserSignedToOrg(organizationId, user)
+        if (!isVerified) throw ('User is not verified');
 
-    if (!isVerified) {
-        return res.status(403)
-            .send({
-                message: 'You must verify with Community before being able to vote.',
-                notCommunityVerified: true
-            });
+    } catch (error) {
+        return res.status(403).send({
+            message: 'You must verify with Community before being able to vote.',
+            notCommunityVerified: true
+        });
+    }
+
+    try {
+        const hasVotePermission = await checkOrgVotePermissions(organizationId, user);
+
+        if (!hasVotePermission) throw ('User does not have permission');
+    } catch (err) {
+        return res.status(403).send({
+            message: 'You do not have permission to vote on this organization'
+        });
     }
 
     Vote.findOne({
@@ -104,10 +113,6 @@ exports.read = function (req, res) {
  * Update a vote
  */
 exports.update = function (req, res) {
-    const org = JSON.parse(req.cookies.organization)
-        .url;
-
-    // IO instance is saved globally
     let vote = req.vote;
     _.extend(vote, req.body);
     // vote.title = req.body.title;
@@ -170,30 +175,28 @@ exports.list = function (req, res) {
     let regionIds = req.query.regionId;
 
     if (regionIds) {
-        getPostcodes(regionIds)
-            .then(
-                function (postCodes) {
-                    console.log(postCodes);
-                    // Find votes submitted from users with those postcodes
-                    getVotesResponse({}, {
-                        path: 'user',
-                        match: {
-                            postalCode: {
-                                $in: postCodes
-                            }
-                        },
-                        select: 'postalCode -_id'
+        getPostcodes(regionIds).then(
+            function (postCodes) {
+                console.log(postCodes);
+                // Find votes submitted from users with those postcodes
+                getVotesResponse({}, {
+                    path: 'user',
+                    match: {
+                        postalCode: {
+                            $in: postCodes
+                        }
                     },
-                    res
-                    );
+                    select: 'postalCode -_id'
                 },
-                function (err) {
-                    return res.status(400)
-                        .send({
-                            message: errorHandler.getErrorMessage(err)
-                        });
-                }
-            );
+                res
+                );
+            },
+            function (err) {
+                return res.status(400).send({
+                    message: errorHandler.getErrorMessage(err)
+                });
+            }
+        );
     } else {
         getVotesResponse({}, {
             path: 'user',
@@ -237,65 +240,61 @@ exports.attachVotes = function (objects, user, regions) {
         return object._id;
     });
 
-    return Promise.resolve(regions)
-        .then(function (regionString) {
-            if (regionString) {
-                let regionIds = [];
+    return Promise.resolve(regions).then(function (regionString) {
+        if (regionString) {
+            let regionIds = [];
 
-                if (isString(regionString)) {
-                    let region = JSON.parse(regionString);
-                    regionIds.push(region._id);
-                } else {
-                    regionIds = regionString.map(function (regionObj) {
-                        let region = JSON.parse(regionObj);
-                        return region._id;
-                    });
-                }
-
-                return getPostcodes(regionIds)
-                    .then(function (postCodes) {
-                        // Find votes submitted from users with those postcodes
-                        return getVotes({
-                            object: {
-                                $in: objectIds
-                            }
-                        }, {
-                            path: 'user',
-                            match: {
-                                $or: [{
-                                    postalCode: {
-                                        $in: postCodes
-                                    }
-                                },
-                                {
-                                    woodfordian: {
-                                        $in: postCodes
-                                    }
-                                }
-                                ]
-                            },
-                            select: 'postalCode -_id'
-                        })
-                            .then(function (votes) {
-                                return mapObjectWithVotes(objects, user, votes);
-                            });
-                    });
+            if (isString(regionString)) {
+                let region = JSON.parse(regionString);
+                regionIds.push(region._id);
             } else {
+                regionIds = regionString.map(function (regionObj) {
+                    let region = JSON.parse(regionObj);
+                    return region._id;
+                });
+            }
+
+            return getPostcodes(regionIds).then(function (postCodes) {
+                // Find votes submitted from users with those postcodes
                 return getVotes({
                     object: {
                         $in: objectIds
                     }
-                },
-                null
-                )
-                    .then(function (votes) {
-                        votes.forEach(function (vote) {
-                            fixVoteTypes(vote);
-                        });
-                        return mapObjectWithVotes(objects, user, votes);
-                    });
-            }
-        });
+                }, {
+                    path: 'user',
+                    match: {
+                        $or: [{
+                            postalCode: {
+                                $in: postCodes
+                            }
+                        },
+                        {
+                            woodfordian: {
+                                $in: postCodes
+                            }
+                        }
+                        ]
+                    },
+                    select: 'postalCode -_id'
+                }).then(function (votes) {
+                    return mapObjectWithVotes(objects, user, votes);
+                });
+            });
+        } else {
+            return getVotes({
+                object: {
+                    $in: objectIds
+                }
+            },
+            null
+            ).then(function (votes) {
+                votes.forEach(function (vote) {
+                    fixVoteTypes(vote);
+                });
+                return mapObjectWithVotes(objects, user, votes);
+            });
+        }
+    });
 };
 
 // Local functions
@@ -306,26 +305,23 @@ function fixVoteTypes(vote) {
     if (vote.objectType === 'proposal') {
         console.log('found vote to fix');
         vote.objectType = 'Proposal';
-        vote.save()
-            .then(function (vote) {
-                console.log('vote updated: ', vote._id);
-            });
+        vote.save().then(function (vote) {
+            console.log('vote updated: ', vote._id);
+        });
     }
 }
 
 function getVotesResponse(findQuery, populateQuery, res) {
-    getVotes(findQuery, populateQuery)
-        .then(
-            function (votes) {
-                res.json(votes);
-            },
-            function (err) {
-                return res.status(400)
-                    .send({
-                        message: errorHandler.getErrorMessage(err)
-                    });
-            }
-        );
+    getVotes(findQuery, populateQuery).then(
+        function (votes) {
+            res.json(votes);
+        },
+        function (err) {
+            return res.status(400).send({
+                message: errorHandler.getErrorMessage(err)
+            });
+        }
+    );
 }
 
 function getVotes(findQuery, populateQuery) {
@@ -412,7 +408,7 @@ function isString(value) {
     return typeof value === 'string' || value instanceof String;
 }
 
-function isUserSignedToOrg(currentOrgId, userObject) {
+async function isUserSignedToOrg(currentOrgId, userObject) {
     return User.findById(userObject._id)
         .then(user => {
             if (!user) return false;
@@ -430,4 +426,39 @@ function isUserSignedToOrg(currentOrgId, userObject) {
 
             return orgExists;
         });
+}
+
+async function checkOrgVotePermissions(organizationId, user) {
+
+    const orgPromise = Organization.findById(organizationId);
+    const userPromise = User.findOne({
+        _id: user._id
+    })
+
+    return Promise.all([orgPromise, userPromise])
+        .then((promises) => {
+            const [organization, user] = promises;
+
+            if (!organization || !user) throw ('Could not find user / organization data')
+            if (organization.authType === 0) return true;
+
+            const providerData = user.providerData[organization.url];
+
+            if (!providerData) throw ('No Matching Provider data');
+
+            return checkPermissions(providerData.edupersonscopedaffiliation, organization.voteRoles);
+        })
+        .catch(err => {
+            throw (err)
+        });
+}
+
+function checkPermissions(userRole, organizationRoles) {
+    const filteredRole = organizationRoles.find((roleObject) => {
+        return userRole.includes(roleObject.role);
+    });
+
+    if (!filteredRole) throw ('User does not have permission to vote');
+
+    return filteredRole.active;
 }

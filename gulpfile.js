@@ -62,12 +62,14 @@ gulp.task('debug:false', function (done) {
 
 gulp.task('server', function (done) {
     console.log('starting server task.');
-    if(node) node.kill();
+    if (node) node.kill();
 
-    node = spawn('node', ['--inspect=9229', 'server.js'], { stdio: 'inherit' })
+    node = spawn('node', ['--inspect=9229', 'server.js'], {
+        stdio: 'inherit'
+    })
     node.on('close', function (code) {
         console.log(`Got code ${code}`);
-        if(code === 8) {
+        if (code === 8) {
             console.log('Error detected, waiting for changes...');
         }
     })
@@ -76,12 +78,14 @@ gulp.task('server', function (done) {
 
 gulp.task('server-debug', function (done) {
     console.log('starting server-debug task.');
-    if(node) node.kill();
+    if (node) node.kill();
 
-    node = spawn('node', ['--inspect-brk', 'server.js'], { stdio: 'inherit' })
+    node = spawn('node', ['--inspect-brk', 'server.js'], {
+        stdio: 'inherit'
+    })
     node.on('close', function (code) {
         console.log(`Got code ${code}`);
-        if(code === 8) {
+        if (code === 8) {
             console.log('Error detected, waiting for changes...');
         }
     })
@@ -99,13 +103,13 @@ gulp.task('watch', function (done) {
     gulp.watch(defaultAssets.server.allJS, gulp.series('lint'))
         .on('change', plugins.livereload.changed);
 
-    if(process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === 'production') {
         gulp.watch(defaultAssets.server.gulpConfig, gulp.series('lint'));
     } else {
         gulp.watch(defaultAssets.server.gulpConfig, gulp.series('lint'));
-        if(debug){
+        if (debug) {
             gulp.watch(_.union(defaultAssets.server.views, defaultAssets.server.allJS, defaultAssets.server.config), gulp.series('server-debug'))
-        }else {
+        } else {
             gulp.watch(_.union(defaultAssets.server.views, defaultAssets.server.allJS, defaultAssets.server.config), gulp.series('server'))
         }
     }
@@ -171,7 +175,7 @@ gulp.task('dropdb', function (done) {
 
     mongoose.connect(function (db) {
         db.connection.db.dropDatabase(function (err) {
-            if(err) {
+            if (err) {
                 console.log(err);
             } else {
                 console.log('Successfully dropped db: ', db.connection.db.databaseName);
