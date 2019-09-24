@@ -16,7 +16,7 @@ let config = require('../config'),
 module.exports = function (app, db) {
     let server = http.createServer(app);
     let io = socketio(server, {
-        transports: ['websocket'],
+        // transports: ['websocket'],
     });
 
     const redis = require('socket.io-redis');
