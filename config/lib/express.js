@@ -248,7 +248,6 @@ module.exports.initErrorRoutes = function (app) {
 
     // populate with general error handler or pass joi errors to next
     app.use(function (err, req, res, next) {
-        console.log(err, 'this is err');
         if (err.joi) {
             return next(err);
         }
