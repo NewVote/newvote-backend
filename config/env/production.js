@@ -28,17 +28,12 @@ module.exports = {
                 fileName: process.env.LOG_FILE || 'access.log',
                 rotatingLogs: {
                     // for more info on rotating logs - https://github.com/holidayextras/file-stream-rotator#usage
-                    active:
-                        process.env.LOG_ROTATING_ACTIVE === 'true'
-                            ? true
-                            : false, // activate to use rotating logs
-                    fileName:
-                        process.env.LOG_ROTATING_FILE || 'access-%DATE%.log', // if rotating logs are active, this fileName setting will be used
+                    active: process.env.LOG_ROTATING_ACTIVE === 'true' ?
+                        true : false, // activate to use rotating logs
+                    fileName: process.env.LOG_ROTATING_FILE || 'access-%DATE%.log', // if rotating logs are active, this fileName setting will be used
                     frequency: process.env.LOG_ROTATING_FREQUENCY || 'daily',
-                    verbose:
-                        process.env.LOG_ROTATING_VERBOSE === 'true'
-                            ? true
-                            : false
+                    verbose: process.env.LOG_ROTATING_VERBOSE === 'true' ?
+                        true : false
                 }
             }
         }
@@ -92,19 +87,21 @@ module.exports = {
         username: process.env.SMS_USERNAME || '',
         password: process.env.SMS_PASSWORD || ''
     },
+    twilio: {
+        sid: process.env.TWILIO_LIVE_SID || 'TWILIO_LIVE_SID',
+        token: process.env.TWILIO_LIVE_TOKEN || 'TWILIO_LIVE_TOKEN'
+    },
     reCaptcha: {
         secret: process.env.RECAPTCHA_SECRET || ''
     },
     seedDB: {
         seed: process.env.MONGO_SEED === 'true' ? true : false,
         options: {
-            logResults:
-                process.env.MONGO_SEED_LOG_RESULTS === 'false' ? false : true,
+            logResults: process.env.MONGO_SEED_LOG_RESULTS === 'false' ? false : true,
             seedUser: {
                 username: process.env.MONGO_SEED_USER_USERNAME || 'user',
                 provider: 'local',
-                email:
-                    process.env.MONGO_SEED_USER_EMAIL || 'user@localhost.com',
+                email: process.env.MONGO_SEED_USER_EMAIL || 'user@localhost.com',
                 firstName: 'User',
                 lastName: 'Local',
                 displayName: 'User Local',
@@ -113,8 +110,7 @@ module.exports = {
             seedAdmin: {
                 username: process.env.MONGO_SEED_ADMIN_USERNAME || 'admin',
                 provider: 'local',
-                email:
-                    process.env.MONGO_SEED_ADMIN_EMAIL || 'admin@localhost.com',
+                email: process.env.MONGO_SEED_ADMIN_EMAIL || 'admin@localhost.com',
                 firstName: 'Admin',
                 lastName: 'Local',
                 displayName: 'Admin Local',
