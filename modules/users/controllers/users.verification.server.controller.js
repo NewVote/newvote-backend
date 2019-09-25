@@ -41,7 +41,7 @@ exports.sendVerificationCodeViaSms = function (req, res, next) {
     return client.messages
         .create({
             body: `Your NewVote verification code is ${code}`,
-            from: config.smsNumber || '+15005550006',
+            from: config.smsNumber,
             to: number
         })
         .then((data) => {
