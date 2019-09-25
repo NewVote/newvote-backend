@@ -20,50 +20,83 @@ let _ = require('lodash'),
  */
 
 exports.sendVerificationCodeViaSms = function (req, res, next) {
-    const { user } = req
-    const { number } = req.body;
+    const {
+        user
+    } = req
+
+    const {
+        number
+    } = req.body;
     const code = User.generateVerificationCode();
 
+    // Twilo Config vars
+    const {
+        sid,
+        token
+    } = config.twilio;
+    const client = require('twilio')(sid, token);
+
     console.log(`sending code ${code} to number ${number}`);
-    let options = {
-        'uri': 'https://api.smsbroadcast.com.au/api-adv.php',
-        'qs': {
-            'username': config.smsBroadcast.username,
-            'password': config.smsBroadcast.password,
-            'to': number,
-            'from': 'NewVote',
-            'message': `Your NewVote verification code is ${code}`
-        },
-        useQueryString: true
-    };
 
-    request.get(options, function (error, response, body) {
-        if(error) {
+    return client.messages
+        .create({
+            body: `Your NewVote verification code is ${code}`,
+            from: config.smsNumber || '+15005550006',
+            to: number
+        })
+        .then((data) => {
+            if (data.errorCode) throw ({
+                code: data.errorCode,
+                message: data.errorMessage
+            })
+            return saveVerificationSmsCode(user, code, number, res);
+        })
+        .catch((err) => {
             return res.status(400)
-                .send({ message: 'There was a problem sending your verification code: ' + error });
-        }
+                .send({
+                    message: err.message
+                });
+        })
 
-        if(response.statusCode == 200) {
-            let responseMessage = body.split(':');
-            if(responseMessage[0] == 'OK') {
-                return saveVerificationSmsCode(user, code, number, res);
-            } else if(responseMessage[0] == 'BAD') {
-                return res.status(400)
-                    .send({ message: 'There was a problem sending your verification code, please make sure the phone number you have entered is correct.' });
-            } else if(responseMessage[0] == 'ERROR') {
-                console.log('SMS BROADCAST ERROR: ' + responseMessage[1]);
-                return res.status(400)
-                    .send({ message: 'There was a problem sending your verification code. There was an internal server error, please try again later.' });
-            } else {
-                console.log('SMS BROADCAST ERROR: ' + responseMessage[1]);
-                return res.status(400)
-                    .send({ message: 'Something went wrong: ' + responseMessage[1] });
-            }
-        } else {
-            return res.status(response.statusCode)
-                .send({ message: 'There was a problem contacting the server.' });
-        }
-    });
+    // let options = {
+    //     'uri': 'https://api.smsbroadcast.com.au/api-adv.php',
+    //     'qs': {
+    //         'username': config.smsBroadcast.username,
+    //         'password': config.smsBroadcast.password,
+    //         'to': number,
+    //         'from': 'NewVote',
+    //         'message': `Your NewVote verification code is ${code}`
+    //     },
+    //     useQueryString: true
+    // };
+
+    // request.get(options, function (error, response, body) {
+    //     if(error) {
+    //         return res.status(400)
+    //             .send({ message: 'There was a problem sending your verification code: ' + error });
+    //     }
+
+    //     if(response.statusCode == 200) {
+    //         let responseMessage = body.split(':');
+    //         if(responseMessage[0] == 'OK') {
+    //             return saveVerificationSmsCode(user, code, number, res);
+    //         } else if(responseMessage[0] == 'BAD') {
+    //             return res.status(400)
+    //                 .send({ message: 'There was a problem sending your verification code, please make sure the phone number you have entered is correct.' });
+    //         } else if(responseMessage[0] == 'ERROR') {
+    //             console.log('SMS BROADCAST ERROR: ' + responseMessage[1]);
+    //             return res.status(400)
+    //                 .send({ message: 'There was a problem sending your verification code. There was an internal server error, please try again later.' });
+    //         } else {
+    //             console.log('SMS BROADCAST ERROR: ' + responseMessage[1]);
+    //             return res.status(400)
+    //                 .send({ message: 'Something went wrong: ' + responseMessage[1] });
+    //         }
+    //     } else {
+    //         return res.status(response.statusCode)
+    //             .send({ message: 'There was a problem contacting the server.' });
+    //     }
+    // });
 }
 
 exports.sendVerificationCodeViaEmail = function (req, res) {
@@ -74,11 +107,13 @@ exports.sendVerificationCodeViaEmail = function (req, res) {
 
     //send code via sms
     return pass$.then(pass => saveEmailVerificationCode(user, pass))
-    // .then(pass => sendEmail(user, pass, req))g
+        // .then(pass => sendEmail(user, pass, req))g
         .then((data) => {
             console.log('Succesfully sent a verification e-mail: ', data);
             return res.status(200)
-                .send({ message: 'success' })
+                .send({
+                    message: 'success'
+                })
         })
         .catch((err) => {
             console.log('error sending verification email: ', err);
@@ -92,7 +127,7 @@ exports.sendVerificationCodeViaEmail = function (req, res) {
 function saveVerificationSmsCode(user, code, number, res) {
     return User.findById(user._id)
         .then((user) => {
-            if(!user) {
+            if (!user) {
                 throw Error('We could not find the user in the database. Please contact administration.');
             }
 
@@ -103,7 +138,9 @@ function saveVerificationSmsCode(user, code, number, res) {
             //update user model
             return user.save()
                 .then((err) => {
-                    return res.json({ 'message': 'success' });
+                    return res.json({
+                        'message': 'success'
+                    });
                 })
                 .catch(err => {
                     console.log('error saving user: ', err);
@@ -123,7 +160,7 @@ function saveEmailVerificationCode(user, code) {
 
     return User.findById(user.id)
         .then((user) => {
-            if(!user) {
+            if (!user) {
                 throw Error('We could not find the user in the database. Please contact administration.');
             }
 
@@ -138,26 +175,28 @@ function saveEmailVerificationCode(user, code) {
 
 exports.verify = function (req, res) {
     const reqUser = req.user;
-    const { code } = req.body
+    const {
+        code
+    } = req.body
 
     console.log(`Trying to verify ${code}`);
 
     //get the actual user because we need the salt
     User.findById(reqUser._id)
         .then((user) => {
-            if (!user) throw('We could not find the user in the database. Please contact administration.')
+            if (!user) throw ('We could not find the user in the database. Please contact administration.')
 
             //add hashed code to users model
             const verified = user.verify(code);
 
-            if (!verified) throw('Verification code was incorrect.')
-			
+            if (!verified) throw ('Verification code was incorrect.')
+
             //update user model
             user.verified = true;
-            if(!user.roles.includes('user')){
+            if (!user.roles.includes('user')) {
                 user.roles.push('user');
             }
-			
+
             return user.save()
         })
         .then((user) => {
@@ -165,9 +204,18 @@ exports.verify = function (req, res) {
             user.password = undefined;
             user.verificationCode = undefined;
             // send a new token with new verified status
-            const payload = { _id: user._id, roles: user.roles, verified: user.verified };
-            const token = jwt.sign(payload, config.jwtSecret, { 'expiresIn': config.jwtExpiry });
-            return res.json({ user: user, token: token });
+            const payload = {
+                _id: user._id,
+                roles: user.roles,
+                verified: user.verified
+            };
+            const token = jwt.sign(payload, config.jwtSecret, {
+                'expiresIn': config.jwtExpiry
+            });
+            return res.json({
+                user: user,
+                token: token
+            });
         })
         .catch((err) => {
             console.log('error finding user: ', err);
