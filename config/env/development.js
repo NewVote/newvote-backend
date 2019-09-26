@@ -106,7 +106,8 @@ module.exports = {
     },
     twilio: {
         sid: process.env.TWILIO_TEST_SID || 'TWILIO_TEST_SID',
-        token: process.env.TWILIO_TEST_TOKEN || 'TWILIO_TEST_TOKEN'
+        token: process.env.TWILIO_TEST_TOKEN || 'TWILIO_TEST_TOKEN',
+        number: process.env.TWILIO_TEST_NUMBER || 'TWILIO_TEST_NUMBER'
     },
     livereload: true,
     seedDB: {
