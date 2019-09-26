@@ -32,7 +32,8 @@ exports.sendVerificationCodeViaSms = function (req, res, next) {
     // Twilo Config vars
     const {
         sid,
-        token
+        token,
+        number: twilioNumber
     } = config.twilio;
     const client = require('twilio')(sid, token);
 
@@ -41,7 +42,7 @@ exports.sendVerificationCodeViaSms = function (req, res, next) {
     return client.messages
         .create({
             body: `Your NewVote verification code is ${code}`,
-            from: config.smsNumber,
+            from: twilioNumber,
             to: number
         })
         .then((data) => {
