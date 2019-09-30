@@ -37,13 +37,20 @@ exports.sendVerificationCodeViaSms = function (req, res, next) {
     } = config.twilio;
     const client = require('twilio')(sid, token);
 
-    console.log(`sending code ${code} to number ${number}`);
+    // Check database is number already exists before sending sms
+    User.findOne({
+        mobileNumber: number
+    })
+        .then((user) => {
+            if (user) throw ('Mobile number is already in use.')
 
-    return client.messages
-        .create({
-            body: `Your NewVote verification code is ${code}`,
-            from: twilioNumber,
-            to: number
+            console.log(`sending code ${code} to number ${number}`);
+            return client.messages
+                .create({
+                    body: `Your NewVote verification code is ${code}`,
+                    from: twilioNumber,
+                    to: number
+                })
         })
         .then((data) => {
             if (data.errorCode) throw ({
