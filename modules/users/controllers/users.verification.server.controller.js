@@ -56,6 +56,7 @@ exports.sendVerificationCodeViaSms = function (req, res, next) {
                 })
         })
         .then((data) => {
+            console.log(data, 'this is data');
             if (data.errorCode) throw ({
                 code: data.errorCode,
                 message: data.errorMessage
