@@ -42,7 +42,9 @@ exports.sendVerificationCodeViaSms = function (req, res, next) {
         mobileNumber: number
     })
         .then((user) => {
-            if (user) throw ('Mobile number is already in use.')
+            if (user) throw ({
+                message: 'Mobile number is already in use.'
+            })
 
             console.log(`sending code ${code} to number ${number}`);
             return client.messages
