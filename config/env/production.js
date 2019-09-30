@@ -90,7 +90,8 @@ module.exports = {
     twilio: {
         sid: process.env.TWILIO_LIVE_SID || 'TWILIO_LIVE_SID',
         token: process.env.TWILIO_LIVE_TOKEN || 'TWILIO_LIVE_TOKEN',
-        number: process.env.TWILIO_LIVE_NUMBER || 'TWILIO_LIVE_NUMBER'
+        number: process.env.TWILIO_LIVE_NUMBER || 'TWILIO_LIVE_NUMBER',
+        serviceId: process.env.TWILIO_LIVE_SERVICE_ID || 'TWILIO_LIVE_SERVICE_ID'
     },
     reCaptcha: {
         secret: process.env.RECAPTCHA_SECRET || ''
