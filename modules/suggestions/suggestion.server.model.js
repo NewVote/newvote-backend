@@ -34,13 +34,11 @@ let SuggestionSchema = new Schema({
         default: '',
         trim: true
     },
-    media: [
-        {
-            type: String,
-            default: '',
-            trim: true
-        }
-    ],
+    media: [{
+        type: String,
+        default: '',
+        trim: true
+    }],
     user: {
         type: Schema.ObjectId,
         ref: 'User'
@@ -75,6 +73,9 @@ let SuggestionSchema = new Schema({
     softDeleted: {
         type: Boolean,
         default: false
+    },
+    slug: {
+        type: String
     }
 });
 

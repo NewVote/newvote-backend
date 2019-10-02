@@ -61,8 +61,14 @@ let IssueSchema = new Schema({
     suggestionTemplate: {
         type: Schema.ObjectId,
         ref: 'Suggestion'
+    },
+    slug: {
+        type: String
     }
 });
 
-IssueSchema.index({ 'name': 'text', 'description': 'text' });
+IssueSchema.index({
+    'name': 'text',
+    'description': 'text'
+});
 mongoose.model('Issue', IssueSchema);

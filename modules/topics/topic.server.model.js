@@ -42,8 +42,14 @@ let TopicSchema = new Schema({
     softDeleted: {
         type: Boolean,
         default: false
+    },
+    slug: {
+        type: String
     }
 });
 
-TopicSchema.index({ 'name': 'text', 'description': 'text' });
+TopicSchema.index({
+    'name': 'text',
+    'description': 'text'
+});
 mongoose.model('Topic', TopicSchema);
