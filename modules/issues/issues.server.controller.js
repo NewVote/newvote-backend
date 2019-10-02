@@ -189,12 +189,24 @@ exports.list = function (req, res) {
  * Issue middleware
  */
 exports.issueByID = function (req, res, next, id) {
-    console.log('issueById user: ', req.user);
-
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).send({
-            message: 'Issue is invalid'
-        });
+        return Issue.findOne({
+            slug: id
+        })
+            .populate('user', 'displayName')
+            .populate('topics', 'name')
+            .populate('organizations')
+            .then((issue) => {
+                if (!issue) throw ('Issue does not exist');
+
+                req.issue = issue;
+                next();
+            })
+            .catch((err) => {
+                return res.status(400).send({
+                    message: err
+                });
+            })
     }
 
     Issue.findById(id)

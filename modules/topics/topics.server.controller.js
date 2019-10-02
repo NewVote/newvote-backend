@@ -151,18 +151,25 @@ exports.list = function (req, res) {
  */
 exports.topicByID = function (req, res, next, id) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).send({
-            message: 'Topic is invalid'
-        });
+        return Topic.findOne({
+            slug: id
+        })
+            .populate('user', 'displayName')
+            .populate('organizations')
+            .then((topic) => {
+                if (!topic) throw ('Topic does not exist');
+
+                req.topic = topic;
+                next();
+            })
+            .catch((err) => {
+                return res.status(400).send({
+                    message: err
+                });
+            })
     }
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).send({
-            message: 'Topic is invalid'
-        });
-    }
-
-    Topic.findById(id)
+    return Topic.findById(id)
         .populate('user', 'displayName')
         .populate('organizations')
         .exec(function (err, topic) {

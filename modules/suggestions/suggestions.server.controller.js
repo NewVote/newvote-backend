@@ -290,9 +290,22 @@ exports.list = function (req, res) {
  */
 exports.suggestionByID = function (req, res, next, id) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).send({
-            message: 'Suggestion is invalid'
-        });
+        return Suggestion.findOne({
+            slug: id
+        })
+            .populate('user', 'displayName')
+            .populate('organizations')
+            .then((suggestion) => {
+                if (!suggestion) throw ('Suggestion does not exist');
+
+                req.suggestion = suggestion;
+                next();
+            })
+            .catch((err) => {
+                return res.status(400).send({
+                    message: err
+                });
+            })
     }
 
     Suggestion.findById(id)

@@ -255,11 +255,24 @@ exports.list = function (req, res) {
  * Solution middleware
  */
 exports.solutionByID = function (req, res, next, id) {
-    console.log('solutionById user: ', req.user);
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).send({
-            message: 'Solution is invalid'
-        });
+        return Solution.findOne({
+            slug: id
+        })
+            .populate('user', 'displayName')
+            .populate('issues')
+            .populate('organizations')
+            .then((solution) => {
+                if (!solution) throw ('Solution does not exist');
+
+                req.solution = solution;
+                next();
+            })
+            .catch((err) => {
+                return res.status(400).send({
+                    message: err
+                });
+            })
     }
 
     Solution.findById(id)

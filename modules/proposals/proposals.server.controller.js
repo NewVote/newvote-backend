@@ -250,9 +250,24 @@ exports.list = function (req, res) {
  */
 exports.proposalByID = function (req, res, next, id) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).send({
-            message: 'Proposal is invalid'
-        });
+        return Proposal.findOne({
+            slug: id
+        })
+            .populate('user', 'displayName')
+            .populate('solutions')
+            .populate('solution')
+            .populate('organizations')
+            .then((proposal) => {
+                if (!proposal) throw ('Proposal does not exist');
+
+                req.proposal = proposal;
+                next();
+            })
+            .catch((err) => {
+                return res.status(400).send({
+                    message: err
+                });
+            })
     }
 
     Proposal.findById(id)
