@@ -250,35 +250,6 @@ exports.list = function (req, res) {
     });
 };
 
-// if (err) {
-// return res.status(400).send({
-//     message: errorHandler.getErrorMessage(err)
-// });
-// } else {
-//     votes
-//         .attachVotes(solutions, req.user, req.query.regions)
-//         .then(function(solutions) {
-//             return res.json(solutions);
-//             // proposals
-//             //     .attachProposals(solutions, req.user, req.query.regions)
-//             //     .then(solutions => {
-//             //         // ;
-//             //         res.json(
-//             //             filterSoftDeleteProposals(
-//             //                 solutions,
-//             //                 showDeleted
-//             //             )
-//             //         );
-//             //     });
-//         })
-//         .catch(function(err) {
-//             // console.log(err);
-//             res.status(500).send({
-//                 message: errorHandler.getErrorMessage(err)
-//             });
-//         });
-// }
-
 /**
  * Solution middleware
  */
@@ -331,3 +302,12 @@ exports.seedData = function (organizationId, issueId) {
     newSolution.save();
     return newSolution;
 };
+
+function createSlug(string) {
+    return string
+        .replace(/[^a-z0-9 -]/g, '') // remove invalid chars
+        .replace(/\s+/g, '-') // collapse whitespace and replace by -
+        .replace(/-+/g, '-') // collapse dashes
+        .replace(/^-+/, '') // trim - from start of text
+        .replace(/-+$/, '') // trim - from end of text
+}
