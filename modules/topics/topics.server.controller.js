@@ -19,6 +19,8 @@ let path = require('path'),
 exports.create = function (req, res) {
     let topic = new Topic(req.body);
     topic.user = req.user;
+    topic.slug = createSlug(topic.name);
+
     topic.save(function (err) {
         if (err) {
             return res.status(400).send({

@@ -28,6 +28,7 @@ exports.create = function (req, res) {
     const proposalPromise = new Promise((resolve, reject) => {
         let proposal = new Proposal(req.body);
         proposal.user = req.user;
+        proposal.slug = createSlug(proposal.title);
         resolve(proposal);
     });
 

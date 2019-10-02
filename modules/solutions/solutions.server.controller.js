@@ -28,6 +28,7 @@ exports.create = function (req, res) {
 
     const solutionPromise = new Promise((resolve, reject) => {
         let solution = new Solution(req.body);
+        solution.slug = createSlug(solution.title)
         solution.user = req.user;
         resolve(solution);
     });

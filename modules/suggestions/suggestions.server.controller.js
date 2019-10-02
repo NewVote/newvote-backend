@@ -65,7 +65,7 @@ exports.create = function (req, res) {
     if (!suggestion.parent) {
         suggestion.parent = null;
     }
-
+    suggestion.slug = createSlug(suggestion.title);
     suggestion.user = req.user;
     suggestion.save(err => {
         if (err) throw err;

@@ -26,6 +26,7 @@ exports.create = function (req, res) {
 
     let issue = new Issue(req.body);
     issue.user = req.user;
+    issue.slug = issue.name;
     issue.save(function (err) {
         if (err) {
             return res.status(400).send({
@@ -106,11 +107,9 @@ exports.list = function (req, res) {
     let orgMatch = orgUrl ? {
         'organizations.url': orgUrl
     } : {};
-    let topicMatch = topicId ?
-        {
-            topics: mongoose.Types.ObjectId(topicId)
-        } :
-        {};
+    let topicMatch = topicId ? {
+        topics: mongoose.Types.ObjectId(topicId)
+    } : {};
     let searchMatch = search ? {
         $text: {
             $search: search
