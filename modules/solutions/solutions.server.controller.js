@@ -127,6 +127,26 @@ exports.update = function (req, res) {
     // solution.title = req.body.title;
     // solution.content = req.body.content;
 
+    if (!solution.slug) {
+        return Solution.generateUniqueSlug(solution.title, null, function (slug) {
+            solution.slug = slug
+
+            solution.save()
+                .then((res) => {
+                    return voteController
+                        .attachVotes([res], req.user, req.query.regions)
+                })
+                .then((data) => {
+                    res.json(data[0]);
+                })
+                .catch((err) => {
+                    return res.status(400).send({
+                        message: errorHandler.getErrorMessage(err)
+                    });
+                })
+        })
+    }
+
     solution
         .save()
         .then((res) => {

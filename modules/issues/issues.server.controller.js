@@ -72,7 +72,21 @@ exports.update = function (req, res) {
     // issue.title = req.body.title;
     // issue.content = req.body.content;
 
-    issue.slug = createSlug(issue.name);
+    if (!issue.slug) {
+        return Issue.generateUniqueSlug(issue.name, null, function (slug) {
+            issue.slug = slug
+
+            issue.save(function (err) {
+                if (err) {
+                    return res.status(400).send({
+                        message: errorHandler.getErrorMessage(err)
+                    });
+                } else {
+                    res.json(issue);
+                }
+            });
+        })
+    }
 
     issue
         .save()

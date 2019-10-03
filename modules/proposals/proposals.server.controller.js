@@ -120,9 +120,28 @@ exports.update = function (req, res) {
 
     let proposal = req.proposal;
     _.extend(proposal, req.body);
-    // proposal.title = req.body.title;
-    // proposal.content = req.body.content;
     proposal.user = req.user;
+
+    if (!proposal.slug) {
+        return Proposal.generateUniqueSlug(proposal.title, null, function (slug) {
+            proposal.slug = slug
+
+            proposal.save()
+                .then((res) => {
+                    return voteController
+                        .attachVotes([res], req.user, req.query.regions)
+                })
+                .then((data) => {
+                    res.json(data[0]);
+                })
+                .catch((err) => {
+                    return res.status(400).send({
+                        message: errorHandler.getErrorMessage(err)
+                    });
+                })
+        })
+    }
+
     proposal
         .save()
         .then((res) => {

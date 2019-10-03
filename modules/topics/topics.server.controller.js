@@ -11,9 +11,7 @@ let path = require('path'),
     Solution = mongoose.model('Solution'),
     errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
     _ = require('lodash'),
-    seed = require('./seed/seed'),
-    createSlug = require('../helpers/stuff');
-
+    seed = require('./seed/seed');
 
 /**
  * Create a topic
@@ -23,7 +21,7 @@ exports.create = function (req, res) {
     Topic.generateUniqueSlug(req.body.name, null, function (slug) {
         let topic = new Topic(req.body);
         topic.user = req.user;
-        topic.slug = createSlug(topic.name);
+        topic.slug = slug;
 
         topic.save(function (err) {
             if (err) {
@@ -53,6 +51,22 @@ exports.update = function (req, res) {
     _.extend(topic, req.body);
     // topic.title = req.body.title;
     // topic.content = req.body.content;
+
+    if (!topic.slug) {
+        return Topic.generateUniqueSlug(topic.name, null, function (slug) {
+            topic.slug = slug
+
+            topic.save(function (err) {
+                if (err) {
+                    return res.status(400).send({
+                        message: errorHandler.getErrorMessage(err)
+                    });
+                } else {
+                    res.json(topic);
+                }
+            });
+        })
+    }
 
     topic.save(function (err) {
         if (err) {

@@ -155,8 +155,26 @@ exports.update = function (req, res) {
     let suggestion = req.suggestion;
     _.extend(suggestion, req.body);
 
-    // suggestion.title = req.body.title;
-    // suggestion.content = req.body.content;
+    if (!suggestion.slug) {
+        return Suggestion.generateUniqueSlug(suggestion.titlee, null, function (slug) {
+            suggestion.slug = slug
+
+            suggestion.save()
+                .then((res) => {
+                    return voteController
+                        .attachVotes([res], req.user, req.query.regions)
+                })
+                .then((data) => {
+                    res.json(data[0]);
+                })
+                .catch((err) => {
+                    return res.status(400).send({
+                        message: errorHandler.getErrorMessage(err)
+                    });
+                })
+        })
+    }
+
     suggestion.save()
         .then((res) => {
             return voteController
