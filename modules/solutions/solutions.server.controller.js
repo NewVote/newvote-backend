@@ -30,9 +30,12 @@ exports.create = function (req, res) {
 
     const solutionPromise = new Promise((resolve, reject) => {
         let solution = new Solution(req.body);
-        solution.slug = createSlug(solution.title)
         solution.user = req.user;
-        resolve(solution);
+
+        Solution.generateUniqueSlug(req.body.title, null, function (slug) {
+            solution.slug = slug
+            resolve(solution);
+        })
     });
 
     const votePromise = new Promise((resolve, reject) => {

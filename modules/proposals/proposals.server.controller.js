@@ -27,11 +27,16 @@ exports.create = function (req, res) {
         delete req.body.imageUrl;
     }
 
+
+
     const proposalPromise = new Promise((resolve, reject) => {
         let proposal = new Proposal(req.body);
         proposal.user = req.user;
-        proposal.slug = createSlug(proposal.title);
-        resolve(proposal);
+
+        Proposal.generateUniqueSlug(req.body.title, null, function (slug) {
+            proposal.slug = slug
+            resolve(proposal);
+        })
     });
 
     // Return votes without an _id - as it cannot be deleted

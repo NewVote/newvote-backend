@@ -21,22 +21,27 @@ const path = require('path'),
  */
 exports.create = function (req, res) {
     // if the string is empty revert to default on model
+
     if (!req.body.imageUrl) {
         delete req.body.imageUrl;
     }
 
-    let issue = new Issue(req.body);
-    issue.user = req.user;
-    issue.slug = createSlug(issue.name);
-    issue.save(function (err) {
-        if (err) {
-            return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
-        } else {
-            res.json(issue);
-        }
-    });
+    Issue.generateUniqueSlug(req.body.name, null, function (slug) {
+        let issue = new Issue(req.body);
+        issue.user = req.user;
+        issue.slug = slug
+
+        issue.save(function (err) {
+            if (err) {
+                return res.status(400).send({
+                    message: errorHandler.getErrorMessage(err)
+                });
+            } else {
+                res.json(issue);
+            }
+        });
+    })
+
 };
 
 /**
@@ -66,6 +71,8 @@ exports.update = function (req, res) {
     _.extend(issue, req.body);
     // issue.title = req.body.title;
     // issue.content = req.body.content;
+
+    issue.slug = createSlug(issue.name);
 
     issue
         .save()

@@ -72,6 +72,34 @@ let ProposalSchema = new Schema({
     }
 });
 
+let createSlug = require('../helpers/stuff');
+
+ProposalSchema.statics.generateUniqueSlug = function (title, suffix, callback) {
+    let _this = this;
+    let possibleSlug = createSlug(title) + (suffix || '');
+
+    _this.findOne({
+        slug: possibleSlug
+    },
+    function (err, slug) {
+        if (!err) {
+            if (!slug) {
+                callback(possibleSlug);
+            } else {
+                return _this.generateUniqueSlug(
+                    title,
+                    (suffix || 0) + 1,
+                    callback
+                );
+            }
+        } else {
+            callback(null);
+        }
+    }
+    );
+};
+
+
 ProposalSchema.index({
     title: 'text',
     description: 'text'
