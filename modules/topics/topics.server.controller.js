@@ -11,7 +11,9 @@ let path = require('path'),
     Solution = mongoose.model('Solution'),
     errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
     _ = require('lodash'),
-    seed = require('./seed/seed');
+    seed = require('./seed/seed'),
+    createSlug = require('../helpers/stuff');
+
 
 /**
  * Create a topic
@@ -193,13 +195,4 @@ exports.seedTopic = function (organizationId) {
     newTopic.organizations = organizationId;
     newTopic.save();
     return newTopic;
-}
-
-function createSlug(string) {
-    return string
-        .replace(/[^a-z0-9 -]/g, '') // remove invalid chars
-        .replace(/\s+/g, '-') // collapse whitespace and replace by -
-        .replace(/-+/g, '-') // collapse dashes
-        .replace(/^-+/, '') // trim - from start of text
-        .replace(/-+$/, '') // trim - from end of text
 }

@@ -13,7 +13,8 @@ const path = require('path'),
         './modules/core/errors.server.controller'
     )),
     _ = require('lodash'),
-    seed = require('./seed/seed');
+    seed = require('./seed/seed'),
+    createSlug = require('../helpers/stuff');
 
 /**
  * Create a issue
@@ -26,7 +27,7 @@ exports.create = function (req, res) {
 
     let issue = new Issue(req.body);
     issue.user = req.user;
-    issue.slug = issue.name;
+    issue.slug = createSlug(issue.name);
     issue.save(function (err) {
         if (err) {
             return res.status(400).send({
@@ -305,12 +306,3 @@ exports.seedData = function (organizationId, topicId) {
     newIssue.save();
     return newIssue;
 };
-
-function createSlug(string) {
-    return string
-        .replace(/[^a-z0-9 -]/g, '') // remove invalid chars
-        .replace(/\s+/g, '-') // collapse whitespace and replace by -
-        .replace(/-+/g, '-') // collapse dashes
-        .replace(/^-+/, '') // trim - from start of text
-        .replace(/-+$/, '') // trim - from end of text
-}

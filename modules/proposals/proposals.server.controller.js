@@ -14,7 +14,9 @@ let path = require('path'),
         './modules/core/errors.server.controller'
     )),
     _ = require('lodash'),
-    seed = require('./seed/seed');
+    seed = require('./seed/seed'),
+    createSlug = require('../helpers/stuff');
+
 
 /**
  * Create a proposal
@@ -332,12 +334,3 @@ exports.seedData = function (organizationId, solutionId) {
     newProposal.save();
     return newProposal;
 };
-
-function createSlug(string) {
-    return string
-        .replace(/[^a-z0-9 -]/g, '') // remove invalid chars
-        .replace(/\s+/g, '-') // collapse whitespace and replace by -
-        .replace(/-+/g, '-') // collapse dashes
-        .replace(/^-+/, '') // trim - from start of text
-        .replace(/-+$/, '') // trim - from end of text
-}

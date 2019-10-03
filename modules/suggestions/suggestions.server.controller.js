@@ -19,7 +19,9 @@ let path = require('path'),
     nodemailer = require('nodemailer'),
     transporter = nodemailer.createTransport(config.mailer.options),
     _ = require('lodash'),
-    seed = require('./seed/seed');
+    seed = require('./seed/seed'),
+    createSlug = require('../helpers/stuff');
+
 
 // TODO: Use a server side templating language to use a html file for this
 let buildMessage = function (suggestion, req) {
@@ -333,12 +335,3 @@ exports.seedData = function (organizationId) {
     newSuggestion.save();
     return newSuggestion;
 };
-
-function createSlug(string) {
-    return string
-        .replace(/[^a-z0-9 -]/g, '') // remove invalid chars
-        .replace(/\s+/g, '-') // collapse whitespace and replace by -
-        .replace(/-+/g, '-') // collapse dashes
-        .replace(/^-+/, '') // trim - from start of text
-        .replace(/-+$/, '') // trim - from end of text
-}
