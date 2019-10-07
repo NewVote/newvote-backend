@@ -89,7 +89,8 @@ let UserSchema = new Schema({
         required: true
     },
     mobileNumber: {
-        type: String
+        type: String,
+        unique: true
     },
     verified: {
         type: Boolean,
