@@ -12,7 +12,7 @@ let r = new RegExp('\\b(' + removeList.join('|') + ')\\b', 'gi');
 function createSlug(string) {
     let newstring = string
         .replace(r, '') // remove articles
-        .replace(/[^a-z0-9 -]/g, '') // remove invalid chars
+        .replace(/\s+/g, '-')
         .replace(/\s+/g, '-') // collapse whitespace and replace by -
         .replace(/-+/g, '-') // collapse dashes
         .replace(/^-+/, '') // trim - from start of text

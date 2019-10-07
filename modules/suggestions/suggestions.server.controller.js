@@ -156,7 +156,7 @@ exports.update = function (req, res) {
     _.extend(suggestion, req.body);
 
     if (!suggestion.slug) {
-        return Suggestion.generateUniqueSlug(suggestion.titlee, null, function (slug) {
+        return Suggestion.generateUniqueSlug(suggestion.title, null, function (slug) {
             suggestion.slug = slug
 
             suggestion.save()
