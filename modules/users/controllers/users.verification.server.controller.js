@@ -6,6 +6,7 @@
 let _ = require('lodash'),
     mongoose = require('mongoose'),
     User = mongoose.model('User'),
+    Organization = mongoose.model('Organization'),
     path = require('path'),
     errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
     config = require(path.resolve('./config/config')),
@@ -236,6 +237,39 @@ exports.verify = function (req, res) {
                 });
         });
 };
+
+exports.verifyWithCommunity = function (req, res) {
+    const {
+        user
+    } = req;
+    const {
+        id: organizationId
+    } = req.body
+
+    const organizationPromise = Organization.findById(organizationId);
+    const userPromise = User.findById(user._id)
+        .select('-salt -password -verificationCode');
+
+    Promise.all([organizationPromise, userPromise])
+        .then((promises) => {
+            const [organization, user] = promises;
+            if (!user) throw ('User does not exist');
+            if (!organization) throw ('Organization does not exist');
+
+            user.organizations.push(organization);
+            return user.save();
+        })
+        .then((user) => {
+            return res.json(user);
+        })
+        .catch((err) => {
+            return res.status(400)
+                .send({
+                    message: errorHandler.getErrorMessage(err)
+                });
+        });
+};
+
 
 let buildMessage = function (user, code, req) {
     let messageString = '';
