@@ -177,7 +177,8 @@ let UserSchema = new Schema({
     // for tracking org memberships
     organizations: [{
         type: Schema.ObjectId,
-        ref: 'Organization'
+        ref: 'Organization',
+        unique: true
     }],
     completedTour: {
         type: Boolean,

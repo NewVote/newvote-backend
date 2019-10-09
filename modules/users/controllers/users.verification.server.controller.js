@@ -242,11 +242,9 @@ exports.verifyWithCommunity = function (req, res) {
     const {
         user
     } = req;
-    const {
-        id: organizationId
-    } = req.body
+    const org = JSON.parse(req.cookies.organization);
 
-    const organizationPromise = Organization.findById(organizationId);
+    const organizationPromise = Organization.findById(org._id);
     const userPromise = User.findById(user._id)
         .select('-salt -password -verificationCode');
 
