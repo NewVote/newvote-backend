@@ -115,6 +115,7 @@ exports.read = function (req, res) {
  * Update a organization
  */
 exports.update = function (req, res) {
+    let unsavedEmails;
     let moderatorArray = req.body.moderators;
 
     delete req.body.moderators;
@@ -156,6 +157,7 @@ exports.update = function (req, res) {
                 return organization.save();
             }
             organization.moderators = emails;
+            unsavedEmails = compareEmailInputWithSavedEmails(emailArray, emails);
             return organization.save();
         })
         .then((organization) => {
@@ -164,7 +166,10 @@ exports.update = function (req, res) {
             })
         })
         .then((organization) => {
-            return res.status(200).json(organization);
+            return res.status(200).json({
+                organization,
+                moderators: unsavedEmails
+            });
         })
         .catch((err) => {
             return res.status(400).send({
@@ -485,4 +490,17 @@ function filterEmails(emails) {
         emailArray: newModEmails,
         emailIdArray: modIDs
     };
+}
+
+function compareEmailInputWithSavedEmails(userEmails, databaseEmails) {
+    // userEmails is an array of strings
+    // databaseEmails is an array of User objects with an email property
+
+    const unsavedEmails = userEmails.slice().filter((email) => {
+        return !databaseEmails.some((user) => {
+            return user.email === email;
+        })
+    });
+
+    return unsavedEmails;
 }
