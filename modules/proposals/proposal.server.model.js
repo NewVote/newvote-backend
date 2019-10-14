@@ -4,7 +4,8 @@
  * Module dependencies.
  */
 let mongoose = require('mongoose'),
-    Schema = mongoose.Schema;
+    Schema = mongoose.Schema,
+    createSlug = require('../helpers/slug');
 
 /**
  * Article Schema
@@ -71,8 +72,6 @@ let ProposalSchema = new Schema({
         type: String
     }
 });
-
-let createSlug = require('../helpers/stuff');
 
 ProposalSchema.statics.generateUniqueSlug = function (title, suffix, callback) {
     let _this = this;
