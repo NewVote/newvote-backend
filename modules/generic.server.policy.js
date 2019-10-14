@@ -168,7 +168,7 @@ exports.isAllowed = function (req, res, next) {
                             // check if the issue is that they are not verified
                             if (
                                 !user.roles.includes('user') ||
-                                !user.verified
+                                    !user.verified
                             ) {
                                 // user is logged in but they are missing the user role
                                 // this means they must not be verified
@@ -183,7 +183,13 @@ exports.isAllowed = function (req, res, next) {
                                 message: 'User is not authorized'
                             });
                         }
-                    });
+                    })
+                        .catch((err) => {
+                            return res.status(403).json({
+                                message: 'User is not authorized',
+                                role: 'user' // used to identify this is a missing role issue
+                            });
+                        })
                 } else {
                     // this is a GET request with a user object that was not allowed
                     // generic auth failure
