@@ -15,7 +15,7 @@ let path = require('path'),
     )),
     _ = require('lodash'),
     seed = require('./seed/seed'),
-    createSlug = require('../helpers/stuff');
+    createSlug = require('../helpers/slug');
 
 
 /**
@@ -123,7 +123,6 @@ exports.update = function (req, res) {
     proposal.user = req.user;
 
     if (!proposal.slug || createSlug(proposal.title) !== proposal.slug) {
-        console.log('Creating slug');
         return Proposal.generateUniqueSlug(proposal.title, null, function (slug) {
             proposal.slug = slug
 

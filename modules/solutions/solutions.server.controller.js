@@ -16,7 +16,7 @@ let path = require('path'),
     proposals = require('../proposals/proposals.server.controller'),
     _ = require('lodash'),
     seed = require('./seed/seed'),
-    createSlug = require('../helpers/stuff');
+    createSlug = require('../helpers/slug');
 
 
 /**
