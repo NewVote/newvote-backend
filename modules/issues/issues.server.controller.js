@@ -14,7 +14,7 @@ const path = require('path'),
     )),
     _ = require('lodash'),
     seed = require('./seed/seed'),
-    createSlug = require('../helpers/stuff');
+    createSlug = require('../helpers/slug');
 
 /**
  * Create a issue
@@ -72,7 +72,7 @@ exports.update = function (req, res) {
     // issue.title = req.body.title;
     // issue.content = req.body.content;
 
-    if (!issue.slug || createSlug(issue.title) !== issue.slug) {
+    if (!issue.slug || createSlug(issue.name) !== issue.slug) {
         return Issue.generateUniqueSlug(issue.name, null, function (slug) {
             issue.slug = slug
 
