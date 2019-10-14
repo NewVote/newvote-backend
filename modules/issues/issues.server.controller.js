@@ -72,7 +72,7 @@ exports.update = function (req, res) {
     // issue.title = req.body.title;
     // issue.content = req.body.content;
 
-    if (!issue.slug) {
+    if (!issue.slug || createSlug(issue.title) !== issue.slug) {
         return Issue.generateUniqueSlug(issue.name, null, function (slug) {
             issue.slug = slug
 

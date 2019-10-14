@@ -11,7 +11,8 @@ let path = require('path'),
     Solution = mongoose.model('Solution'),
     errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
     _ = require('lodash'),
-    seed = require('./seed/seed');
+    seed = require('./seed/seed'),
+    createSlug = require('../helpers/stuff')
 
 /**
  * Create a topic
@@ -52,7 +53,7 @@ exports.update = function (req, res) {
     // topic.title = req.body.title;
     // topic.content = req.body.content;
 
-    if (!topic.slug) {
+    if (!topic.slug || createSlug(topic.title) !== topic.slug) {
         return Topic.generateUniqueSlug(topic.name, null, function (slug) {
             topic.slug = slug
 

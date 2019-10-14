@@ -7,11 +7,12 @@ let removeList = [
     'with'
 ];
 
-let r = new RegExp('\\b(' + removeList.join('|') + ')\\b', 'gi');
+let articles = new RegExp('\\b(' + removeList.join('|') + ')\\b', 'gi');
 
 function createSlug(string) {
     let newstring = string
-        .replace(r, '') // remove articles
+        .replace(/[^a-zA-Z0-9 ]/g, '') // remove special characters
+        .replace(articles, '') // remove articles
         .replace(/\s+/g, '-')
         .replace(/\s+/g, '-') // collapse whitespace and replace by -
         .replace(/-+/g, '-') // collapse dashes

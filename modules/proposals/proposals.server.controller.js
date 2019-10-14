@@ -122,7 +122,8 @@ exports.update = function (req, res) {
     _.extend(proposal, req.body);
     proposal.user = req.user;
 
-    if (!proposal.slug) {
+    if (!proposal.slug || createSlug(proposal.title) !== proposal.slug) {
+        console.log('Creating slug');
         return Proposal.generateUniqueSlug(proposal.title, null, function (slug) {
             proposal.slug = slug
 
