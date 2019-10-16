@@ -402,9 +402,20 @@ exports.oauthCallback = function (strategy) {
                     secure: false
                 };
                 res.cookie('credentials', JSON.stringify(creds), opts);
-                const redirect = sessionRedirectURL ?
-                    host + sessionRedirectURL :
-                    host + '/';
+                let redirect;
+
+                if (req.cookies.redirect) {
+                    redirect = host + req.cookies.redirect;
+                    res.clearCookie('redirect', {
+                        path: '/',
+                        domain: 'newvote.org'
+                    });
+                } else {
+                    redirect = sessionRedirectURL ?
+                        host + sessionRedirectURL :
+                        host + '/';
+                }
+
                 return res.redirect(302, redirect);
             });
         })(req, res, next);
