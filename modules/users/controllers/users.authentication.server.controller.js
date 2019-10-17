@@ -21,7 +21,8 @@ const path = require('path'),
     Mailchimp = require('mailchimp-api-v3'),
     Recaptcha = require('recaptcha-verify'),
     async = require('async'),
-    voteController = require('../../votes/votes.server.controller');
+    voteController = require('../../votes/votes.server.controller'),
+    socket = require('../../helpers/socket');
 
 // URLs for which user can't be redirected on signin
 const noReturnUrls = ['/authentication/signin', '/authentication/signup'];
@@ -170,7 +171,6 @@ exports.signup = function (req, res) {
                 return loginUser(req, res, doc);
             })
             .catch(err => {
-                console.log(err, 'this is err');
                 return res.status(400).send({
                     message: errorHandler.getErrorMessage(err)
                 });
@@ -294,28 +294,54 @@ exports.signin = function (req, res, next) {
 
                 req.login(user, function (err) {
                     if (err) {
-                        res.status(400).send(err);
-                    } else {
-                        const payload = {
-                            _id: user._id,
-                            roles: user.roles,
-                            verified: user.verified
-                        };
-                        const token = jwt.sign(payload, config.jwtSecret, {
-                            expiresIn: config.jwtExpiry
-                        });
-                        const creds = {
-                            user,
-                            token
-                        };
-                        const opts = {
-                            domain: 'newvote.org',
-                            httpOnly: false,
-                            secure: false
-                        };
+                        return res.status(400).send(err);
+                    }
 
-                        res.cookie('credentials', JSON.stringify(creds), opts);
-                        res.json(creds);
+
+                    const payload = {
+                        _id: user._id,
+                        roles: user.roles,
+                        verified: user.verified
+                    };
+                    const token = jwt.sign(payload, config.jwtSecret, {
+                        expiresIn: config.jwtExpiry
+                    });
+                    const creds = {
+                        user,
+                        token
+                    };
+                    const opts = {
+                        domain: 'newvote.org',
+                        httpOnly: false,
+                        secure: false
+                    };
+
+                    res.cookie('credentials', JSON.stringify(creds), opts);
+
+                    // If a vote attempt occured on the front end, process and return on credentials
+                    if (req.cookies.vote) {
+                        const cookieVote = JSON.parse(req.cookies.vote);
+                        const org = JSON.parse(req.cookies.organization).url;
+
+                        voteController.loginVote(user, cookieVote)
+                            .then(([vote, voteMetaData]) => {
+                                socket.send(req, voteMetaData, 'vote', org);
+
+                                creds.voted = vote;
+                                return res.json(creds);
+                            })
+                            .catch((err) => {
+                                // Vote could not be processed
+                                creds.voted = false;
+                                return res.json(creds);
+                            })
+
+                        return res.clearCookie('vote', {
+                            path: '/',
+                            domain: 'newvote.org'
+                        });
+                    } else {
+                        return res.json(creds);
                     }
                 });
             });
@@ -421,13 +447,14 @@ exports.oauthCallback = function (strategy) {
 
                 if (req.cookies.vote) {
                     const cookieVote = JSON.parse(req.cookies.vote);
+                    const voteParams = req.cookies.redirect ? '&voted=' : '?voted=';
                     voteController.loginVote(user, cookieVote)
                         .then(([vote, voteMetaData]) => {
-                            return res.redirect(302, redirect + '?voted=true');
+                            return res.redirect(302, redirect + voteParams + 'true');
                         })
                         .catch((err) => {
                             // Vote could not be processed
-                            return res.redirect(302, redirect + '?voted=false');
+                            return res.redirect(302, redirect + voteParams + 'false');
                         })
 
                     res.clearCookie('vote', {

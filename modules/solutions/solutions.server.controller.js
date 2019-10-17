@@ -145,9 +145,9 @@ exports.delete = function (req, res) {
     let solution = req.solution;
 
     Vote.deleteMany({
-        object: req.solution._id,
-        objectType: 'Solution'
-    })
+            object: req.solution._id,
+            objectType: 'Solution'
+        })
         .then(votes => {
             return solution.remove();
         })
@@ -199,41 +199,41 @@ exports.list = function (req, res) {
         showNonDeletedItemsMatch;
 
     Solution.aggregate([{
-        $match: searchMatch
-    },
-    {
-        $match: softDeleteMatch
-    },
-    {
-        $match: issueMatch
-    },
-    {
-        $lookup: {
-            from: 'organizations',
-            localField: 'organizations',
-            foreignField: '_id',
-            as: 'organizations'
+            $match: searchMatch
+        },
+        {
+            $match: softDeleteMatch
+        },
+        {
+            $match: issueMatch
+        },
+        {
+            $lookup: {
+                from: 'organizations',
+                localField: 'organizations',
+                foreignField: '_id',
+                as: 'organizations'
+            }
+        },
+        {
+            $match: orgMatch
+        },
+        {
+            $unwind: '$organizations'
+        },
+        {
+            $lookup: {
+                from: 'issues',
+                localField: 'issues',
+                foreignField: '_id',
+                as: 'issues'
+            }
+        },
+        {
+            $sort: {
+                created: -1
+            }
         }
-    },
-    {
-        $match: orgMatch
-    },
-    {
-        $unwind: '$organizations'
-    },
-    {
-        $lookup: {
-            from: 'issues',
-            localField: 'issues',
-            foreignField: '_id',
-            as: 'issues'
-        }
-    },
-    {
-        $sort: {
-            created: -1
-        }
-    }
     ]).exec(function (err, solutions) {
 
         if (err) {
