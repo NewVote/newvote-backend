@@ -18,82 +18,42 @@ let path = require('path'),
 /**
  * Create a vote
  */
-exports.create = function (req, res) {
-    const org = JSON.parse(req.cookies.organization).url;
-    let vote = new Vote(req.body);
-    vote.user = req.user;
+exports.create = function (userVote, user) {
+    let vote = new Vote(userVote);
+    vote.user = user;
 
-    vote.save()
-        .then((vote) => {
-            return Vote.find({
-                object: vote.object
-            })
-        })
-        .then((votes) => {
-            const voteMetaData = {
-                up: 0,
-                down: 0,
-                total: 0,
-                _id: vote.object
-            };
-
-            votes.forEach((item) => {
-                if (item.voteValue > 0) voteMetaData.up++
-                if (item.voteValue < 0) voteMetaData.down++
-            })
-
-            voteMetaData.total = voteMetaData.up + voteMetaData.down;
-            socket.send(req, voteMetaData, 'vote', org);
-
-            return vote;
-        })
-        .then((vote) => {
-            return res.json(vote);
-        })
-        .catch(err => {
-            return res.status(400)
-                .send({
-                    message: errorHandler.getErrorMessage(err)
-                });
-        });
+    return vote.save()
 };
 
 exports.updateOrCreate = async function (req, res) {
-    let user = req.user;
+    const user = req.user;
+    const userVote = req.body;
+    const org = JSON.parse(req.cookies.organization).url;
+
     const {
         object,
         organizationId
-    } = req.body;
+    } = userVote;
 
     try {
-        const isVerified = await isUserSignedToOrg(organizationId, user)
-        if (!isVerified) throw ('User is not verified');
-
-    } catch (error) {
-        return res.status(403).send({
-            message: 'You must verify with Community before being able to vote.',
-            notCommunityVerified: true
-        });
-    }
-
-    try {
-        const hasVotePermission = await checkOrgVotePermissions(organizationId, user);
-
-        if (!hasVotePermission) throw ('User does not have permission');
+        await isUserPermittedToVote(user, organizationId)
     } catch (err) {
-        return res.status(403).send({
-            message: 'You do not have permission to vote on this organization'
-        });
+        return res.status(403).send(err);
     }
 
-    Vote.findOne({
+    const findVotePromise = await Vote.findOne({
         user: user,
         object: object
-    })
-        .then(vote => {
-            if (!vote) return exports.create(req, res);
-            req.vote = vote;
-            return exports.update(req, res);
+    });
+
+    const createOrUpdateVote = findVotePromise ? exports.update(findVotePromise, userVote) :
+        exports.create(userVote, user);
+    const getVoteMetaData = createOrUpdateVote.then(createVoteMetaData);
+
+    return Promise.all([createOrUpdateVote, getVoteMetaData])
+        .then(([vote, voteMetaData]) => {
+            socket.send(req, voteMetaData, 'vote', org);
+            return res.json(vote);
         })
         .catch(err => {
             return res.status(400)
@@ -113,43 +73,9 @@ exports.read = function (req, res) {
 /**
  * Update a vote
  */
-exports.update = function (req, res) {
-    const org = JSON.parse(req.cookies.organization).url;
-    let vote = req.vote;
-    _.extend(vote, req.body);
-    // vote.title = req.body.title;
-    // vote.content = req.body.content;
-    vote.save()
-        .then((vote) => {
-            // search for all votes related to the updated object
-            return Vote.find({
-                object: vote.object
-            })
-        })
-        .then((votes) => {
-            // recalculate vote values
-            const voteMetaData = {
-                up: 0,
-                down: 0,
-                total: 0,
-                _id: vote.object
-            };
-
-            votes.forEach((item) => {
-                if (item.voteValue > 0) voteMetaData.up++
-                if (item.voteValue < 0) voteMetaData.down++
-            })
-            voteMetaData.total = voteMetaData.up + voteMetaData.down
-
-            socket.send(req, voteMetaData, 'vote', org);
-            return res.json(vote)
-        })
-        .catch(err => {
-            return res.status(400)
-                .send({
-                    message: errorHandler.getErrorMessage(err)
-                });
-        });
+exports.update = function (vote, userVote) {
+    _.extend(vote, userVote);
+    return vote.save();
 };
 
 /**
@@ -298,6 +224,84 @@ exports.attachVotes = function (objects, user, regions) {
         }
     });
 };
+
+exports.loginVote = async function (user, userVote) {
+
+    const {
+        object,
+        organizationId
+    } = userVote;
+
+    try {
+        await isUserPermittedToVote(user, organizationId)
+    } catch (err) {
+        console.log(err);
+        throw (err)
+    }
+
+    const findVotePromise = await Vote.findOne({
+        user: user,
+        object: object
+    });
+
+    const createOrUpdateVote = findVotePromise ? exports.update(findVotePromise, userVote) :
+        exports.create(userVote, user);
+    const getVoteMetaData = createOrUpdateVote.then(createVoteMetaData);
+
+    return Promise.all([createOrUpdateVote, getVoteMetaData])
+}
+
+async function createVoteMetaData(vote) {
+
+    const voteMetaData = {
+        up: 0,
+        down: 0,
+        total: 0,
+    };
+
+    // Get all related votes
+    const votes = await Vote.find({
+        object: vote.object
+    })
+
+    votes.forEach((item) => {
+        if (!voteMetaData._id && item.object) {
+            voteMetaData._id = item.object
+        }
+        if (item.voteValue > 0) voteMetaData.up++
+        if (item.voteValue < 0) voteMetaData.down++
+    })
+
+    voteMetaData.total = voteMetaData.up + voteMetaData.down;
+
+    return voteMetaData;
+}
+
+async function isUserPermittedToVote(user, organizationId) {
+
+    try {
+        const isVerified = await isUserSignedToOrg(organizationId, user)
+        if (!isVerified) throw ('User is not verified');
+    } catch (error) {
+        throw ({
+            message: 'You must verify with Community before being able to vote.',
+            notCommunityVerified: true
+        });
+    }
+
+    try {
+        const hasVotePermission = await checkOrgVotePermissions(organizationId, user);
+
+        if (!hasVotePermission) throw ('User does not have permission');
+    } catch (err) {
+        throw ({
+            message: 'You do not have permission to vote on this organization'
+        });
+    }
+
+    return true;
+}
+
 
 // Local functions
 function fixVoteTypes(vote) {

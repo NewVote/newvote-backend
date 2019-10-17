@@ -20,7 +20,8 @@ const path = require('path'),
     transporter = nodemailer.createTransport(config.mailer.options),
     Mailchimp = require('mailchimp-api-v3'),
     Recaptcha = require('recaptcha-verify'),
-    async = require('async');
+    async = require('async'),
+    voteController = require('../../votes/votes.server.controller');
 
 // URLs for which user can't be redirected on signin
 const noReturnUrls = ['/authentication/signin', '/authentication/signup'];
@@ -360,7 +361,7 @@ exports.oauthCallback = function (strategy) {
 
         passport.authenticate(strategy, function (err, user, redirectURL) {
             //   https://rapid.test.aaf.edu.au/jwt/authnrequest/research/4txVkEDrvjAH6PxxlCKZGg
-            // need to generate url from org in request cookie here
+
             let orgObject = req.organization;
             let org = orgObject ? orgObject.url : 'home';
             let host = '';
@@ -380,10 +381,12 @@ exports.oauthCallback = function (strategy) {
             if (!user) {
                 return res.redirect(host + '/auth/login?err="400_JWT_SIGNATURE"');
             }
+
             req.login(user, function (err) {
                 if (err) {
                     return res.redirect(host + '/auth/login');
                 }
+
                 const payload = {
                     _id: user._id,
                     roles: user.roles,
@@ -405,7 +408,7 @@ exports.oauthCallback = function (strategy) {
                 let redirect;
 
                 if (req.cookies.redirect) {
-                    redirect = host + req.cookies.redirect;
+                    redirect = host + req.cookies.redirect + '?redirectLogin=true';
                     res.clearCookie('redirect', {
                         path: '/',
                         domain: 'newvote.org'
@@ -416,7 +419,24 @@ exports.oauthCallback = function (strategy) {
                         host + '/';
                 }
 
-                return res.redirect(302, redirect);
+                if (req.cookies.vote) {
+                    const cookieVote = JSON.parse(req.cookies.vote);
+                    voteController.loginVote(user, cookieVote)
+                        .then(([vote, voteMetaData]) => {
+                            return res.redirect(302, redirect + '?voted=true');
+                        })
+                        .catch((err) => {
+                            // Vote could not be processed
+                            return res.redirect(302, redirect + '?voted=false');
+                        })
+
+                    res.clearCookie('vote', {
+                        path: '/',
+                        domain: 'newvote.org'
+                    });
+                } else {
+                    return res.redirect(302, redirect);
+                }
             });
         })(req, res, next);
     };
