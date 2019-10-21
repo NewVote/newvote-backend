@@ -225,8 +225,10 @@ exports.attachVotes = function (objects, user, regions) {
     });
 };
 
-exports.loginVote = async function (user, userVote) {
+// Runs only on login
+// Returns a promise that is handled on login so the right error message can be shown to the frontend.
 
+exports.loginVote = async function (user, userVote) {
     const {
         object,
         organizationId
@@ -249,6 +251,7 @@ exports.loginVote = async function (user, userVote) {
     const getVoteMetaData = createOrUpdateVote.then(createVoteMetaData);
 
     return Promise.all([createOrUpdateVote, getVoteMetaData])
+        .then
 }
 
 async function createVoteMetaData(vote) {
