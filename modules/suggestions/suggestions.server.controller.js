@@ -95,14 +95,14 @@ exports.create = function (req, res) {
                 if (!orgPromise || !suggestionPromise) return false;
 
                 return transporter.sendMail({
-                        from: process.env.MAILER_FROM,
-                        to: orgPromise.owner.email,
-                        subject: 'New suggestion created on your NewVote community!',
-                        html: buildMessage(suggestion, req)
-                    },
-                    (err, info) => {
-                        return false;
-                    }
+                    from: process.env.MAILER_FROM,
+                    to: orgPromise.owner.email,
+                    subject: 'New suggestion created on your NewVote community!',
+                    html: buildMessage(suggestion, req)
+                },
+                (err, info) => {
+                    return false;
+                }
                 );
             })
             .then(() => {
@@ -197,9 +197,9 @@ exports.delete = function (req, res) {
     let suggestion = req.suggestion;
 
     Vote.deleteMany({
-            object: req.suggestion._id,
-            objectType: 'Suggestion'
-        })
+        object: req.suggestion._id,
+        objectType: 'Suggestion'
+    })
         .then(votes => {
             return suggestion.remove();
         })
@@ -266,39 +266,39 @@ exports.list = function (req, res) {
         showNonDeletedItemsMatch;
 
     Suggestion.aggregate([{
-            $match: searchMatch
-        },
-        {
-            $match: softDeleteMatch
-        },
-        {
-            $match: typeMatch
-        },
-        {
-            $match: parentMatch
-        },
-        {
-            $match: userMatch
-        },
-        {
-            $lookup: {
-                from: 'organizations',
-                localField: 'organizations',
-                foreignField: '_id',
-                as: 'organizations'
-            }
-        },
-        {
-            $match: orgMatch
-        },
-        {
-            $unwind: '$organizations'
-        },
-        {
-            $sort: {
-                created: -1
-            }
+        $match: searchMatch
+    },
+    {
+        $match: softDeleteMatch
+    },
+    {
+        $match: typeMatch
+    },
+    {
+        $match: parentMatch
+    },
+    {
+        $match: userMatch
+    },
+    {
+        $lookup: {
+            from: 'organizations',
+            localField: 'organizations',
+            foreignField: '_id',
+            as: 'organizations'
         }
+    },
+    {
+        $match: orgMatch
+    },
+    {
+        $unwind: '$organizations'
+    },
+    {
+        $sort: {
+            created: -1
+        }
+    }
     ]).exec(function (err, suggestions) {
         if (err) throw err;
         voteController
@@ -316,8 +316,8 @@ exports.list = function (req, res) {
 exports.suggestionByID = function (req, res, next, id) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return Suggestion.findOne({
-                slug: id
-            })
+            slug: id
+        })
             .populate('user', 'displayName')
             .populate('organizations')
             .then((suggestion) => {
