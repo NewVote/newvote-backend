@@ -114,66 +114,67 @@ exports.signup = function (req, res) {
             return res.status(400).send({
                 message: 'Recaptcha verification failed.'
             });
-        } else {
-            //user is not a robot, captcha success, continue with sign up
-            // Add missing user fields
-            user.provider = 'local';
-            //set the username to e-mail to satisfy unique indexes
-            //we cant just remove username as its the index for the table
-            //we'd have to drop the entire table to change the index field
-            user.username = user.email;
+        }
 
-            // If a user has been added as a future leader handle here
-            if (verificationCode) {
-                return handleLeaderVerification(user, verificationCode)
-                    .then(savedUser => {
-                        try {
-                            addToMailingList(savedUser)
-                                .then(results => {
-                                    // console.log('Added user to mailchimp');
-                                })
-                                .catch(err => {
-                                    console.log(
-                                        'Error saving to mailchimp: ',
-                                        err
-                                    );
-                                });
-                        } catch (err) {
-                            console.log('Issue with mailchimp: ', err);
-                        }
-                        return loginUser(req, res, savedUser);
-                    })
-                    .catch(err => {
-                        return res.status(400).send({
-                            message: errorHandler.getErrorMessage(err)
-                        });
-                    });
-            }
+        //user is not a robot, captcha success, continue with sign up
+        // Add missing user fields
+        user.provider = 'local';
+        //set the username to e-mail to satisfy unique indexes
+        //we cant just remove username as its the index for the table
+        //we'd have to drop the entire table to change the index field
+        user.username = user.email;
 
-            return user
-                .save()
-                .then(doc => {
+        // If a user has been added as a future leader handle here
+        if (verificationCode) {
+            return handleLeaderVerification(user, verificationCode)
+                .then(savedUser => {
                     try {
-                        addToMailingList(doc)
+                        addToMailingList(savedUser)
                             .then(results => {
                                 // console.log('Added user to mailchimp');
                             })
                             .catch(err => {
-                                console.log('Error saving to mailchimp: ', err);
+                                console.log(
+                                    'Error saving to mailchimp: ',
+                                    err
+                                );
                             });
                     } catch (err) {
                         console.log('Issue with mailchimp: ', err);
                     }
-
-                    return loginUser(req, res, doc);
+                    return loginUser(req, res, savedUser);
                 })
                 .catch(err => {
-                    console.log(err, 'this is err');
                     return res.status(400).send({
                         message: errorHandler.getErrorMessage(err)
                     });
                 });
         }
+
+        return user
+            .save()
+            .then(doc => {
+                try {
+                    addToMailingList(doc)
+                        .then(results => {
+                            // console.log('Added user to mailchimp');
+                        })
+                        .catch(err => {
+                            console.log('Error saving to mailchimp: ', err);
+                        });
+                } catch (err) {
+                    console.log('Issue with mailchimp: ', err);
+                }
+
+                return loginUser(req, res, doc);
+            })
+            .catch(err => {
+                console.log(err, 'this is err');
+                return res.status(400).send({
+                    message: errorHandler.getErrorMessage(err)
+                });
+            });
+
     });
 };
 
@@ -261,7 +262,10 @@ exports.signin = function (req, res, next) {
                             const token = jwt.sign(payload, config.jwtSecret, {
                                 expiresIn: config.jwtExpiry
                             });
-                            const creds = { user, token };
+                            const creds = {
+                                user,
+                                token
+                            };
 
                             const opts = {
                                 domain: 'newvote.org',
