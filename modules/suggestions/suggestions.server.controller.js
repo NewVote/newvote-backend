@@ -19,9 +19,7 @@ let path = require('path'),
     nodemailer = require('nodemailer'),
     transporter = nodemailer.createTransport(config.mailer.options),
     _ = require('lodash'),
-    seed = require('./seed/seed'),
-    createSlug = require('../helpers/slug');
-
+    seed = require('./seed/seed');
 
 // TODO: Use a server side templating language to use a html file for this
 let buildMessage = function (suggestion, req) {
@@ -68,58 +66,53 @@ exports.create = function (req, res) {
         suggestion.parent = null;
     }
 
-    Suggestion.generateUniqueSlug(req.body.title, null, function (slug) {
-        suggestion.slug = slug
-        suggestion.user = req.user;
-        suggestion.save(err => {
-            if (err) throw err;
-        });
+    suggestion.user = req.user;
+    suggestion.save(err => {
+        if (err) throw err;
+    });
 
-        const getSuggestion = Suggestion.populate(suggestion, {
-            path: 'user organizations'
-        });
+    const getSuggestion = Suggestion.populate(suggestion, {
+        path: 'user organizations'
+    });
 
-        const getOrganization = getSuggestion.then(suggestion => {
-            // if organization has no owner then begin exit out of promise chain
-            if (!suggestion.organizations || !suggestion.organizations.owner)
+    const getOrganization = getSuggestion.then(suggestion => {
+        // if organization has no owner then begin exit out of promise chain
+        if (!suggestion.organizations || !suggestion.organizations.owner)
+            return false;
+        return Organization.populate(suggestion.organizations, {
+            path: 'owner'
+        });
+    });
+
+    return Promise.all([getSuggestion, getOrganization])
+        .then(promises => {
+            const [suggestionPromise, orgPromise] = promises;
+            if (!orgPromise || !suggestionPromise) return false;
+
+            return transporter.sendMail({
+                from: process.env.MAILER_FROM,
+                to: orgPromise.owner.email,
+                subject: 'New suggestion created on your NewVote community!',
+                html: buildMessage(suggestion, req)
+            },
+            (err, info) => {
                 return false;
-            return Organization.populate(suggestion.organizations, {
-                path: 'owner'
+            }
+            );
+        })
+        .then(() => {
+            // a new suggestion is returned without a vote object - breaks vote button component
+            return voteController.attachVotes([suggestion], req.user, req.query.regions)
+        })
+        .then((suggestions) => {
+            // console.log('mailer success: ', data);
+            return res.status(200).json(suggestions[0]);
+        })
+        .catch(err => {
+            return res.status(400).send({
+                message: errorHandler.getErrorMessage(err)
             });
         });
-
-
-        return Promise.all([getSuggestion, getOrganization])
-            .then(promises => {
-                const [suggestionPromise, orgPromise] = promises;
-                if (!orgPromise || !suggestionPromise) return false;
-
-                return transporter.sendMail({
-                        from: process.env.MAILER_FROM,
-                        to: orgPromise.owner.email,
-                        subject: 'New suggestion created on your NewVote community!',
-                        html: buildMessage(suggestion, req)
-                    },
-                    (err, info) => {
-                        return false;
-                    }
-                );
-            })
-            .then(() => {
-                // a new suggestion is returned without a vote object - breaks vote button component
-                return voteController.attachVotes([suggestion], req.user, req.query.regions)
-            })
-            .then((suggestions) => {
-                // console.log('mailer success: ', data);
-                return res.status(200).json(suggestions[0]);
-            })
-            .catch(err => {
-                return res.status(400).send({
-                    message: errorHandler.getErrorMessage(err)
-                });
-            });
-    })
-
 };
 
 /**
@@ -155,26 +148,8 @@ exports.update = function (req, res) {
     let suggestion = req.suggestion;
     _.extend(suggestion, req.body);
 
-    if (!suggestion.slug) {
-        return Suggestion.generateUniqueSlug(suggestion.title, null, function (slug) {
-            suggestion.slug = slug
-
-            suggestion.save()
-                .then((res) => {
-                    return voteController
-                        .attachVotes([res], req.user, req.query.regions)
-                })
-                .then((data) => {
-                    res.json(data[0]);
-                })
-                .catch((err) => {
-                    return res.status(400).send({
-                        message: errorHandler.getErrorMessage(err)
-                    });
-                })
-        })
-    }
-
+    // suggestion.title = req.body.title;
+    // suggestion.content = req.body.content;
     suggestion.save()
         .then((res) => {
             return voteController
@@ -197,9 +172,9 @@ exports.delete = function (req, res) {
     let suggestion = req.suggestion;
 
     Vote.deleteMany({
-            object: req.suggestion._id,
-            objectType: 'Suggestion'
-        })
+        object: req.suggestion._id,
+        objectType: 'Suggestion'
+    })
         .then(votes => {
             return suggestion.remove();
         })
@@ -266,39 +241,39 @@ exports.list = function (req, res) {
         showNonDeletedItemsMatch;
 
     Suggestion.aggregate([{
-            $match: searchMatch
-        },
-        {
-            $match: softDeleteMatch
-        },
-        {
-            $match: typeMatch
-        },
-        {
-            $match: parentMatch
-        },
-        {
-            $match: userMatch
-        },
-        {
-            $lookup: {
-                from: 'organizations',
-                localField: 'organizations',
-                foreignField: '_id',
-                as: 'organizations'
-            }
-        },
-        {
-            $match: orgMatch
-        },
-        {
-            $unwind: '$organizations'
-        },
-        {
-            $sort: {
-                created: -1
-            }
+        $match: searchMatch
+    },
+    {
+        $match: softDeleteMatch
+    },
+    {
+        $match: typeMatch
+    },
+    {
+        $match: parentMatch
+    },
+    {
+        $match: userMatch
+    },
+    {
+        $lookup: {
+            from: 'organizations',
+            localField: 'organizations',
+            foreignField: '_id',
+            as: 'organizations'
         }
+    },
+    {
+        $match: orgMatch
+    },
+    {
+        $unwind: '$organizations'
+    },
+    {
+        $sort: {
+            created: -1
+        }
+    }
     ]).exec(function (err, suggestions) {
         if (err) throw err;
         voteController
@@ -315,22 +290,9 @@ exports.list = function (req, res) {
  */
 exports.suggestionByID = function (req, res, next, id) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return Suggestion.findOne({
-                slug: id
-            })
-            .populate('user', 'displayName')
-            .populate('organizations')
-            .then((suggestion) => {
-                if (!suggestion) throw ('Suggestion does not exist');
-
-                req.suggestion = suggestion;
-                next();
-            })
-            .catch((err) => {
-                return res.status(400).send({
-                    message: err
-                });
-            })
+        return res.status(400).send({
+            message: 'Suggestion is invalid'
+        });
     }
 
     Suggestion.findById(id)
