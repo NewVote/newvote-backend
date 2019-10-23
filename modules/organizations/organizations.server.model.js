@@ -74,9 +74,9 @@ let OrganizationSchema = new Schema({
         type: String,
         trim: true,
         required: function () {
-            if(this.authType === 0) {
+            if (this.authType === 0) {
                 return false;
-            }else {
+            } else {
                 return true;
             }
         }
@@ -90,9 +90,16 @@ let OrganizationSchema = new Schema({
         default: false
     },
     voteRoles: [{
-        role: { type: String },
-        active: { type: Boolean }
-    }]
+        role: {
+            type: String
+        },
+        active: {
+            type: Boolean
+        }
+    }],
+    mailingList: {
+        type: String
+    }
 });
 
 mongoose.model('Organization', OrganizationSchema);

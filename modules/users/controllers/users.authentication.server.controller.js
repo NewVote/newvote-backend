@@ -30,11 +30,10 @@ const recaptcha = new Recaptcha({
     verbose: true
 });
 
-const addToMailingList = function (user) {
+const addToMailingList = function (user, mailingList) {
     const mailchimp = new Mailchimp(config.mailchimp.api);
-    const MAILCHIMP_LIST_ID = config.mailchimp.list;
 
-    return mailchimp.post(`/lists/${MAILCHIMP_LIST_ID}/members`, {
+    return mailchimp.post(`/lists/${mailingList}/members`, {
         email_address: user.email,
         status: 'subscribed'
     });
@@ -129,7 +128,7 @@ exports.signup = function (req, res) {
             return handleLeaderVerification(user, verificationCode)
                 .then(savedUser => {
                     try {
-                        addToMailingList(savedUser)
+                        addToMailingList(savedUser, req.organization.mailingList)
                             .then(results => {
                                 // console.log('Added user to mailchimp');
                             })
@@ -155,7 +154,7 @@ exports.signup = function (req, res) {
             .save()
             .then(doc => {
                 try {
-                    addToMailingList(doc)
+                    addToMailingList(doc, req.organization.mailingList)
                         .then(results => {
                             // console.log('Added user to mailchimp');
                         })
@@ -419,9 +418,9 @@ exports.saveRapidProfile = function (req, profile, done) {
         _id: req.organization._id
     });
     const userPromise = User.findOne({
-        email: profile.mail
-    },
-    '-salt -password -verificationCode'
+            email: profile.mail
+        },
+        '-salt -password -verificationCode'
     );
 
     Promise.all([organizationPromise, userPromise])
@@ -674,8 +673,8 @@ exports.updateOrgs = function (loginData) {
         if (user) {
             // get all the votes for this user
             Vote.find({
-                user
-            })
+                    user
+                })
                 .populate('object')
                 .then(votes => {
                     if (votes) {
@@ -706,8 +705,8 @@ exports.updateAllOrgs = function () {
         .then(users => {
             users.forEach(user => {
                 Vote.find({
-                    user: user._id
-                })
+                        user: user._id
+                    })
                     .populate('object')
                     .then(populatedVotes => {
                         let orgs = populatedVotes.reduce((accum, v) => {
@@ -735,8 +734,8 @@ function handleLeaderVerification(user, verificationCode) {
     } = user;
 
     return FutureLeader.findOne({
-        email
-    })
+            email
+        })
         .populate('organizations')
         .then(leader => {
             if (!leader) throw 'Email does not match Verification Code';
