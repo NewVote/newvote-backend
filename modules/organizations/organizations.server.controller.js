@@ -151,13 +151,13 @@ exports.update = function (req, res) {
     Promise.all([orgPromise, userEmailPromise])
         .then(([org, emails]) => {
             let organization = _.assign(org, req.body);
+            unsavedEmails = compareEmailInputWithSavedEmails(emailArray, emails);
 
             if (!emails.length) {
                 organization.moderators = [];
                 return organization.save();
             }
             organization.moderators = emails;
-            unsavedEmails = compareEmailInputWithSavedEmails(emailArray, emails);
             return organization.save();
         })
         .then((organization) => {
@@ -231,19 +231,19 @@ exports.list = function (req, res) {
         showNonDeletedItemsMatch;
 
     Organization.aggregate([{
-        $match: query
-    },
-    {
-        $match: softDeleteMatch
-    },
-    {
-        $match: privateMatch
-    },
-    {
-        $sort: {
-            name: 1
+            $match: query
+        },
+        {
+            $match: softDeleteMatch
+        },
+        {
+            $match: privateMatch
+        },
+        {
+            $sort: {
+                name: 1
+            }
         }
-    }
     ]).exec(function (err, organizations) {
         if (err) {
             return res.status(400).send({
@@ -274,16 +274,16 @@ exports.organizationByID = function (req, res, next, id) {
             })
             .catch(err =>
                 res
-                    .status(404)
-                    .send({
-                        message: errorHandler.getErrorMessage(err)
-                    })
+                .status(404)
+                .send({
+                    message: errorHandler.getErrorMessage(err)
+                })
             );
     }
     // check whether organization is a string it's a string url
     return Organization.findOne({
-        url: id
-    })
+            url: id
+        })
         .populate('user', 'displayName')
         .populate('owner', '_id displayName firstName lastName email')
         .populate('moderators', '_id displayName firstName lastName email')
@@ -387,14 +387,14 @@ let buildMessage = function (code, req) {
 
 let sendEmail = function (user, pass, req) {
     return transporter.sendMail({
-        from: process.env.MAILER_FROM,
-        to: user.email,
-        subject: 'NewVote UQU Verification',
-        html: buildMessage(pass, req)
-    },
-    (err, info) => {
-        console.log(info, 'error sending email');
-    }
+            from: process.env.MAILER_FROM,
+            to: user.email,
+            subject: 'NewVote UQU Verification',
+            html: buildMessage(pass, req)
+        },
+        (err, info) => {
+            console.log(info, 'error sending email');
+        }
     );
 };
 
@@ -495,7 +495,6 @@ function filterEmails(emails) {
 function compareEmailInputWithSavedEmails(userEmails, databaseEmails) {
     // userEmails is an array of strings
     // databaseEmails is an array of User objects with an email property
-
     const unsavedEmails = userEmails.slice().filter((email) => {
         return !databaseEmails.some((user) => {
             return user.email === email;
