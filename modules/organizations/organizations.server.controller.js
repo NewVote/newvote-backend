@@ -117,7 +117,6 @@ exports.read = function (req, res) {
 exports.update = function (req, res) {
     let unsavedEmails;
     let moderatorArray = req.body.moderators;
-
     delete req.body.moderators;
     delete req.body.moderatorsControl;
 
@@ -231,19 +230,19 @@ exports.list = function (req, res) {
         showNonDeletedItemsMatch;
 
     Organization.aggregate([{
-            $match: query
-        },
-        {
-            $match: softDeleteMatch
-        },
-        {
-            $match: privateMatch
-        },
-        {
-            $sort: {
-                name: 1
-            }
+        $match: query
+    },
+    {
+        $match: softDeleteMatch
+    },
+    {
+        $match: privateMatch
+    },
+    {
+        $sort: {
+            name: 1
         }
+    }
     ]).exec(function (err, organizations) {
         if (err) {
             return res.status(400).send({
@@ -274,16 +273,16 @@ exports.organizationByID = function (req, res, next, id) {
             })
             .catch(err =>
                 res
-                .status(404)
-                .send({
-                    message: errorHandler.getErrorMessage(err)
-                })
+                    .status(404)
+                    .send({
+                        message: errorHandler.getErrorMessage(err)
+                    })
             );
     }
     // check whether organization is a string it's a string url
     return Organization.findOne({
-            url: id
-        })
+        url: id
+    })
         .populate('user', 'displayName')
         .populate('owner', '_id displayName firstName lastName email')
         .populate('moderators', '_id displayName firstName lastName email')
@@ -387,14 +386,14 @@ let buildMessage = function (code, req) {
 
 let sendEmail = function (user, pass, req) {
     return transporter.sendMail({
-            from: process.env.MAILER_FROM,
-            to: user.email,
-            subject: 'NewVote UQU Verification',
-            html: buildMessage(pass, req)
-        },
-        (err, info) => {
-            console.log(info, 'error sending email');
-        }
+        from: process.env.MAILER_FROM,
+        to: user.email,
+        subject: 'NewVote UQU Verification',
+        html: buildMessage(pass, req)
+    },
+    (err, info) => {
+        console.log(info, 'error sending email');
+    }
     );
 };
 
@@ -481,6 +480,9 @@ function filterEmails(emails) {
 
     const newModEmails = [];
     const modIDs = emails.slice().filter(e => {
+        // If the client removes all moderators, from the mod form
+        // an array of objects is passed to server that need to be filtered.
+        if (typeof e !== 'string') return false;
         if (mongoose.Types.ObjectId.isValid(e)) return e;
         newModEmails.push(e);
         return false;
