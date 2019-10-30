@@ -18,6 +18,12 @@ let FeedSchema = new Schema({
         type: Schema.ObjectId,
         ref: 'Organization'
     },
+    parent: {
+        type: String,
+    },
+    parentType: {
+        type: String
+    },
     news: [{
         message: {
             type: String
