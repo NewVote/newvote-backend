@@ -61,6 +61,10 @@ let IssueSchema = new Schema({
     suggestionTemplate: {
         type: Schema.ObjectId,
         ref: 'Suggestion'
+    }, 
+    progressFeed: {
+        type: Schema.ObjectId,
+        ref: 'Feed'
     }
 });
 
