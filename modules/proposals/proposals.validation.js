@@ -1,6 +1,4 @@
-const {
-    Joi
-} = require('celebrate');
+const { Joi } = require('celebrate');
 Joi.objectId = require('joi-objectid')(Joi);
 
 const schema = {
@@ -16,8 +14,7 @@ const schema = {
         likert: Joi.boolean(),
         organizations: Joi.objectId(),
         softDeleted: Joi.boolean(),
-        suggestionTemplate: Joi.objectId(),
-        slug: Joi.string()
+        suggestionTemplate: Joi.objectId()
     })
 }
 
