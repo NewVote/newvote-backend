@@ -5,10 +5,12 @@
  */
 let path = require('path'),
     mongoose = require('mongoose'),
-    Feed = mongoose.model('Feed')
-    errorHandler = require(path.resolve(
-        './modules/core/errors.server.controller'
-    )),
+    Feed = mongoose.model('Feed'),
+    errorHandler = require(
+        path.resolve(
+            './modules/core/errors.server.controller'
+        )
+    ),
     _ = require('lodash');
 
 exports.create = function (req, res) {
@@ -28,7 +30,7 @@ exports.create = function (req, res) {
 exports.read = function (req, res) {
     Feed.findOne({ _id: req.body.id })
         .then((feed) => {
-            res.json(feed);
+            return res.json(feed);
         })
         .catch((err) => {
             return res.status(400).send({
@@ -38,18 +40,16 @@ exports.read = function (req, res) {
 }
 
 exports.update = function (req, res) {
-
     let feed = req.feed;
     _.extend(feed, req.body);
 
     feed.save()
-        .then((savedIssue) => res.json(savedIssue))
+        .then((savedFeed) => res.json(savedFeed))
         .catch((err) => {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             })
-        }
-
+        });
 }
 
 exports.delete = function (req, res) {
@@ -88,7 +88,7 @@ exports.feedByID = function(req, res, next, id) {
         .then((feed) => {
             if (!feed) {
                 return res.status(404).send({
-                    message: 'No issue with that identifier has been found'
+                    message: 'No Feed with that identifier has been found'
                 });
             }
             req.feed = feed;

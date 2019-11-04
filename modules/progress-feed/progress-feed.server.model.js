@@ -6,9 +6,6 @@
 let mongoose = require('mongoose'),
     Schema = mongoose.Schema;
 
-/**
- * Article Schema
- */
 let FeedSchema = new Schema({
     created: {
         type: Date,

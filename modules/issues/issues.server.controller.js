@@ -81,15 +81,13 @@ exports.update = function(req, res) {
 exports.delete = function(req, res) {
     let issue = req.issue;
 
-    issue.remove(function(err) {
-        if (err) {
+    issue.remove()
+        .then(() => res.json(issue))
+        .catch((err) => {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });
-        } else {
-            res.json(issue);
-        }
-    });
+        })
 };
 
 /**
