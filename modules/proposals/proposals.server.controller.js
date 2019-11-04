@@ -14,7 +14,9 @@ let path = require('path'),
         './modules/core/errors.server.controller'
     )),
     _ = require('lodash'),
-    seed = require('./seed/seed');
+    seed = require('./seed/seed'),
+    createSlug = require('../helpers/slug');
+
 
 /**
  * Create a proposal
@@ -25,10 +27,16 @@ exports.create = function (req, res) {
         delete req.body.imageUrl;
     }
 
+
+
     const proposalPromise = new Promise((resolve, reject) => {
         let proposal = new Proposal(req.body);
         proposal.user = req.user;
-        resolve(proposal);
+
+        Proposal.generateUniqueSlug(req.body.title, null, function (slug) {
+            proposal.slug = slug
+            resolve(proposal);
+        })
     });
 
     // Return votes without an _id - as it cannot be deleted
@@ -112,9 +120,28 @@ exports.update = function (req, res) {
 
     let proposal = req.proposal;
     _.extend(proposal, req.body);
-    // proposal.title = req.body.title;
-    // proposal.content = req.body.content;
     proposal.user = req.user;
+
+    if (!proposal.slug || createSlug(proposal.title) !== proposal.slug) {
+        return Proposal.generateUniqueSlug(proposal.title, null, function (slug) {
+            proposal.slug = slug
+
+            proposal.save()
+                .then((res) => {
+                    return voteController
+                        .attachVotes([res], req.user, req.query.regions)
+                })
+                .then((data) => {
+                    res.json(data[0]);
+                })
+                .catch((err) => {
+                    return res.status(400).send({
+                        message: errorHandler.getErrorMessage(err)
+                    });
+                })
+        })
+    }
+
     proposal
         .save()
         .then((res) => {
@@ -249,9 +276,24 @@ exports.list = function (req, res) {
  */
 exports.proposalByID = function (req, res, next, id) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).send({
-            message: 'Proposal is invalid'
-        });
+        return Proposal.findOne({
+            slug: id
+        })
+            .populate('user', 'displayName')
+            .populate('solutions')
+            .populate('solution')
+            .populate('organizations')
+            .then((proposal) => {
+                if (!proposal) throw ('Proposal does not exist');
+
+                req.proposal = proposal;
+                next();
+            })
+            .catch((err) => {
+                return res.status(400).send({
+                    message: err
+                });
+            })
     }
 
     Proposal.findById(id)

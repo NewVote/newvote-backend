@@ -15,7 +15,9 @@ let path = require('path'),
     votes = require('../votes/votes.server.controller'),
     proposals = require('../proposals/proposals.server.controller'),
     _ = require('lodash'),
-    seed = require('./seed/seed');
+    seed = require('./seed/seed'),
+    createSlug = require('../helpers/slug');
+
 
 /**
  * Create a solution
@@ -29,7 +31,11 @@ exports.create = function (req, res) {
     const solutionPromise = new Promise((resolve, reject) => {
         let solution = new Solution(req.body);
         solution.user = req.user;
-        resolve(solution);
+
+        Solution.generateUniqueSlug(req.body.title, null, function (slug) {
+            solution.slug = slug
+            resolve(solution);
+        })
     });
 
     const votePromise = new Promise((resolve, reject) => {
@@ -120,6 +126,26 @@ exports.update = function (req, res) {
     _.extend(solution, req.body);
     // solution.title = req.body.title;
     // solution.content = req.body.content;
+
+    if (!solution.slug || createSlug(solution.title) !== solution.slug) {
+        return Solution.generateUniqueSlug(solution.title, null, function (slug) {
+            solution.slug = slug
+
+            solution.save()
+                .then((res) => {
+                    return voteController
+                        .attachVotes([res], req.user, req.query.regions)
+                })
+                .then((data) => {
+                    res.json(data[0]);
+                })
+                .catch((err) => {
+                    return res.status(400).send({
+                        message: errorHandler.getErrorMessage(err)
+                    });
+                })
+        })
+    }
 
     solution
         .save()
@@ -250,44 +276,28 @@ exports.list = function (req, res) {
     });
 };
 
-// if (err) {
-// return res.status(400).send({
-//     message: errorHandler.getErrorMessage(err)
-// });
-// } else {
-//     votes
-//         .attachVotes(solutions, req.user, req.query.regions)
-//         .then(function(solutions) {
-//             return res.json(solutions);
-//             // proposals
-//             //     .attachProposals(solutions, req.user, req.query.regions)
-//             //     .then(solutions => {
-//             //         // ;
-//             //         res.json(
-//             //             filterSoftDeleteProposals(
-//             //                 solutions,
-//             //                 showDeleted
-//             //             )
-//             //         );
-//             //     });
-//         })
-//         .catch(function(err) {
-//             // console.log(err);
-//             res.status(500).send({
-//                 message: errorHandler.getErrorMessage(err)
-//             });
-//         });
-// }
-
 /**
  * Solution middleware
  */
 exports.solutionByID = function (req, res, next, id) {
-    console.log('solutionById user: ', req.user);
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).send({
-            message: 'Solution is invalid'
-        });
+        return Solution.findOne({
+            slug: id
+        })
+            .populate('user', 'displayName')
+            .populate('issues')
+            .populate('organizations')
+            .then((solution) => {
+                if (!solution) throw ('Solution does not exist');
+
+                req.solution = solution;
+                next();
+            })
+            .catch((err) => {
+                return res.status(400).send({
+                    message: err
+                });
+            })
     }
 
     Solution.findById(id)
