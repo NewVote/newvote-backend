@@ -3,6 +3,7 @@
 // Progress Feed Routes
 let path = require('path'),
     config = require(path.resolve('./config/config')),
+    policy = require('./generic.server.policy'),
     progressFeedController = require('./progress-feed.server.controller'),
     jwt = require('express-jwt');
 

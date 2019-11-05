@@ -3,6 +3,7 @@
 // Progress Routes
 let path = require('path'),
     config = require(path.resolve('./config/config')),
+    policy = require('./generic.server.policy'),
     progressController = require('./progress.server.controller'),
     jwt = require('express-jwt');
 
