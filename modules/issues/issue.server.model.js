@@ -65,6 +65,10 @@ let IssueSchema = new Schema({
     progressFeed: {
         type: Schema.ObjectId,
         ref: 'Feed'
+    },
+    progress: {
+        type: Schema.ObjectId,
+        ref: 'Progress'
     }
 });
 
