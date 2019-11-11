@@ -4,7 +4,8 @@
  * Module dependencies.
  */
 let mongoose = require('mongoose'),
-    Schema = mongoose.Schema;
+    Schema = mongoose.Schema,
+    createSlug = require('../helpers/slug');
 
 /**
  * Article Schema
@@ -33,25 +34,19 @@ let SolutionSchema = new Schema({
         type: Schema.ObjectId,
         ref: 'User'
     },
-    comments: [
-        {
-            type: Schema.ObjectId,
-            ref: 'Comment'
-        }
-    ],
-    issues: [
-        {
-            type: Schema.ObjectId,
-            ref: 'Issue',
-            required: true
-        }
-    ],
-    proposals: [
-        {
-            type: Schema.ObjectId,
-            ref: 'Proposal'
-        }
-    ],
+    comments: [{
+        type: Schema.ObjectId,
+        ref: 'Comment'
+    }],
+    issues: [{
+        type: Schema.ObjectId,
+        ref: 'Issue',
+        required: true
+    }],
+    proposals: [{
+        type: Schema.ObjectId,
+        ref: 'Proposal'
+    }],
     votes: {
         up: Number,
         down: Number,
@@ -61,12 +56,10 @@ let SolutionSchema = new Schema({
             ref: 'Vote'
         }
     },
-    tags: [
-        {
-            type: String,
-            trim: true
-        }
-    ],
+    tags: [{
+        type: String,
+        trim: true
+    }],
     likert: {
         type: Boolean,
         default: false
@@ -82,8 +75,39 @@ let SolutionSchema = new Schema({
     suggestionTemplate: {
         type: Schema.ObjectId,
         ref: 'Suggestion'
+    },
+    slug: {
+        type: String
     }
 });
 
-SolutionSchema.index({ title: 'text', description: 'text' });
+SolutionSchema.statics.generateUniqueSlug = function (title, suffix, callback) {
+    let _this = this;
+    let possibleSlug = createSlug(title) + (suffix || '');
+
+    _this.findOne({
+        slug: possibleSlug
+    },
+    function (err, slug) {
+        if (!err) {
+            if (!slug) {
+                callback(possibleSlug);
+            } else {
+                return _this.generateUniqueSlug(
+                    title,
+                    (suffix || 0) + 1,
+                    callback
+                );
+            }
+        } else {
+            callback(null);
+        }
+    }
+    );
+};
+
+SolutionSchema.index({
+    title: 'text',
+    description: 'text'
+});
 mongoose.model('Solution', SolutionSchema);
