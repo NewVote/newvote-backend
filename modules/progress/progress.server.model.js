@@ -7,9 +7,9 @@ let mongoose = require('mongoose'),
     Schema = mongoose.Schema;
 
 let ProgressSchema = new Schema({
-    currentStates: [
+    states: [
         { 
-            state: String,
+            name: String,
             active: Boolean,
         }
     ],

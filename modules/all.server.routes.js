@@ -77,7 +77,6 @@ module.exports = function(app) {
         }
     });
 
-    // Articles collection routes
     app.route('/api/organizations')
         .all(
             jwt({ secret: config.jwtSecret, credentialsRequired: false }),
