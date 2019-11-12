@@ -275,7 +275,7 @@ exports.list = function (req, res) {
  * Proposal middleware
  */
 exports.proposalByID = function (req, res, next, id) {
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
         return Proposal.findOne({
             slug: id
         })
