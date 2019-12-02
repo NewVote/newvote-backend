@@ -131,7 +131,7 @@ exports.isAllowed = async function (req, res, next) {
     if (object && req.user && object.user && object.user.id === req.user.id) {
         return next();
     }
-  
+
     // Check for user roles
     acl.areAnyRolesAllowed(
         roles,
@@ -176,7 +176,7 @@ exports.isAllowed = async function (req, res, next) {
                             message: err
                         });
                     });
-            } 
+            }
 
             // this is a GET request with a user object that was not allowed
             // generic auth failure
@@ -195,7 +195,7 @@ async function canAccessOrganization(req, object) {
     const method = req.method.toLowerCase();
 
     if (!organization) throw('No organization discovered in request body')
-    
+
     const { owner, moderators } = organization;
     const { roles, _id: id } = user;
     const { collection } = object;
@@ -203,17 +203,17 @@ async function canAccessOrganization(req, object) {
     // check user for role access
     const isOwner = checkOwner(id, roles, owner);
     const isModerator = checkModerator(id, roles, moderators);
-    
+
     if (method === 'post') {
         if (!isOwner && !isModerator) throw('User does not have access to that method');
         return true;
     }
     if (method === 'put') {
         if (!isOwner && !isModerator) throw('User does not have access to that route');
-        // block access to organization editing  
+        // block access to organization editing
         if (!isOwner && collection && collection.name === 'organizations') throw('An error occoured while validating your credentials')
         return true;
-    } 
+    }
     if (method === 'delete') throw('User does not have access to that method');
 }
 
@@ -221,7 +221,8 @@ function checkOwner(id, roles, owner) {
     // admins have universal access
     if (roles.includes('admin')) return true;
     // user is the organization owner
-    if (owner && owner._id === id) return true
+    console.log(owner)
+    if (owner && owner === id) return true
 
     return false;
 }
@@ -294,7 +295,7 @@ async function canAccessOrganization(req, object) {
         // On delete requests on admins have access to delete requests
         return Promise.resolve(false);
     }
-} 
+}
   // allowed test failed, is this a non GET request? (POST/UPDATE/DELETE)
             if (req.method.toLowerCase() !== 'get' && user) {
                 //check for org owner or moderator on all non get requests
@@ -324,6 +325,6 @@ async function canAccessOrganization(req, object) {
                         });
                     }
                 });
-            } 
-            
+            }
+
 */
