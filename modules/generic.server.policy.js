@@ -193,8 +193,12 @@ exports.isAllowed = async function (req, res, next) {
 async function canAccessOrganization(req, object) {
     const { user, organization } = req;
     const method = req.method.toLowerCase();
-
     if (!organization) throw('No organization discovered in request body')
+
+    // req.header.url (or something) === organization.url
+    // look up the organization from the URL
+    // populate the owner on this query
+    // now use this owner for tests instead of the cookie data
 
     const { owner, moderators } = organization;
     const { roles, _id: id } = user;
@@ -221,8 +225,7 @@ function checkOwner(id, roles, owner) {
     // admins have universal access
     if (roles.includes('admin')) return true;
     // user is the organization owner
-    console.log(owner)
-    if (owner && owner === id) return true
+    if (owner && owner._id === id) return true
 
     return false;
 }
