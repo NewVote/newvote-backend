@@ -156,8 +156,6 @@ exports.isAllowed = async function (req, res, next) {
                 !user.roles.includes('user') ||
                 !user.verified
             ) {
-
-                console.log('failed at verification & loggged in');
                 // user is logged in but they are missing the user role
                 // this means they must not be verified
                 return res.status(403).json({
@@ -176,14 +174,12 @@ exports.isAllowed = async function (req, res, next) {
                         return next();
                     })
                     .catch((err) => {
-                        console.log(err, 'this is err on can access');
                         return res.status(403).json({
                             message: err
                         });
                     });
             } 
 
-            console.log('FAiled at end')
             // this is a GET request with a user object that was not allowed
             // generic auth failure
             return res.status(403).json({
@@ -254,9 +250,7 @@ function checkUrl (req) {
     url = url.replace(/(^\w+:|^)\/\//, '');
     const [domain, ...rest] = url.split('.');
     
-    console.log(domain, 'this is domain');
-    console.log(organization, 'this is organization url from cookie');
-
+    console.log(domain === organization.url, 'this is organization url from cookie');
     return domain === organization.url
 }
 
