@@ -4,7 +4,9 @@
  * Module dependencies.
  */
 let acl = require('acl'),
-    organizations = require('./organizations/organizations.server.controller');
+    mongoose = require('mongoose'),
+    organizationController = require('./organizations/organizations.server.controller'),
+    Organization = mongoose.model('Organization');
 
 // Using the memory backend
 acl = new acl(new acl.memoryBackend());
@@ -154,6 +156,8 @@ exports.isAllowed = async function (req, res, next) {
                 !user.roles.includes('user') ||
                 !user.verified
             ) {
+
+                console.log('failed at verification & loggged in');
                 // user is logged in but they are missing the user role
                 // this means they must not be verified
                 return res.status(403).json({
@@ -172,12 +176,14 @@ exports.isAllowed = async function (req, res, next) {
                         return next();
                     })
                     .catch((err) => {
+                        console.log(err, 'this is err on can access');
                         return res.status(403).json({
                             message: err
                         });
                     });
             } 
 
+            console.log('FAiled at end')
             // this is a GET request with a user object that was not allowed
             // generic auth failure
             return res.status(403).json({
@@ -191,13 +197,17 @@ exports.isAllowed = async function (req, res, next) {
 // this is NOT the organization that the content belongs to (not the object.organizations)
 // N.B new content will have no organization
 async function canAccessOrganization(req, object) {
-    const { user, organization } = req;
-    const method = req.method.toLowerCase();
+    if (!checkUrl(req)) throw('Invalid Domain');
 
-    if (!organization) throw('No organization discovered in request body')
-    
-    const { owner, moderators } = organization;
-    const { roles, _id: id } = user;
+    const { organization: reqOrg } = req;
+    if (!reqOrg) throw('No organization discovered in request body')
+
+    const method = req.method.toLowerCase();
+    const { owner, moderators } = await Organization
+        .findOne({ _id: reqOrg._id })
+        .populate('owner')
+
+    const { roles, _id: id } = req.user;
     const { collection } = object;
 
     // check user for role access
@@ -220,8 +230,8 @@ async function canAccessOrganization(req, object) {
 function checkOwner(id, roles, owner) {
     // admins have universal access
     if (roles.includes('admin')) return true;
-    // user is the organization owner
-    if (owner && owner._id === id) return true
+    // user is the organization owner - need to use .equals (object id comparison from mongoose) to check id's
+    if (owner && owner._id.equals(id)) return true
 
     return false;
 }
@@ -230,11 +240,24 @@ function checkModerator(id, roles, moderators) {
     // admins have universal access
     if (roles.includes('admin')) return true;
     // user is a mod
-    if (moderators && moderators.some((mod) => mod._id === id)) {
+    if (moderators && moderators.some((mod) => mod._id.equals(id))) {
         return true;
     }
 
     return false;
+}
+
+function checkUrl (req) {
+    let { organization } = req
+
+    let url = req.get('referer');
+    url = url.replace(/(^\w+:|^)\/\//, '');
+    const [domain, ...rest] = url.split('.');
+    
+    console.log(domain, 'this is domain');
+    console.log(organization, 'this is organization url from cookie');
+
+    return domain === organization.url
 }
 
 /*
