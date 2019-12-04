@@ -193,7 +193,9 @@ exports.isAllowed = async function (req, res, next) {
 // this is NOT the organization that the content belongs to (not the object.organizations)
 // N.B new content will have no organization
 async function canAccessOrganization(req, object) {
-    if (!checkUrl(req)) throw('Invalid Domain');
+    // Check the session url against the request url (via referrer)
+    // If not matching reject
+    if (!checkUrl(req)) throw('Session domain does not match request');
 
     const { organization: reqOrg } = req;
     if (!reqOrg) throw('No organization discovered in request body')
@@ -250,7 +252,6 @@ function checkUrl (req) {
     url = url.replace(/(^\w+:|^)\/\//, '');
     const [domain, ...rest] = url.split('.');
     
-    console.log(domain === organization.url, 'this is organization url from cookie');
     return domain === organization.url
 }
 
