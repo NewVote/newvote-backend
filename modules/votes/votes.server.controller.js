@@ -213,7 +213,7 @@ exports.list = function (req, res) {
  * Vote middleware
  */
 exports.voteByID = function (req, res, next, id) {
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
         return res.status(400)
             .send({
                 message: 'Vote is invalid'
