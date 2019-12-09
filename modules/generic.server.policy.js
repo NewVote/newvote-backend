@@ -4,7 +4,9 @@
  * Module dependencies.
  */
 let acl = require('acl'),
-    organizations = require('./organizations/organizations.server.controller');
+    mongoose = require('mongoose'),
+    organizationController = require('./organizations/organizations.server.controller'),
+    Organization = mongoose.model('Organization');
 
 // Using the memory backend
 acl = new acl(new acl.memoryBackend());
@@ -191,13 +193,19 @@ exports.isAllowed = async function (req, res, next) {
 // this is NOT the organization that the content belongs to (not the object.organizations)
 // N.B new content will have no organization
 async function canAccessOrganization(req, object) {
-    const { user, organization } = req;
+    // Check the session url against the request url (via referrer)
+    // If not matching reject
+    if (!checkUrl(req)) throw('Session domain does not match request');
+
+    const { organization: reqOrg } = req;
+    if (!reqOrg) throw('No organization discovered in request body')
+
     const method = req.method.toLowerCase();
+    const { owner, moderators } = await Organization
+        .findOne({ _id: reqOrg._id })
+        .populate('owner')
 
-    if (!organization) throw('No organization discovered in request body')
-
-    const { owner, moderators } = organization;
-    const { roles, _id: id } = user;
+    const { roles, _id: id } = req.user;
     const { collection } = object;
 
     // check user for role access
@@ -220,9 +228,8 @@ async function canAccessOrganization(req, object) {
 function checkOwner(id, roles, owner) {
     // admins have universal access
     if (roles.includes('admin')) return true;
-    // user is the organization owner
-    console.log(owner)
-    if (owner && owner === id) return true
+    // user is the organization owner - need to use .equals (object id comparison from mongoose) to check id's
+    if (owner && owner._id.equals(id)) return true
 
     return false;
 }
@@ -231,11 +238,21 @@ function checkModerator(id, roles, moderators) {
     // admins have universal access
     if (roles.includes('admin')) return true;
     // user is a mod
-    if (moderators && moderators.some((mod) => mod._id === id)) {
+    if (moderators && moderators.some((mod) => mod._id.equals(id))) {
         return true;
     }
 
     return false;
+}
+
+function checkUrl (req) {
+    let { organization } = req
+
+    let url = req.get('referer');
+    url = url.replace(/(^\w+:|^)\/\//, '');
+    const [domain, ...rest] = url.split('.');
+
+    return domain === organization.url
 }
 
 /*
