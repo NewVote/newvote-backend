@@ -1,5 +1,6 @@
 let mongoose = require('mongoose'),
     User = mongoose.model('User'),
+    Rep = mongoose.model('Rep'),
     _ = require('lodash');
 
 
@@ -22,8 +23,40 @@ exports.delete = function (req, res) {
 }
 
 exports.list = function (req, res) {
-    
+
 }
+
+exports.issueByID = function (req, res, next, id) {
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+        return Rep.findOne({
+            slug: id
+        })
+            .then((rep) => {
+                if (!rep) throw ('Issue does not exist');
+
+                req.rep = rep;
+                next();
+            })
+            .catch((err) => {
+                return res.status(400).send({
+                    message: err
+                });
+            })
+    }
+
+    Rep.findById(id)
+        .exec(function (err, rep) {
+            if (err) {
+                return next(err);
+            } else if (!rep) {
+                return res.status(404).send({
+                    message: 'No rep with that identifier has been found'
+                });
+            }
+            req.rep = rep;
+            next();
+        });
+};
 
 
 
