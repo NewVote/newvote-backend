@@ -1,3 +1,32 @@
+let mongoose = require('mongoose'),
+    User = mongoose.model('User'),
+    _ = require('lodash');
+
+
+
+
+exports.create = function (req, res) {
+
+}
+
+exports.read = function (req, res) {
+
+}
+
+exports.update = function (req, res) {
+
+}
+
+exports.delete = function (req, res) {
+
+}
+
+exports.list = function (req, res) {
+    
+}
+
+
+
 // /**
 //  * Create a issue
 //  */
