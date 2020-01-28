@@ -4,9 +4,10 @@ let repController = require('./reps.server.controller'),
     policy = require('../generic.server.policy'),
     path = require('path'),
     config = require(path.resolve('./config/config')),
-    jwt = require('express-jwt')
+    jwt = require('express-jwt');
 
 module.exports = function (app) {
+
 
     // Get all Reps
     app.route('/api/reps')
@@ -25,5 +26,5 @@ module.exports = function (app) {
         .put(repController.update)
         .delete(repController.delete);
 
-    app.param('repId', repController.repById)
+    app.param('repId', repController.repByID)
 }

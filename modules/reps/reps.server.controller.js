@@ -99,5 +99,10 @@ exports.repByID = async function (req, res, next, id) {
             }
             req.rep = rep;
             next();
-        });
+        })
+        .catch((err) => {
+            return res.status(400).send({
+                message: err
+            });
+        })
 };

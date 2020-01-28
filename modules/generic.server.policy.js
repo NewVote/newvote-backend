@@ -56,6 +56,26 @@ exports.invokeRolesPolicies = function () {
         ]
     },
     {
+        roles: ['rep'],
+        allows: [{
+            resources: collectionRoutes,
+            permissions: ['get']
+        },
+        {
+            resources: objectRoutes,
+            permissions: ['get']
+        },
+        {
+            resources: [
+                '/api/issue',
+                '/api/solution',
+                '/api/proposal'
+            ],
+            permissions: ['get', 'post']
+        }
+        ]
+    },
+    {
         roles: ['endorser'],
         allows: [{
             resources: collectionRoutes,
@@ -72,6 +92,11 @@ exports.invokeRolesPolicies = function () {
                 '/api/endorsement'
             ],
             permissions: ['get', 'post']
+        },
+        {
+            // users can create and edit suggestions
+            resources: ['/api/suggestions', '/api/suggestions/:suggestionId'],
+            permissions: ['get', 'post', 'put']
         }
         ]
     },
