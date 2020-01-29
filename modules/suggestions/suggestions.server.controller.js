@@ -314,7 +314,7 @@ exports.list = function (req, res) {
  * Suggestion middleware
  */
 exports.suggestionByID = function (req, res, next, id) {
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
         return Suggestion.findOne({
             slug: id
         })
