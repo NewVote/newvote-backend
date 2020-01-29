@@ -8,16 +8,33 @@ let mongoose = require('mongoose'),
     _ = require('lodash');
 
 
-
-
 exports.create = async function (req, res) {
-    const { _id } = await User.findOne({ email: req.body.email })
-    const newRep = Object.assign({}, req.body, {
-        user: _id
-    })
-    const rep = new Rep(newRep);
+    console.log(req.body, 'this is req.body')
+    const { newReps, currentReps } = req.body;
 
-    rep.save()
+    // TODO - 
+    // 1) Remove duplicate entries in the newReps array
+    // 2) remove entries which don't conform to being an email
+    // 3) if a user in the users array is also in the CurrentReps array remove from users array (no need for duplicates)
+    
+    
+    // Find existing users in database based on an array of emails
+    const users = await User.find({ email: { $in: newReps } })
+    let userArray = [];
+    
+    // create an array of "Reps" to then save to database
+    users.forEach((user) => {
+        const newRep = {
+            name: user.username || user.displayName,
+            organizations: req.organization,
+            owner: user._id
+        }
+        const rep = new Rep(newRep)
+        userArray.push(rep);
+    })
+
+    // create can take an array of objects
+    Rep.create([userArray])
         .then((rep) => {
             return res.json(rep)
         })
