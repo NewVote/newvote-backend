@@ -9,32 +9,74 @@ let mongoose = require('mongoose'),
 
 
 exports.create = async function (req, res) {
-    console.log(req.body, 'this is req.body')
-    const { newReps, currentReps } = req.body;
+    const {
+        newReps,
+        currentReps
+    } = req.body;
 
     // TODO - 
     // 1) Remove duplicate entries in the newReps array
     // 2) remove entries which don't conform to being an email
     // 3) if a user in the users array is also in the CurrentReps array remove from users array (no need for duplicates)
-    
-    
+
+    // let currentRepIds = currentReps.map((rep) => {
+    //     return rep._id;
+    // });
+
+    // const reps = await Rep.find({
+    //     _id: {
+    //         $in: currentRepIds
+    //     }
+    // })
+
     // Find existing users in database based on an array of emails
-    const users = await User.find({ email: { $in: newReps } })
-    let userArray = [];
-    
-    // create an array of "Reps" to then save to database
-    users.forEach((user) => {
-        const newRep = {
-            name: user.username || user.displayName,
-            organizations: req.organization,
-            owner: user._id
+    const users = await User.find({
+        email: {
+            $in: newReps
         }
-        const rep = new Rep(newRep)
-        userArray.push(rep);
+    })
+        .select('displayName username _id')
+
+    if (!users.length) {
+        return res.status(400)
+            .send({
+                message: "Invalid Email addresses"
+            })
+    }
+
+    // check if any of the user Ids from users are present in the Reps Collections
+    let userIds = users.map((user) => {
+        return user._id;
     })
 
+    const reps = await Rep.find({ owner: { $in: userIds } })
+        .and([{ organizations: req.organization }])
+
+
+    let userArray = [];
+    // Check that the user id's do not exist in the Reps collection under owner
+    users.filter((user) => {
+        if (!reps.length) return true
+        // is user a current rep
+        return !reps.some((rep) => {
+            return user._id.equals(rep.owner)
+        })
+    })
+        // create an array of "Reps" to then save to database
+        .forEach((user) => {
+            console.log(user, 'this is forEach');
+            const newRep = {
+                displayName: user.username,
+                organizations: req.organization,
+                owner: user._id
+            }
+
+            const rep = new Rep(newRep)
+            userArray.push(rep);
+        })
+
     // create can take an array of objects
-    Rep.create([userArray])
+    Rep.create(userArray)
         .then((rep) => {
             return res.json(rep)
         })
@@ -51,7 +93,9 @@ exports.read = async function (req, res) {
 }
 
 exports.update = async function (req, res) {
-    const rep = await Rep.findOne({ _id: req.body._id })
+    const rep = await Rep.findOne({
+        _id: req.body._id
+    })
 
     const newRep = _.assign(rep, req.body);
     newRep.save()

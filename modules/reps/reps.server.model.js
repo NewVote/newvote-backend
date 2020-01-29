@@ -15,10 +15,8 @@ let RepSchema = new Schema({
         type: Date,
         default: Date.now
     },
-    name: {
-        type: String,
-        trim: true,
-        required: 'Name cannot be blank'
+    displayName: {
+        type: String
     },
     position: {
         type: String
@@ -46,7 +44,7 @@ let RepSchema = new Schema({
         type: Schema.ObjectId,
         ref: 'Proposal'
     }],
-    user: {
+    owner: {
         type: Schema.ObjectId,
         ref: 'User'
     },
