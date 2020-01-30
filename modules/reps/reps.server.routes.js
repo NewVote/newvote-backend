@@ -8,12 +8,12 @@ let repController = require('./reps.server.controller'),
 
 module.exports = function (app) {
 
-
     // Get all Reps
     app.route('/api/reps')
         .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }))
         .get(repController.list)
         .post(repController.create)
+        .put(repController.deleteMany)
 
     // Single Rep
 

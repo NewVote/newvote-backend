@@ -44,7 +44,6 @@ exports.create = async function (req, res) {
             })
     }
 
-    // check if any of the user Ids from users are present in the Reps Collections
     let userIds = users.map((user) => {
         return user._id;
     })
@@ -64,9 +63,8 @@ exports.create = async function (req, res) {
     })
         // create an array of "Reps" to then save to database
         .forEach((user) => {
-            console.log(user, 'this is forEach');
             const newRep = {
-                displayName: user.username,
+                displayName: user.displayName || '',
                 organizations: req.organization,
                 owner: user._id
             }
@@ -110,11 +108,36 @@ exports.update = async function (req, res) {
         })
 }
 
+exports.deleteMany = async function (req, res) {
+    const repIds = req.body.slice().map((rep) => {
+        return rep._id
+    });
+
+    try {
+        const reps = await Rep.find({ _id: { $in: repIds } })
+        await Rep.deleteMany({ _id: { $in: repIds } })
+        return res.json(reps);
+    } catch {
+        return res.status(400)
+            .send({
+                message: errorHandler.getErrorMessage(err)
+            })
+    }
+    
+}
+
 exports.delete = async function (req, res) {
+    // console.log(req.body, 'this is req.body')
     let rep = req.rep
     rep.remove()
         .then((removedRep) => {
             return res.json(removedRep)
+        })
+        .catch((err) => {
+            return res.status(400)
+                .send({
+                    message: errorHandler.getErrorMessage(err)
+                })
         })
 }
 
