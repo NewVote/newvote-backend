@@ -23,7 +23,8 @@ let collectionRoutes = [
     '/api/endorsement',
     '/api/media',
     '/api/regions',
-    '/api/countries'
+    '/api/countries',
+    '/api/reps'
 ];
 let objectRoutes = [
     '/api/organizations/:organizationId',
@@ -37,7 +38,8 @@ let objectRoutes = [
     '/api/endorsement/:endorsementId',
     '/api/media/:mediaId',
     '/api/meta/:uri',
-    '/api/regions/:regionId'
+    '/api/regions/:regionId',
+    '/api/reps/:repId'
 ];
 /**
  * Invoke Articles Permissions

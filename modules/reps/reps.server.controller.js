@@ -35,7 +35,7 @@ exports.create = async function (req, res) {
             $in: newReps
         }
     })
-        .select('displayName username _id')
+        .select('displayName username _id roles')
 
     if (!users.length) {
         return res.status(400)
@@ -63,6 +63,12 @@ exports.create = async function (req, res) {
     })
         // create an array of "Reps" to then save to database
         .forEach((user) => {
+            // Add the rep role to users
+            if (!user.roles.includes('rep')) {
+                user.roles.push('rep')
+                user.save()
+            }
+            // Create and add new reps
             const newRep = {
                 displayName: user.displayName || '',
                 organizations: req.organization,
@@ -112,12 +118,26 @@ exports.deleteMany = async function (req, res) {
     const repIds = req.body.slice().map((rep) => {
         return rep._id
     });
+    // find the reps to be deleted, take the owner id and user
+    // id to remove 'rep' role from user
+    const userIds = req.body.slice().map((rep) => {
+        return rep.owner._id || rep.owner
+    });
 
     try {
         const reps = await Rep.find({ _id: { $in: repIds } })
         await Rep.deleteMany({ _id: { $in: repIds } })
+        await User.find({ _id: { $in: userIds } })
+            .then((users) => {
+                users.forEach((user) => {
+                    user.roles = user.roles.filter((role) => {
+                        return role !== 'rep'
+                    })
+                    user.save()
+                })
+            })
         return res.json(reps);
-    } catch {
+    } catch (err) {
         return res.status(400)
             .send({
                 message: errorHandler.getErrorMessage(err)
@@ -155,28 +175,9 @@ exports.list = async function (req, res) {
 }
 
 exports.repByID = async function (req, res, next, id) {
-    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
-        return Rep.findOne({
-            slug: id
-        })
-            .then((rep) => {
-                if (!rep) throw ('Issue does not exist');
-
-                req.rep = rep;
-                next();
-            })
-            .catch((err) => {
-                return res.status(400).send({
-                    message: err
-                });
-            })
-    }
-
     Rep.findById(id)
-        .exec(function (err, rep) {
-            if (err) {
-                return next(err);
-            } else if (!rep) {
+        .then((rep) => {
+            if (!rep) {
                 return res.status(404).send({
                     message: 'No rep with that identifier has been found'
                 });
