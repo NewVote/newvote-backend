@@ -163,6 +163,7 @@ exports.delete = async function (req, res) {
 
 exports.list = async function (req, res) {
     Rep.find()
+        .populate('proposals solutions issues')
         .then((reps) => {
             return res.json(reps);
         })

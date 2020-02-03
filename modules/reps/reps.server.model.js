@@ -48,6 +48,10 @@ let RepSchema = new Schema({
         type: Schema.ObjectId,
         ref: 'User'
     },
+    imageUrl: {
+        type: String,
+        default: 'assets/logo-no-text.png'
+    }
 });
 
 
