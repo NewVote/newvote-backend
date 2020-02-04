@@ -14,22 +14,6 @@ exports.create = async function (req, res) {
         currentReps
     } = req.body;
 
-    // TODO - 
-    // 1) Remove duplicate entries in the newReps array
-    // 2) remove entries which don't conform to being an email
-    // 3) if a user in the users array is also in the CurrentReps array remove from users array (no need for duplicates)
-
-    // let currentRepIds = currentReps.map((rep) => {
-    //     return rep._id;
-    // });
-
-    // const reps = await Rep.find({
-    //     _id: {
-    //         $in: currentRepIds
-    //     }
-    // })
-
-    // Find existing users in database based on an array of emails
     const users = await User.find({
         email: {
             $in: newReps
