@@ -96,7 +96,13 @@ let OrganizationSchema = new Schema({
     representativeTitle: {
         type: String,
         default: 'Rep'
-    }
+    },
+    representativeTags: [
+        {
+            name: { type: String },
+            color: { type: String }
+        }
+    ]
 });
 
 mongoose.model('Organization', OrganizationSchema);
