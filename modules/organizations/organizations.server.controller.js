@@ -256,7 +256,6 @@ exports.list = function (req, res) {
 
 exports.patch = function (req, res) {
     const { representativeTags } = req.body
-
     Organization.findById(req.organization._id)
         .then((org) => {
 
