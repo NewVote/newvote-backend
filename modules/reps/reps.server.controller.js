@@ -14,9 +14,27 @@ exports.create = async function (req, res) {
         currentReps
     } = req.body;
 
+    let ids; 
+    let savedReps;
+    if (currentReps && currentReps.length) {
+        // get an array of ids
+        ids = currentReps.map((item) => item._id)
+        savedReps = await Rep.find({ _id: { $in: ids } })
+        savedReps.then((repArray) => {
+            repArray.forEach((rep) => {
+                const { tags } = currentReps.find((item) => rep._id.equals(item._id))
+                rep.tags = tags
+                return rep.save()
+            })
+        })
+            .catch((err) => {
+                console.log(err, 'err while saving currentRep')
+            })
+    }
+
     const users = await User.find({
         email: {
-            $in: newReps
+            $in: newReps.map((rep) => rep.name)
         }
     })
         .select('displayName username _id roles email')
@@ -26,7 +44,7 @@ exports.create = async function (req, res) {
     // Take those invalid emails, send them to the client
     const invalidReps = newReps.slice().filter((rep) => {
         const user = users.find((user) => {
-            return user.email === rep;
+            return user.email === rep.name;
         })
         return !user
     })
@@ -38,10 +56,7 @@ exports.create = async function (req, res) {
             })
     }
 
-    let userIds = users.map((user) => {
-        return user._id;
-    })
-
+    const userIds = users.map((user) => user._id)
     const reps = await Rep.find({ owner: { $in: userIds } })
         .and([{ organizations: req.organization }])
 
@@ -67,7 +82,8 @@ exports.create = async function (req, res) {
                 displayName: user.displayName || '',
                 organizations: req.organization,
                 owner: user._id,
-                email: user.email
+                email: user.email,
+                tags: newReps.find((rep) => rep.name === user.email).tags
             }
 
             const rep = new Rep(newRep)
@@ -77,7 +93,10 @@ exports.create = async function (req, res) {
     // create can take an array of objects
     Rep.create(userArray)
         .then((reps) => {
-            return res.json({ reps, invalidReps })
+            // reps - newly created (add to client store)
+            // invalidReps - failed to create (for client feedback)
+            // updatedReps - existing reps that were updated (update on client store)
+            return res.json({ reps, invalidReps, updatedReps: savedReps })
         })
         .catch((err) => {
             return res.status(400)
