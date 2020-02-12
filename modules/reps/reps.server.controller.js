@@ -19,7 +19,17 @@ exports.create = async function (req, res) {
             $in: newReps
         }
     })
-        .select('displayName username _id roles')
+        .select('displayName username _id roles email')
+
+    // Compare users with the newReps array to find out which emails
+    // were not valid.
+    // Take those invalid emails, send them to the client
+    const invalidReps = newReps.slice().filter((rep) => {
+        const user = users.find((user) => {
+            return user.email === rep;
+        })
+        return !user
+    })
 
     if (!users.length) {
         return res.status(400)
@@ -56,7 +66,8 @@ exports.create = async function (req, res) {
             const newRep = {
                 displayName: user.displayName || '',
                 organizations: req.organization,
-                owner: user._id
+                owner: user._id,
+                email: user.email
             }
 
             const rep = new Rep(newRep)
@@ -65,8 +76,8 @@ exports.create = async function (req, res) {
 
     // create can take an array of objects
     Rep.create(userArray)
-        .then((rep) => {
-            return res.json(rep)
+        .then((reps) => {
+            return res.json({ reps, invalidReps })
         })
         .catch((err) => {
             return res.status(400)
