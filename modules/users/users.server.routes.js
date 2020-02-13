@@ -23,6 +23,13 @@ module.exports = function(app) {
         .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }))
         .post(users.verify);
 
+    app.route('/api/users/community-verify')
+        .all(jwt({
+            secret: config.jwtSecret,
+            credentialsRequired: false
+        }))
+        .post(users.verifyWithCommunity);
+
     // Setting up the users profile api
     app.route('/api/users/me')
         .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }))

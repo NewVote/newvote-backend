@@ -13,6 +13,9 @@ module.exports = function (app) {
         .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }))
         .get(repController.list)
         .post(repController.create)
+        .put(repController.updateMany)
+
+    app.route('/api/reps/remove')
         .put(repController.deleteMany)
 
     // Single Rep

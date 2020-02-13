@@ -57,10 +57,7 @@ let RepSchema = new Schema({
         default: 'assets/logo-no-text.png'
     },
     tags: [
-        {
-            type: String,
-            unique: true
-        }
+        { type: String, unique: false }
     ]
 });
 

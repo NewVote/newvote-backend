@@ -13,6 +13,7 @@ let _ = require('lodash'),
     nodemailer = require('nodemailer'),
     transporter = nodemailer.createTransport(config.mailer.options),
     jwt = require('jsonwebtoken'),
+    Organization = mongoose.model('Organization'),
     request = require('request');
 
 /**
@@ -230,6 +231,36 @@ exports.verify = function (req, res) {
         })
         .catch((err) => {
             console.log('error finding user: ', err);
+            return res.status(400)
+                .send({
+                    message: errorHandler.getErrorMessage(err)
+                });
+        });
+};
+
+exports.verifyWithCommunity = function (req, res) {
+    const {
+        user
+    } = req;
+    const org = JSON.parse(req.cookies.organization);
+
+    const organizationPromise = Organization.findById(org._id);
+    const userPromise = User.findById(user._id)
+        .select('-salt -password -verificationCode');
+
+    Promise.all([organizationPromise, userPromise])
+        .then((promises) => {
+            const [organization, user] = promises;
+            if (!user) throw ('User does not exist');
+            if (!organization) throw ('Organization does not exist');
+
+            user.organizations.push(organization);
+            return user.save();
+        })
+        .then((user) => {
+            return res.json(user);
+        })
+        .catch((err) => {
             return res.status(400)
                 .send({
                     message: errorHandler.getErrorMessage(err)
