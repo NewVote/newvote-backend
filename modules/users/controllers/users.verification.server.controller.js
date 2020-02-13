@@ -14,7 +14,6 @@ let _ = require('lodash'),
     nodemailer = require('nodemailer'),
     transporter = nodemailer.createTransport(config.mailer.options),
     jwt = require('jsonwebtoken'),
-    Organization = mongoose.model('Organization'),
     request = require('request');
 
 /**
