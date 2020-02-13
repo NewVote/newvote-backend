@@ -6,6 +6,7 @@
 let _ = require('lodash'),
     mongoose = require('mongoose'),
     User = mongoose.model('User'),
+    Organization = mongoose.model('Organization'),
     path = require('path'),
     errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
     config = require(path.resolve('./config/config')),

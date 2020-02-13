@@ -330,6 +330,20 @@ async function canAccessOrganization(req, object) {
         ) {
             return Promise.resolve(true);
         } else {
+
+            if (
+                !user.roles.includes('user') ||
+                !user.verified
+            ) {
+                const error = {
+                    message: 'An error occoured while validating your credentials',
+                    role: 'user',
+                    status: 403
+                }
+
+                return Promise.reject(error);
+            }
+  
             console.error(
                 'failed to test user against admin owner or mod list'
             );
