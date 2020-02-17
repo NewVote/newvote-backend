@@ -10,13 +10,12 @@ let mongoose = require('mongoose'),
 
 exports.create = async function (req, res) {
     const {
-        newReps,
-        currentReps
+        newReps
     } = req.body;
 
     const users = await User.find({
         email: {
-            $in: newReps
+            $in: newReps.map((rep) => rep.name)
         }
     })
         .select('displayName username _id roles email')
@@ -26,7 +25,7 @@ exports.create = async function (req, res) {
     // Take those invalid emails, send them to the client
     const invalidReps = newReps.slice().filter((rep) => {
         const user = users.find((user) => {
-            return user.email === rep;
+            return user.email === rep.name;
         })
         return !user
     })
@@ -38,10 +37,7 @@ exports.create = async function (req, res) {
             })
     }
 
-    let userIds = users.map((user) => {
-        return user._id;
-    })
-
+    const userIds = users.map((user) => user._id)
     const reps = await Rep.find({ owner: { $in: userIds } })
         .and([{ organizations: req.organization }])
 
@@ -67,7 +63,8 @@ exports.create = async function (req, res) {
                 displayName: user.displayName || '',
                 organizations: req.organization,
                 owner: user._id,
-                email: user.email
+                email: user.email,
+                tags: newReps.find((rep) => rep.name === user.email).tags
             }
 
             const rep = new Rep(newRep)
@@ -77,9 +74,12 @@ exports.create = async function (req, res) {
     // create can take an array of objects
     Rep.create(userArray)
         .then((reps) => {
+            // reps - newly created (add to client store)
+            // invalidReps - failed to create (for client feedback)
             return res.json({ reps, invalidReps })
         })
         .catch((err) => {
+            console.log(err, 'this is err')
             return res.status(400)
                 .send({
                     message: errorHandler.getErrorMessage(err)
@@ -97,16 +97,38 @@ exports.update = async function (req, res) {
     })
 
     const newRep = _.assign(rep, req.body);
+    console.log(newRep, 'this is newRep')
     newRep.save()
         .then((rep) => {
             res.json(rep)
         })
         .catch((err) => {
+            console.log(err, 'this is err')
             return res.status(400)
                 .send({
                     message: errorHandler.getErrorMessage(err)
                 })
         })
+}
+
+exports.updateMany = async function (req, res) {
+    const { currentReps } = req.body
+    const ids = currentReps.map((item) => item._id)
+    const savedReps = await Rep.find({ _id: { $in: ids } })
+    await savedReps.forEach((rep) => {
+        const { tags } = currentReps.find((item) => rep._id.equals(item._id))
+        rep.tags = tags
+        return rep.save()
+    })
+        
+    return res.json(savedReps)
+    // .catch((err) => {
+    //     return res.status(400)
+    //         .send({
+    //             message: errorHandler.getErrorMessage(err)
+    //         })
+    // })
+    
 }
 
 exports.deleteMany = async function (req, res) {
