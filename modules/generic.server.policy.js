@@ -6,7 +6,8 @@
 let acl = require('acl'),
     mongoose = require('mongoose'),
     organizationController = require('./organizations/organizations.server.controller'),
-    Organization = mongoose.model('Organization');
+    Organization = mongoose.model('Organization'),
+    Rep = mongoose.model('Rep');
 
 // Using the memory backend
 acl = new acl(new acl.memoryBackend());
@@ -23,7 +24,8 @@ let collectionRoutes = [
     '/api/endorsement',
     '/api/media',
     '/api/regions',
-    '/api/countries'
+    '/api/countries',
+    '/api/reps'
 ];
 let objectRoutes = [
     '/api/organizations/:organizationId',
@@ -37,7 +39,8 @@ let objectRoutes = [
     '/api/endorsement/:endorsementId',
     '/api/media/:mediaId',
     '/api/meta/:uri',
-    '/api/regions/:regionId'
+    '/api/regions/:regionId',
+    '/api/reps/:repId'
 ];
 /**
  * Invoke Articles Permissions
@@ -52,6 +55,32 @@ exports.invokeRolesPolicies = function () {
         {
             resources: objectRoutes,
             permissions: '*'
+        }
+        ]
+    },
+    {
+        roles: ['rep'],
+        allows: [{
+            resources: collectionRoutes,
+            permissions: ['get']
+        },
+        {
+            resources: objectRoutes,
+            permissions: ['get']
+        },
+        {
+            resources: [
+                '/api/issues',
+                '/api/solutions',
+                '/api/proposals'
+            ],
+            permissions: ['get', 'post']
+        },
+        {
+            resources: [
+                '/api/reps/:repId'
+            ],
+            permissions: ['get', 'put']
         }
         ]
     },
@@ -72,6 +101,11 @@ exports.invokeRolesPolicies = function () {
                 '/api/endorsement'
             ],
             permissions: ['get', 'post']
+        },
+        {
+            // users can create and edit suggestions
+            resources: ['/api/suggestions', '/api/suggestions/:suggestionId'],
+            permissions: ['get', 'post', 'put']
         }
         ]
     },
@@ -129,7 +163,8 @@ exports.isAllowed = async function (req, res, next) {
         req.endorsement ||
         req.topic ||
         req.media ||
-        req.suggestion
+        req.suggestion ||
+        req.rep
     if (object && req.user && object.user && object.user.id === req.user.id) {
         return next();
     }
@@ -208,11 +243,16 @@ async function canAccessOrganization(req, object) {
     const { roles, _id: id } = req.user;
     const { collection } = object;
 
+    const rep = await Rep 
+        .findOne({ _id: id, organizations: reqOrg._id })
+
     // check user for role access
     const isOwner = checkOwner(id, roles, owner);
     const isModerator = checkModerator(id, roles, moderators);
+    const isRep = checkRep(rep, roles)
 
     if (method === 'post') {
+        console.log()
         if (!isOwner && !isModerator) throw('User does not have access to that method');
         return true;
     }
@@ -243,6 +283,13 @@ function checkModerator(id, roles, moderators) {
     }
 
     return false;
+}
+
+function checkRep(repObject, roles) {
+    if (!roles.includes('rep')) return false
+    if (!repObject) return false
+
+    return true
 }
 
 function checkUrl (req) {
