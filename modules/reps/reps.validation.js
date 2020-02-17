@@ -5,6 +5,7 @@ const schema = {
     body: Joi.object().keys({
         created: Joi.date(),
         name: Joi.string(),
+        email: Joi.string(),
         position: Joi.string(),
         description: Joi.objectId(),
         organizations: Joi.objectId(),

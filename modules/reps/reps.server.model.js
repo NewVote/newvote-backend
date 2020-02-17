@@ -18,6 +18,10 @@ let RepSchema = new Schema({
     displayName: {
         type: String
     },
+    email: {
+        type: String,
+        required: true
+    },
     position: {
         type: String
     },
