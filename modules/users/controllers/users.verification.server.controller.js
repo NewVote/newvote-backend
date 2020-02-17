@@ -205,6 +205,14 @@ exports.verify = function (req, res) {
 
             //update user model
             user.verified = true;
+            const guestIndex = user.roles.findIndex((role) => {
+                return role === 'guest'
+            })
+
+            user.roles = user.roles.filter((role) => {
+                return role !== 'guest'
+            })
+            
             if (!user.roles.includes('user')) {
                 user.roles.push('user');
             }
