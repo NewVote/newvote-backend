@@ -179,7 +179,8 @@ exports.delete = async function (req, res) {
 }
 
 exports.list = async function (req, res) {
-    Rep.find()
+    const { organization: { _id: id } } = req
+    Rep.find({ organizations: id })
         .populate('proposals solutions issues')
         .then((reps) => {
             return res.json(reps);
