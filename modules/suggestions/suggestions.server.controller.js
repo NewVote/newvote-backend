@@ -19,7 +19,9 @@ let path = require('path'),
     nodemailer = require('nodemailer'),
     transporter = nodemailer.createTransport(config.mailer.options),
     _ = require('lodash'),
-    seed = require('./seed/seed');
+    seed = require('./seed/seed'),
+    createSlug = require('../helpers/slug');
+
 
 // TODO: Use a server side templating language to use a html file for this
 let buildMessage = function (suggestion, req) {
@@ -66,53 +68,58 @@ exports.create = function (req, res) {
         suggestion.parent = null;
     }
 
-    suggestion.user = req.user;
-    suggestion.save(err => {
-        if (err) throw err;
-    });
-
-    const getSuggestion = Suggestion.populate(suggestion, {
-        path: 'user organizations'
-    });
-
-    const getOrganization = getSuggestion.then(suggestion => {
-        // if organization has no owner then begin exit out of promise chain
-        if (!suggestion.organizations || !suggestion.organizations.owner)
-            return false;
-        return Organization.populate(suggestion.organizations, {
-            path: 'owner'
+    Suggestion.generateUniqueSlug(req.body.title, null, function (slug) {
+        suggestion.slug = slug
+        suggestion.user = req.user;
+        suggestion.save(err => {
+            if (err) throw err;
         });
-    });
 
-    return Promise.all([getSuggestion, getOrganization])
-        .then(promises => {
-            const [suggestionPromise, orgPromise] = promises;
-            if (!orgPromise || !suggestionPromise) return false;
+        const getSuggestion = Suggestion.populate(suggestion, {
+            path: 'user organizations'
+        });
 
-            return transporter.sendMail({
-                from: process.env.MAILER_FROM,
-                to: orgPromise.owner.email,
-                subject: 'New suggestion created on your NewVote community!',
-                html: buildMessage(suggestion, req)
-            },
-            (err, info) => {
+        const getOrganization = getSuggestion.then(suggestion => {
+            // if organization has no owner then begin exit out of promise chain
+            if (!suggestion.organizations || !suggestion.organizations.owner)
                 return false;
-            }
-            );
-        })
-        .then(() => {
-            // a new suggestion is returned without a vote object - breaks vote button component
-            return voteController.attachVotes([suggestion], req.user, req.query.regions)
-        })
-        .then((suggestions) => {
-            // console.log('mailer success: ', data);
-            return res.status(200).json(suggestions[0]);
-        })
-        .catch(err => {
-            return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
+            return Organization.populate(suggestion.organizations, {
+                path: 'owner'
             });
         });
+
+
+        return Promise.all([getSuggestion, getOrganization])
+            .then(promises => {
+                const [suggestionPromise, orgPromise] = promises;
+                if (!orgPromise || !suggestionPromise) return false;
+
+                return transporter.sendMail({
+                    from: process.env.MAILER_FROM,
+                    to: orgPromise.owner.email,
+                    subject: 'New suggestion created on your NewVote community!',
+                    html: buildMessage(suggestion, req)
+                },
+                (err, info) => {
+                    return false;
+                }
+                );
+            })
+            .then(() => {
+                // a new suggestion is returned without a vote object - breaks vote button component
+                return voteController.attachVotes([suggestion], req.user, req.query.regions)
+            })
+            .then((suggestions) => {
+                // console.log('mailer success: ', data);
+                return res.status(200).json(suggestions[0]);
+            })
+            .catch(err => {
+                return res.status(400).send({
+                    message: errorHandler.getErrorMessage(err)
+                });
+            });
+    })
+
 };
 
 /**
@@ -148,8 +155,26 @@ exports.update = function (req, res) {
     let suggestion = req.suggestion;
     _.extend(suggestion, req.body);
 
-    // suggestion.title = req.body.title;
-    // suggestion.content = req.body.content;
+    if (!suggestion.slug) {
+        return Suggestion.generateUniqueSlug(suggestion.title, null, function (slug) {
+            suggestion.slug = slug
+
+            suggestion.save()
+                .then((res) => {
+                    return voteController
+                        .attachVotes([res], req.user, req.query.regions)
+                })
+                .then((data) => {
+                    res.json(data[0]);
+                })
+                .catch((err) => {
+                    return res.status(400).send({
+                        message: errorHandler.getErrorMessage(err)
+                    });
+                })
+        })
+    }
+
     suggestion.save()
         .then((res) => {
             return voteController
@@ -289,10 +314,23 @@ exports.list = function (req, res) {
  * Suggestion middleware
  */
 exports.suggestionByID = function (req, res, next, id) {
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).send({
-            message: 'Suggestion is invalid'
-        });
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+        return Suggestion.findOne({
+            slug: id
+        })
+            .populate('user', 'displayName')
+            .populate('organizations')
+            .then((suggestion) => {
+                if (!suggestion) throw ('Suggestion does not exist');
+
+                req.suggestion = suggestion;
+                next();
+            })
+            .catch((err) => {
+                return res.status(400).send({
+                    message: err
+                });
+            })
     }
 
     Suggestion.findById(id)

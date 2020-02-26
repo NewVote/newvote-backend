@@ -4,7 +4,8 @@
  * Module dependencies.
  */
 let mongoose = require('mongoose'),
-    Schema = mongoose.Schema;
+    Schema = mongoose.Schema,
+    createSlug = require('../helpers/slug');
 
 /**
  * Article Schema
@@ -34,13 +35,11 @@ let SuggestionSchema = new Schema({
         default: '',
         trim: true
     },
-    media: [
-        {
-            type: String,
-            default: '',
-            trim: true
-        }
-    ],
+    media: [{
+        type: String,
+        default: '',
+        trim: true
+    }],
     user: {
         type: Schema.ObjectId,
         ref: 'User'
@@ -75,7 +74,35 @@ let SuggestionSchema = new Schema({
     softDeleted: {
         type: Boolean,
         default: false
+    },
+    slug: {
+        type: String
     }
 });
+
+SuggestionSchema.statics.generateUniqueSlug = function (title, suffix, callback) {
+    let _this = this;
+    let possibleSlug = createSlug(title) + (suffix || '');
+
+    _this.findOne({
+        slug: possibleSlug
+    },
+    function (err, slug) {
+        if (!err) {
+            if (!slug) {
+                callback(possibleSlug);
+            } else {
+                return _this.generateUniqueSlug(
+                    title,
+                    (suffix || 0) + 1,
+                    callback
+                );
+            }
+        } else {
+            callback(null);
+        }
+    }
+    );
+};
 
 mongoose.model('Suggestion', SuggestionSchema);

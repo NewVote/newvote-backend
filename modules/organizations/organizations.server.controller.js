@@ -115,8 +115,8 @@ exports.read = function (req, res) {
  * Update a organization
  */
 exports.update = function (req, res) {
+    let unsavedEmails;
     let moderatorArray = req.body.moderators;
-
     delete req.body.moderators;
     delete req.body.moderatorsControl;
 
@@ -150,6 +150,7 @@ exports.update = function (req, res) {
     Promise.all([orgPromise, userEmailPromise])
         .then(([org, emails]) => {
             let organization = _.assign(org, req.body);
+            unsavedEmails = compareEmailInputWithSavedEmails(emailArray, emails);
 
             if (!emails.length) {
                 organization.moderators = [];
@@ -164,7 +165,10 @@ exports.update = function (req, res) {
             })
         })
         .then((organization) => {
-            return res.status(200).json(organization);
+            return res.status(200).json({
+                organization,
+                moderators: unsavedEmails
+            });
         })
         .catch((err) => {
             return res.status(400).send({
@@ -249,6 +253,24 @@ exports.list = function (req, res) {
         return res.json(organizations);
     });
 };
+
+exports.patch = function (req, res) {
+    const { representativeTags } = req.body
+    Organization.findById(req.organization._id)
+        .then((org) => {
+
+            org.representativeTags = representativeTags
+            return org.save()
+        })
+        .then((organization) => {
+            return res.json(organization)
+        })
+        .catch((err) => {
+            return res.status(400).send({
+                message: errorHandler.getErrorMessage(err)
+            });
+        })
+}
 
 /**
  * Organization middleware
@@ -476,6 +498,9 @@ function filterEmails(emails) {
 
     const newModEmails = [];
     const modIDs = emails.slice().filter(e => {
+        // If the client removes all moderators, from the mod form
+        // an array of objects is passed to server that need to be filtered.
+        if (typeof e !== 'string') return false;
         if (mongoose.Types.ObjectId.isValid(e)) return e;
         newModEmails.push(e);
         return false;
@@ -485,4 +510,16 @@ function filterEmails(emails) {
         emailArray: newModEmails,
         emailIdArray: modIDs
     };
+}
+
+function compareEmailInputWithSavedEmails(userEmails, databaseEmails) {
+    // userEmails is an array of strings
+    // databaseEmails is an array of User objects with an email property
+    const unsavedEmails = userEmails.slice().filter((email) => {
+        return !databaseEmails.some((user) => {
+            return user.email === email;
+        })
+    });
+
+    return unsavedEmails;
 }
