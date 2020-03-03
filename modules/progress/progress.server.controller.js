@@ -13,14 +13,40 @@ let path = require('path'),
         )
     ),
     _ = require('lodash');
+
+
+exports.createProgress = function (issue) {
+    const progress = new Progress();
+    progress.states = [
+        {
+            name: 'Raised',
+            active: true
+        },
+        {
+            name: 'In Progress',
+            active: false
+        },
+        {
+            name: 'Outcome',
+            active: false
+        },
+    ]
+    progress.parentType = 'Issue';
+    progress.parent = issue._id
+
+    return progress.save()
+}
     
 exports.create = function (req, res) {
+    console.log(req.body, 'this is req.body')
     let progress = new Progress(req.body);
+    console.log(progress, 'this is progress')
     progress.save()
         .then(() => {
             res.json(progress);
         })
         .catch((err) => {
+            console.log(err, 'this is err')
             return res.status(400)
                 .send({
                     message: errorHandler.getErrorMessage(err)
