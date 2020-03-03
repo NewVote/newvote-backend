@@ -35,18 +35,20 @@ exports.createProgress = function (issue) {
     progress.parent = issue._id
 
     return progress.save()
+        .then((res) => {
+            console.log(res)
+            return res
+        })
 }
     
 exports.create = function (req, res) {
-    console.log(req.body, 'this is req.body')
+    delete req.body._id
     let progress = new Progress(req.body);
-    console.log(progress, 'this is progress')
     progress.save()
         .then(() => {
             res.json(progress);
         })
         .catch((err) => {
-            console.log(err, 'this is err')
             return res.status(400)
                 .send({
                     message: errorHandler.getErrorMessage(err)
