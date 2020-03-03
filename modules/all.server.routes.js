@@ -77,15 +77,6 @@ module.exports = function(app) {
         }
     });
 
-    app.route('/api/organizations')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed
-        )
-        .get(organizations.list)
-        // .post(celebrate(schema))
-        .post(organizations.create);
-
     app.route('/api/topics')
         .all(
             jwt({ secret: config.jwtSecret, credentialsRequired: false }),
@@ -179,15 +170,6 @@ module.exports = function(app) {
         .put(topics.update)
         .delete(topics.delete);
 
-    app.route('/api/organizations/:organizationId')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed
-        )
-        .get(organizations.read)
-        .put(organizations.update)
-        .delete(organizations.delete);
-
     app.route('/api/organizations/owner/:organizationId')
         .all(
             jwt({ secret: config.jwtSecret, credentialsRequired: false }),
@@ -276,7 +258,6 @@ module.exports = function(app) {
 
     // Finish by binding the article middleware
     app.param('topicId', topics.topicByID);
-    app.param('organizationId', organizations.organizationByID);
     app.param('issueId', issues.issueByID);
     app.param('solutionId', solutions.solutionByID);
     app.param('proposalId', proposals.proposalByID);

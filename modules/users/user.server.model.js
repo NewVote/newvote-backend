@@ -155,7 +155,7 @@ let UserSchema = new Schema({
     roles: {
         type: [{
             type: String,
-            enum: ['guest', 'user', 'admin', 'endorser']
+            enum: ['guest', 'user', 'admin', 'endorser', 'rep']
         }],
         default: ['guest'],
         required: 'Please provide at least one role'
@@ -177,7 +177,8 @@ let UserSchema = new Schema({
     // for tracking org memberships
     organizations: [{
         type: Schema.ObjectId,
-        ref: 'Organization'
+        ref: 'Organization',
+        unique: true
     }],
     completedTour: {
         type: Boolean,

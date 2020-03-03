@@ -254,6 +254,24 @@ exports.list = function (req, res) {
     });
 };
 
+exports.patch = function (req, res) {
+    const { representativeTags } = req.body
+    Organization.findById(req.organization._id)
+        .then((org) => {
+
+            org.representativeTags = representativeTags
+            return org.save()
+        })
+        .then((organization) => {
+            return res.json(organization)
+        })
+        .catch((err) => {
+            return res.status(400).send({
+                message: errorHandler.getErrorMessage(err)
+            });
+        })
+}
+
 /**
  * Organization middleware
  */

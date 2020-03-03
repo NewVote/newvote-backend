@@ -280,7 +280,7 @@ exports.list = function (req, res) {
  * Solution middleware
  */
 exports.solutionByID = function (req, res, next, id) {
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
         return Solution.findOne({
             slug: id
         })

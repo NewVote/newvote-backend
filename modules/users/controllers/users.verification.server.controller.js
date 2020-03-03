@@ -6,6 +6,7 @@
 let _ = require('lodash'),
     mongoose = require('mongoose'),
     User = mongoose.model('User'),
+    Organization = mongoose.model('Organization'),
     path = require('path'),
     errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
     config = require(path.resolve('./config/config')),
@@ -204,6 +205,14 @@ exports.verify = function (req, res) {
 
             //update user model
             user.verified = true;
+            const guestIndex = user.roles.findIndex((role) => {
+                return role === 'guest'
+            })
+
+            user.roles = user.roles.filter((role) => {
+                return role !== 'guest'
+            })
+            
             if (!user.roles.includes('user')) {
                 user.roles.push('user');
             }
@@ -230,6 +239,36 @@ exports.verify = function (req, res) {
         })
         .catch((err) => {
             console.log('error finding user: ', err);
+            return res.status(400)
+                .send({
+                    message: errorHandler.getErrorMessage(err)
+                });
+        });
+};
+
+exports.verifyWithCommunity = function (req, res) {
+    const {
+        user
+    } = req;
+    const org = JSON.parse(req.cookies.organization);
+
+    const organizationPromise = Organization.findById(org._id);
+    const userPromise = User.findById(user._id)
+        .select('-salt -password -verificationCode');
+
+    Promise.all([organizationPromise, userPromise])
+        .then((promises) => {
+            const [organization, user] = promises;
+            if (!user) throw ('User does not exist');
+            if (!organization) throw ('Organization does not exist');
+
+            user.organizations.push(organization);
+            return user.save();
+        })
+        .then((user) => {
+            return res.json(user);
+        })
+        .catch((err) => {
             return res.status(400)
                 .send({
                     message: errorHandler.getErrorMessage(err)
