@@ -72,6 +72,10 @@ let IssueSchema = new Schema({
         type: Schema.ObjectId,
         ref: 'Progress'
     },
+    notifications: [{
+        type: Schema.ObjectId,
+        ref: 'Notification'
+    }],
     slug: {
         type: String
     }
