@@ -6,7 +6,7 @@
 let path = require('path'),
     mongoose = require('mongoose'),
     Notification = mongoose.model('Notification'),
-    issueController = require('../issues/issues.server.controller'),
+    Issue = mongoose.model('Issue'),
     errorHandler = require(
         path.resolve(
             './modules/core/errors.server.controller'
@@ -44,9 +44,9 @@ let path = require('path'),
 exports.create = function (req, res) {
     delete req.body._id
     let notification = new Notification(req.body);
-    issueController.findById(notification.parent)
+    Issue.findById(notification.parent)
         .then((issue) => {
-            issue.notification.push(notification._id)
+            issue.notifications.push(notification._id)
             return issue.save();
         })
 
@@ -102,6 +102,7 @@ exports.delete = function (req, res) {
 
 exports.list = function (req, res) {
     Notification.find()
+        .populate('user', '_id displayName firstName')
         .then((progresss) => {
             res.json(progresss);
         })

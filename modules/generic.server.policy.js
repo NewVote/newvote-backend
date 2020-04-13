@@ -26,7 +26,8 @@ let collectionRoutes = [
     '/api/regions',
     '/api/countries',
     '/api/progress',
-    '/api/reps'
+    '/api/reps',
+    '/api/notifications'
 ];
 let objectRoutes = [
     '/api/organizations/:organizationId',
@@ -43,6 +44,7 @@ let objectRoutes = [
     '/api/regions/:regionId',
     '/api/progress/:progressId',
     '/api/reps/:repId',
+    '/api/:notificationId'
 ];
 /**
  * Invoke Articles Permissions
@@ -167,7 +169,9 @@ exports.isAllowed = async function (req, res, next) {
         req.media ||
         req.suggestion ||
         req.progress ||
-        req.rep
+        req.rep ||
+        req.notification
+
     if (object && req.user && object.user && object.user.id === req.user.id) {
         return next();
     }
@@ -255,7 +259,6 @@ async function canAccessOrganization(req, object) {
     const isRep = checkRep(rep, roles)
 
     if (method === 'post') {
-        console.log()
         if (!isOwner && !isModerator) throw('User does not have access to that method');
         return true;
     }
