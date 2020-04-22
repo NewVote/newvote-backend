@@ -183,15 +183,24 @@ exports.delete = function (req, res) {
  * List of Proposals
  */
 exports.list = function (req, res) {
+    let { orgs = '' } = req.query
+    // orgs is a string with a list of organization urls, separated by commas
+    // split it and search to get all related issues
+    if (orgs) {
+        orgs = orgs.split(',')
+    }
+
     let solutionId = req.query.solutionId || null;
     let search = req.query.search || null;
-    let org = req.organization;
-    let orgUrl = org ? org.url : null;
     let showDeleted = req.query.showDeleted || null;
 
-    let orgMatch = orgUrl ? {
-        'organizations.url': orgUrl
-    } : {};
+    let orgMatch = !orgs.length ? {} :
+        {
+            'organizations.url': {
+                $in: orgs
+            }
+        } 
+    
     let solutionMatch = solutionId ? {
         solutions: mongoose.Types.ObjectId(solutionId)
     } : {};

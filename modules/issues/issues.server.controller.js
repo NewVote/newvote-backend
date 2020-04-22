@@ -119,16 +119,23 @@ exports.delete = function (req, res) {
  * List of Issues
  */
 exports.list = function (req, res) {
-    let query = {};
+    let { orgs = '' } = req.query
+    // orgs is a string with a list of organization urls, separated by commas
+    // split it and search to get all related issues
+    if (orgs) {
+        orgs = orgs.split(',')
+    }
+
     let topicId = req.query.topicId || null;
-    let org = req.organization;
-    let orgUrl = org ? org.url : null;
     let search = req.query.search || null;
     let showDeleted = req.query.showDeleted || null;
 
-    let orgMatch = orgUrl ? {
-        'organizations.url': orgUrl
-    } : {};
+    const newOrgMatch = !orgs.length ? {} :
+        {
+            'organizations.url': {
+                $in: orgs
+            }
+        } 
     let topicMatch = topicId ? {
         topics: mongoose.Types.ObjectId(topicId)
     } : {};
@@ -152,43 +159,45 @@ exports.list = function (req, res) {
         showAllItemsMatch :
         showNonDeletedItemsMatch;
 
-    Issue.aggregate([{
-        $match: searchMatch
-    },
-    {
-        $match: softDeleteMatch
-    },
-    {
-        $match: topicMatch
-    },
-    {
-        $lookup: {
-            from: 'organizations',
-            localField: 'organizations',
-            foreignField: '_id',
-            as: 'organizations'
+    Issue.aggregate([
+        {
+            $match: searchMatch
+        },
+        {
+            $match: softDeleteMatch
+        },
+        {
+            $match: topicMatch
+        },
+        {
+            $lookup: {
+                from: 'organizations',
+                localField: 'organizations',
+                foreignField: '_id',
+                as: 'organizations'
+            },
+        },
+        {
+            $match: newOrgMatch
+        }, 
+        {
+            $unwind: '$organizations'
+        },
+        {
+            $lookup: {
+                from: 'topics',
+                localField: 'topics',
+                foreignField: '_id',
+                as: 'topics'
+            }
+        },
+        {
+            $sort: {
+                name: 1
+            }
         }
-    },
-    {
-        $match: orgMatch
-    },
-    {
-        $unwind: '$organizations'
-    },
-    {
-        $lookup: {
-            from: 'topics',
-            localField: 'topics',
-            foreignField: '_id',
-            as: 'topics'
-        }
-    },
-    {
-        $sort: {
-            name: 1
-        }
-    }
     ]).exec(function (err, issues) {
+        console.log(issues.length, 'this is issues')
         if (err) {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)

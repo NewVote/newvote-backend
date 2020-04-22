@@ -101,15 +101,22 @@ exports.delete = function (req, res) {
  * List of Topics
  */
 exports.list = function (req, res) {
-    let query = {};
-    let org = req.organization;
-    let orgUrl = org ? org.url : null;
+    let { orgs = '' } = req.query
+    // orgs is a string with a list of organization urls, separated by commas
+    // split it and search to get all related issues
+    if (orgs) {
+        orgs = orgs.split(',')
+    }
+
     let search = req.query.search || null;
     let showDeleted = req.query.showDeleted || null;
 
-    let orgMatch = orgUrl ? {
-        'organizations.url': orgUrl
-    } : {};
+    let orgMatch = !orgs.length ? {} :
+        {
+            'organizations.url': {
+                $in: orgs
+            }
+        } 
     let searchMatch = search ? {
         $text: {
             $search: search
