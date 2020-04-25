@@ -197,7 +197,6 @@ exports.list = function (req, res) {
             }
         }
     ]).exec(function (err, issues) {
-        console.log(issues.length, 'this is issues')
         if (err) {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)

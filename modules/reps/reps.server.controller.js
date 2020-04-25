@@ -179,17 +179,39 @@ exports.delete = async function (req, res) {
 }
 
 exports.list = async function (req, res) {
-    const { organization: { _id: id } } = req
-    Rep.find({ organizations: id })
-        .populate('proposals solutions issues')
-        .then((reps) => {
-            return res.json(reps);
-        })
-        .catch((err) => {
-            return res.status(400)
-                .send({
-                    message: errorHandler.getErrorMessage(err)
-                })
+    const { orgs } = req.query
+    const organizationMatch = { 'organizations.url': { $in: orgs.split(',') } }
+    Rep.aggregate([
+        {
+            $lookup: {
+                from: 'organizations',
+                localField: 'organizations',
+                foreignField: '_id',
+                as: 'organizations'
+            },
+        },
+        {
+            $match: organizationMatch
+        }
+    ])
+        .exec(function (err, reps) {
+            if (err) {
+                return res.status(400)
+                    .send({
+                        message: errorHandler.getErrorMessage(err)
+                    })
+            }
+            
+            Rep.populate(reps, { path: 'proposals issues solutions' }, function (error, results) {
+                if (error) {
+                    return res.status(400)
+                        .send({
+                            message: errorHandler.getErrorMessage(error)
+                        })
+                }
+
+                return res.json(results);
+            })
         })
 }
 
