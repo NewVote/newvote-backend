@@ -44,15 +44,20 @@ let path = require('path'),
 exports.create = function (req, res) {
     delete req.body._id
     let notification = new Notification(req.body);
+    
     Issue.findById(notification.parent)
         .then((issue) => {
             issue.notifications.push(notification._id)
             return issue.save();
         })
 
+    
     notification.save()
-        .then(() => {
-            res.json(notification);
+        .then((item) => {
+            return Notification.populate(item, { path: 'user', select: '_id displayName firstName' })
+        })
+        .then((data) => {
+            res.json(data);
         })
         .catch((err) => {
             return res.status(400)
@@ -88,11 +93,9 @@ exports.update = function (req, res) {
 }
 
 exports.delete = function (req, res) {
-    Notification.findById(req.body.id)
-        .remove()
-        .then((notification) => {
-            return res.json(notification);
-        })
+    Notification.findOne({ _id: req.notification._id })
+        .then((notification) => notification.remove())
+        .then((notification) => res.json(notification))
         .catch((err) => {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
@@ -121,6 +124,7 @@ exports.notificationByID = function(req, res, next, id) {
     }
 
     Notification.findById(id)
+        .populate('user')
         .then((notification) => {
             if (!notification) {
                 return res.status(404).send({

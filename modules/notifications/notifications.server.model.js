@@ -26,9 +26,13 @@ let NotificationSchema = new Schema({
     },
     image: {
         type: String
+    },
+    softDeleted: {
+        type: Boolean,
+        default: false
     }
 }, {
-    timestamps: { createdAt: 'created_at' }
+    timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });
 
 mongoose.model('Notification', NotificationSchema);

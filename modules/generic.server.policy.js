@@ -163,19 +163,21 @@ exports.isAllowed = async function (req, res, next) {
         req.issue ||
         req.solution ||
         req.proposal ||
-        req.organization ||
+        req.notification ||
         req.endorsement ||
         req.topic ||
         req.media ||
         req.suggestion ||
         req.progress ||
         req.rep ||
-        req.notification
+        req.organization
+        
 
+    // are they the owner
     if (object && req.user && object.user && object.user.id === req.user.id) {
         return next();
     }
-  
+
     // Check for user roles
     acl.areAnyRolesAllowed(
         roles,
@@ -254,6 +256,7 @@ async function canAccessOrganization(req, object) {
         .findOne({ _id: id, organizations: reqOrg._id })
 
     // check user for role access
+    const isAdmin = checkAdmin(id, roles);
     const isOwner = checkOwner(id, roles, owner);
     const isModerator = checkModerator(id, roles, moderators);
     const isRep = checkRep(rep, roles)
@@ -268,12 +271,20 @@ async function canAccessOrganization(req, object) {
         if (!isOwner && collection && collection.name === 'organizations') throw('An error occoured while validating your credentials')
         return true;
     }
-    if (method === 'delete') throw('User does not have access to that method');
+    if (method === 'delete') {
+        if (isAdmin) return true
+        throw('User does not have access to that method');
+    }
+}
+
+function checkAdmin(id, roles) {
+    if (roles.includes('admin')) return true;
+    return false
 }
 
 function checkOwner(id, roles, owner) {
     // admins have universal access
-    if (roles.includes('admin')) return true;
+    if (checkAdmin(id, roles)) return true;
     // user is the organization owner - need to use .equals (object id comparison from mongoose) to check id's
     if (owner && owner._id.equals(id)) return true
 
@@ -282,7 +293,7 @@ function checkOwner(id, roles, owner) {
 
 function checkModerator(id, roles, moderators) {
     // admins have universal access
-    if (roles.includes('admin')) return true;
+    if (checkAdmin(id, roles)) return true;
     // user is a mod
     if (moderators && moderators.some((mod) => mod._id.equals(id))) {
         return true;

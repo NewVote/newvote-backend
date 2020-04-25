@@ -184,7 +184,7 @@ exports.list = function (req, res) {
         }
     },
     {
-        $match: newOrgMatch
+        $match: orgMatch
     },
     {
         $unwind: '$organizations'
