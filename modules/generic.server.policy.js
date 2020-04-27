@@ -160,17 +160,19 @@ exports.isAllowed = async function (req, res, next) {
     let user = req.user;
 
     // If an article is being processed and the current user created it then allow any manipulation
-
-    // splitting the url gives us a min of 3 element array
-    // take the third element to get the route that's being accessed
-    const [first, api, routeAndParams, ...rest] = req.originalUrl.split('/')
-    // split the route from the params to get the route so we can tell ACL what
-    // type to lookup and check
-    const [route, params] = routeAndParams.split('?')
-
-    const routes = ['organizations', 'topics', 'issues', 'solutions', 'proposals', 'suggestions', 'votes', 'media', 'notifications', 'reps', 'progress']
-    const objects = [req.organization, req.topic, req.issue, req.solution, req.proposal, req.suggestion, req.vote, req.media, req.notification, req.rep, req.progress]
-    const entityObject = objects[routes.indexOf(route)]
+    let object =
+        req.vote ||
+        req.issue ||
+        req.solution ||
+        req.proposal ||
+        req.organization ||
+        req.endorsement ||
+        req.topic ||
+        req.media ||
+        req.suggestion ||
+        req.rep ||
+        req.progress ||
+        req.notification
 
     // Check fo r user roles
     acl.areAnyRolesAllowed(
@@ -206,7 +208,7 @@ exports.isAllowed = async function (req, res, next) {
             if (req.method.toLowerCase() !== 'get' && user) {
                 //check for org owner or moderator on all non get requests
                 // this requires a DB query so only use it when necesary
-                return canAccessOrganization(req, entityObject)
+                return canAccessOrganization(req, object)
                     .then(result => {
                         // they own this organization, let them do whatever
                         return next();
