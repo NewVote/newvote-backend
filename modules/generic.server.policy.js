@@ -7,7 +7,8 @@ let acl = require('acl'),
     mongoose = require('mongoose'),
     organizationController = require('./organizations/organizations.server.controller'),
     Organization = mongoose.model('Organization'),
-    Rep = mongoose.model('Rep');
+    Rep = mongoose.model('Rep'),
+    ObjectId = require('mongodb').ObjectID
 
 // Using the memory backend
 acl = new acl(new acl.memoryBackend());
@@ -44,7 +45,7 @@ let objectRoutes = [
     '/api/regions/:regionId',
     '/api/progress/:progressId',
     '/api/reps/:repId',
-    '/api/:notificationId'
+    '/api/notifications/:notificationId'
 ];
 /**
  * Invoke Articles Permissions
@@ -76,7 +77,8 @@ exports.invokeRolesPolicies = function () {
             resources: [
                 '/api/issues',
                 '/api/solutions',
-                '/api/proposals'
+                '/api/proposals',
+                '/api/notifications'
             ],
             permissions: ['get', 'post']
         },
@@ -158,27 +160,19 @@ exports.isAllowed = async function (req, res, next) {
     let user = req.user;
 
     // If an article is being processed and the current user created it then allow any manipulation
-    let object =
-        req.vote ||
-        req.issue ||
-        req.solution ||
-        req.proposal ||
-        req.notification ||
-        req.endorsement ||
-        req.topic ||
-        req.media ||
-        req.suggestion ||
-        req.progress ||
-        req.rep ||
-        req.organization
-        
 
-    // are they the owner
-    if (object && req.user && object.user && object.user.id === req.user.id) {
-        return next();
-    }
+    // splitting the url gives us a min of 3 element array
+    // take the third element to get the route that's being accessed
+    const [first, api, routeAndParams, ...rest] = req.originalUrl.split('/')
+    // split the route from the params to get the route so we can tell ACL what
+    // type to lookup and check
+    const [route, params] = routeAndParams.split('?')
 
-    // Check for user roles
+    const routes = ['organizations', 'topics', 'issues', 'solutions', 'proposals', 'suggestions', 'votes', 'media', 'notifications', 'reps', 'progress']
+    const objects = [req.organization, req.topic, req.issue, req.solution, req.proposal, req.suggestion, req.vote, req.media, req.notification, req.rep, req.progress]
+    const entityObject = objects[routes.indexOf(route)]
+
+    // Check fo r user roles
     acl.areAnyRolesAllowed(
         roles,
         req.route.path,
@@ -212,7 +206,7 @@ exports.isAllowed = async function (req, res, next) {
             if (req.method.toLowerCase() !== 'get' && user) {
                 //check for org owner or moderator on all non get requests
                 // this requires a DB query so only use it when necesary
-                return canAccessOrganization(req, object)
+                return canAccessOrganization(req, entityObject)
                     .then(result => {
                         // they own this organization, let them do whatever
                         return next();
@@ -260,21 +254,20 @@ async function canAccessOrganization(req, object) {
     const isOwner = checkOwner(id, roles, owner);
     const isModerator = checkModerator(id, roles, moderators);
     const isRep = checkRep(rep, roles)
+    const isCreator = checkCreator(id, object)
 
     if (method === 'post') {
         if (!isOwner && !isModerator) throw('User does not have access to that method');
         return true;
     }
     if (method === 'put') {
-        if (!isOwner && !isModerator) throw('User does not have access to that route');
+        if (!isOwner && !isModerator && !isCreator) throw('User does not have access to that route');
         // block access to organization editing
         if (!isOwner && collection && collection.name === 'organizations') throw('An error occoured while validating your credentials')
         return true;
     }
-    if (method === 'delete') {
-        if (isAdmin) return true
-        throw('User does not have access to that method');
-    }
+    if (method === 'delete') throw('User does not have access to that method');
+
 }
 
 function checkAdmin(id, roles) {
@@ -307,6 +300,15 @@ function checkRep(repObject, roles) {
     if (!repObject) return false
 
     return true
+}
+
+function checkCreator(id, object) {
+    if (!object || !id || !object.user || !object.user._id) return false
+    const userId = ObjectId(id)
+    const entityOwnerId = ObjectId(object.user._id)
+    if (!userId || !entityOwnerId) return false
+
+    return userId.equals(entityOwnerId);
 }
 
 function checkUrl (req) {

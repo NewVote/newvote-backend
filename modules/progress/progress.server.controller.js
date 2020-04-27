@@ -120,6 +120,7 @@ exports.progressByID = function(req, res, next, id) {
                     message: 'No Progress with that identifier has been found'
                 });
             }
+            console.log(progress, 'this is progress')
             req.progress = progress;
             next();
         })

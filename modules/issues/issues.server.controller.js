@@ -126,7 +126,6 @@ exports.list = function (req, res) {
     if (orgs) {
         orgs = orgs.split(', ')
     }
-    console.log(orgs, 'this is orgs')
     let query = {};
     let topicId = req.query.topicId || null;
     let org = req.organization;
