@@ -13,33 +13,6 @@ let path = require('path'),
         )
     ),
     _ = require('lodash');
-
-
-// exports.createProgress = function (issue) {
-//     const progress = new Progress();
-//     progress.states = [
-//         {
-//             name: 'Raised',
-//             active: true
-//         },
-//         {
-//             name: 'In Progress',
-//             active: false
-//         },
-//         {
-//             name: 'Outcome',
-//             active: false
-//         },
-//     ]
-//     progress.parentType = 'Issue';
-//     progress.parent = issue._id
-
-//     return progress.save()
-//         .then((res) => {
-//             console.log(res)
-//             return res
-//         })
-// }
     
 exports.create = function (req, res) {
     delete req.body._id
