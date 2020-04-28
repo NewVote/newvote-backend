@@ -79,7 +79,6 @@ exports.create = async function (req, res) {
             return res.json({ reps, invalidReps })
         })
         .catch((err) => {
-            console.log(err, 'this is err')
             return res.status(400)
                 .send({
                     message: errorHandler.getErrorMessage(err)
@@ -97,13 +96,11 @@ exports.update = async function (req, res) {
     })
 
     const newRep = _.assign(rep, req.body);
-    console.log(newRep, 'this is newRep')
     newRep.save()
         .then((rep) => {
             res.json(rep)
         })
         .catch((err) => {
-            console.log(err, 'this is err')
             return res.status(400)
                 .send({
                     message: errorHandler.getErrorMessage(err)
@@ -164,7 +161,6 @@ exports.deleteMany = async function (req, res) {
 }
 
 exports.delete = async function (req, res) {
-    // console.log(req.body, 'this is req.body')
     let rep = req.rep
     rep.remove()
         .then((removedRep) => {
@@ -179,7 +175,8 @@ exports.delete = async function (req, res) {
 }
 
 exports.list = async function (req, res) {
-    Rep.find()
+    const { organization: { _id: id } } = req
+    Rep.find({ organizations: id })
         .populate('proposals solutions issues')
         .then((reps) => {
             return res.json(reps);

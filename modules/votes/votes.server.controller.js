@@ -117,6 +117,10 @@ exports.update = function (req, res) {
     const org = JSON.parse(req.cookies.organization).url;
     let vote = req.vote;
     _.extend(vote, req.body);
+
+    if (req.body.voteValue === 0) {
+        vote.voteValue = 0;
+    }
     // vote.title = req.body.title;
     // vote.content = req.body.content;
     vote.save()

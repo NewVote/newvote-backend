@@ -16,7 +16,8 @@ const schema = {
         organizations: Joi.objectId(),
         softDeleted: Joi.boolean(),
         suggestionTemplate: Joi.objectId(),
-        slug: Joi.string()
+        slug: Joi.string(),
+        notifications: Joi.array(),
     })
 }
 

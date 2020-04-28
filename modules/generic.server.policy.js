@@ -7,7 +7,8 @@ let acl = require('acl'),
     mongoose = require('mongoose'),
     organizationController = require('./organizations/organizations.server.controller'),
     Organization = mongoose.model('Organization'),
-    Rep = mongoose.model('Rep');
+    Rep = mongoose.model('Rep'),
+    ObjectId = require('mongodb').ObjectID
 
 // Using the memory backend
 acl = new acl(new acl.memoryBackend());
@@ -25,7 +26,9 @@ let collectionRoutes = [
     '/api/media',
     '/api/regions',
     '/api/countries',
-    '/api/reps'
+    '/api/progress',
+    '/api/reps',
+    '/api/notifications'
 ];
 let objectRoutes = [
     '/api/organizations/:organizationId',
@@ -40,7 +43,9 @@ let objectRoutes = [
     '/api/media/:mediaId',
     '/api/meta/:uri',
     '/api/regions/:regionId',
-    '/api/reps/:repId'
+    '/api/progress/:progressId',
+    '/api/reps/:repId',
+    '/api/notifications/:notificationId'
 ];
 /**
  * Invoke Articles Permissions
@@ -72,7 +77,8 @@ exports.invokeRolesPolicies = function () {
             resources: [
                 '/api/issues',
                 '/api/solutions',
-                '/api/proposals'
+                '/api/proposals',
+                '/api/notifications'
             ],
             permissions: ['get', 'post']
         },
@@ -164,12 +170,11 @@ exports.isAllowed = async function (req, res, next) {
         req.topic ||
         req.media ||
         req.suggestion ||
-        req.rep
-    if (object && req.user && object.user && object.user.id === req.user.id) {
-        return next();
-    }
+        req.rep ||
+        req.progress ||
+        req.notification
 
-    // Check for user roles
+    // Check fo r user roles
     acl.areAnyRolesAllowed(
         roles,
         req.route.path,
@@ -247,27 +252,34 @@ async function canAccessOrganization(req, object) {
         .findOne({ _id: id, organizations: reqOrg._id })
 
     // check user for role access
+    const isAdmin = checkAdmin(id, roles);
     const isOwner = checkOwner(id, roles, owner);
     const isModerator = checkModerator(id, roles, moderators);
     const isRep = checkRep(rep, roles)
+    const isCreator = checkCreator(id, object)
 
     if (method === 'post') {
-        console.log()
         if (!isOwner && !isModerator) throw('User does not have access to that method');
         return true;
     }
     if (method === 'put') {
-        if (!isOwner && !isModerator) throw('User does not have access to that route');
+        if (!isOwner && !isModerator && !isCreator) throw('User does not have access to that route');
         // block access to organization editing
         if (!isOwner && collection && collection.name === 'organizations') throw('An error occoured while validating your credentials')
         return true;
     }
     if (method === 'delete') throw('User does not have access to that method');
+
+}
+
+function checkAdmin(id, roles) {
+    if (roles.includes('admin')) return true;
+    return false
 }
 
 function checkOwner(id, roles, owner) {
     // admins have universal access
-    if (roles.includes('admin')) return true;
+    if (checkAdmin(id, roles)) return true;
     // user is the organization owner - need to use .equals (object id comparison from mongoose) to check id's
     if (owner && owner._id.equals(id)) return true
 
@@ -276,7 +288,7 @@ function checkOwner(id, roles, owner) {
 
 function checkModerator(id, roles, moderators) {
     // admins have universal access
-    if (roles.includes('admin')) return true;
+    if (checkAdmin(id, roles)) return true;
     // user is a mod
     if (moderators && moderators.some((mod) => mod._id.equals(id))) {
         return true;
@@ -292,6 +304,15 @@ function checkRep(repObject, roles) {
     return true
 }
 
+function checkCreator(id, object) {
+    if (!object || !id || !object.user || !object.user._id) return false
+    const userId = ObjectId(id)
+    const entityOwnerId = ObjectId(object.user._id)
+    if (!userId || !entityOwnerId) return false
+
+    return userId.equals(entityOwnerId);
+}
+
 function checkUrl (req) {
     let { organization } = req
 
@@ -301,108 +322,3 @@ function checkUrl (req) {
 
     return domain === organization.url
 }
-
-/*
-// need to find the organization that the user is currently viewing (the url)
-// this is NOT the organization that the content belongs to (not the object.organizations)
-// N.B new content will have no organization
-async function canAccessOrganization(req, object) {
-    const user = req.user;
-    const method = req.method.toLowerCase();
-    let organization = null;
-    let orgUrl = null;
-    const { user, method, organization } = req;
-    if (!organization) throw('No organization discovered in request body')
-    try {
-        organization = req.organization;
-        orgUrl = organization.url;
-    } catch (e) {
-        Promise.reject('No organization discovered in request body');
-    }
-    // when creating there is no org for the object yet
-    // so use the org in the url to test for ownership
-    if (method === 'post') {
-        if (
-            user.roles.includes('admin') ||
-            (organization.owner && organization.owner._id == user._id) ||
-            (organization.moderators &&
-                organization.moderators.some(mod => mod._id == user._id))
-        ) {
-            return Promise.resolve(true);
-        } else {
-
-            if (
-                !user.roles.includes('user') ||
-                !user.verified
-            ) {
-                const error = {
-                    message: 'An error occoured while validating your credentials',
-                    role: 'user',
-                    status: 403
-                }
-
-                return Promise.reject(error);
-            }
-  
-            console.error(
-                'failed to test user against admin owner or mod list'
-            );
-            console.error('user is: ', user);
-            return Promise.reject(
-                'An error occoured while validating your credentials'
-            );
-        }
-    } else if (method === 'put') {
-        if (object.collection && object.collection.name === 'organizations') {
-            if (object.owner === null && !user.roles.includes('admin')) {
-                console.error('no owner on object and user is not admin');
-                Promise.reject(
-                    'An error occoured while validating your credentials'
-                );
-            }
-            // we are updating a community so just check its owner (mods cant edit community)
-            return Promise.resolve(
-                user.roles.includes('admin') || object.owner._id == user._id
-            );
-        } else {
-            debugger;
-            // updating other content so need to check organization owner and moderators
-            return true;
-        }
-    } else if (method === 'delete') {
-        // On delete requests on admins have access to delete requests
-        return Promise.resolve(false);
-    }
-}
-  // allowed test failed, is this a non GET request? (POST/UPDATE/DELETE)
-            if (req.method.toLowerCase() !== 'get' && user) {
-                //check for org owner or moderator on all non get requests
-                // this requires a DB query so only use it when necesary
-                await canAccessOrganization(req, object)
-                .then(result => {
-                    if (result) {
-                        // they own this organization, let them do whatever
-                        return next();
-                    } else {
-                        // it was not a GET request but they still have no access
-                        // check if the issue is that they are not verified
-                        if (
-                            !user.roles.includes('user') ||
-                            !user.verified
-                        ) {
-                            // user is logged in but they are missing the user role
-                            // this means they must not be verified
-                            return res.status(403).json({
-                                message: 'User is not authorized',
-                                role: 'user' // used to identify this is a missing role issue
-                            });
-                        }
-                        // not a GET + has 'user' role
-                        return res.status(403).json({
-                            message: 'User is not authorized'
-                        });
-                    }
-                });
-            }
-
-*/
