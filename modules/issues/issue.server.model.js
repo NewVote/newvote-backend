@@ -63,7 +63,19 @@ let IssueSchema = new Schema({
     suggestionTemplate: {
         type: Schema.ObjectId,
         ref: 'Suggestion'
+    }, 
+    progressFeed: {
+        type: Schema.ObjectId,
+        ref: 'Feed'
     },
+    progress: {
+        type: Schema.ObjectId,
+        ref: 'Progress'
+    },
+    notifications: [{
+        type: Schema.ObjectId,
+        ref: 'Notification'
+    }],
     slug: {
         type: String
     }

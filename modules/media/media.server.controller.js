@@ -202,7 +202,6 @@ exports.list = function (req, res) {
             } else {
                 votes.attachVotes(medias, req.user)
                     .then(function (mediaArr) {
-                        // console.log(mediaArr);
                         res.json(mediaArr);
                     })
                     .catch(function (err) {

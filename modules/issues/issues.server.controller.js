@@ -14,7 +14,8 @@ const path = require('path'),
     )),
     _ = require('lodash'),
     seed = require('./seed/seed'),
-    createSlug = require('../helpers/slug');
+    createSlug = require('../helpers/slug'),
+    progressController = require('../progress/progress.server.controller');
 
 /**
  * Create a issue
@@ -30,16 +31,20 @@ exports.create = function (req, res) {
         let issue = new Issue(req.body);
         issue.user = req.user;
         issue.slug = slug
-
-        issue.save(function (err) {
-            if (err) {
+        const progress = progressController.createProgress(issue)
+        progress
+            .then((item) => {
+                issue.progress = item
+                return issue.save()
+            })
+            .then((item) => {
+                res.json(item);
+            })
+            .catch((err) => {
                 return res.status(400).send({
                     message: errorHandler.getErrorMessage(err)
                 });
-            } else {
-                res.json(issue);
-            }
-        });
+            })
     })
 
 };
@@ -104,21 +109,23 @@ exports.update = function (req, res) {
 exports.delete = function (req, res) {
     let issue = req.issue;
 
-    issue.remove(function (err) {
-        if (err) {
+    issue.remove()
+        .then(() => res.json(issue))
+        .catch((err) => {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });
-        } else {
-            res.json(issue);
-        }
-    });
+        })
 };
 
 /**
  * List of Issues
  */
 exports.list = function (req, res) {
+    let { orgs } = req.query
+    if (orgs) {
+        orgs = orgs.split(', ')
+    }
     let query = {};
     let topicId = req.query.topicId || null;
     let org = req.organization;
@@ -129,6 +136,12 @@ exports.list = function (req, res) {
     let orgMatch = orgUrl ? {
         'organizations.url': orgUrl
     } : {};
+    const newOrgMatch = {
+        'organizations.url': {
+            $all: orgs
+        }
+    }
+    
     let topicMatch = topicId ? {
         topics: mongoose.Types.ObjectId(topicId)
     } : {};
