@@ -186,14 +186,14 @@ exports.list = function (req, res) {
     {
         $unwind: '$organizations'
     },
-    {
-        $lookup: {
-            from: entityKey,
-            localField: entityKey,
-            foreignField: '_id',
-            as: entityKey
-        }
-    },
+    // {
+    //     $lookup: {
+    //         from: entityKey,
+    //         localField: entityKey,
+    //         foreignField: '_id',
+    //         as: entityKey
+    //     }
+    // },
     {
         $sort: {
             created: -1
@@ -201,17 +201,15 @@ exports.list = function (req, res) {
     }
     ])
         .exec(function (err, medias) {
-
             if (err) {
                 return res.status(400)
                     .send({
                         message: errorHandler.getErrorMessage(err)
                     });
             } else {
-                votes.attachVotes(medias, req.user)
+                return votes.attachVotes(medias, req.user)
                     .then(function (mediaArr) {
-                        // console.log(mediaArr);
-                        res.json(mediaArr);
+                        return res.json(mediaArr);
                     })
                     .catch(function (err) {
                         res.status(500)

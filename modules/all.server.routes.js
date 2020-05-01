@@ -13,7 +13,6 @@ let path = require('path'),
     solutions = require('./solutions/solutions.server.controller'),
     proposals = require('./proposals/proposals.server.controller'),
     suggestions = require('./suggestions/suggestions.server.controller'),
-    media = require('./media/media.server.controller'),
     endorsement = require('./endorsement/endorsement.server.controller'),
     votes = require('./votes/votes.server.controller'),
     regions = require('./regions/regions.server.controller'),
@@ -133,14 +132,6 @@ module.exports = function(app) {
         .get(endorsement.list)
         .post(endorsement.create);
 
-    app.route('/api/media')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed
-        )
-        .get(media.list)
-        .post(media.create);
-
     app.route('/api/regions')
         .all(
             jwt({ secret: config.jwtSecret, credentialsRequired: false }),
@@ -155,10 +146,6 @@ module.exports = function(app) {
             policy.isAllowed
         )
         .get(countries.list);
-
-    app.route('/api/meta/:uri')
-        // .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
-        .get(media.getMeta);
 
     // Single article routes
     app.route('/api/topics/:topicId')
@@ -231,15 +218,6 @@ module.exports = function(app) {
         .put(endorsement.update)
         .delete(endorsement.delete);
 
-    app.route('/api/media/:mediaId')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed
-        )
-        .get(media.read)
-        .put(media.update)
-        .delete(media.delete);
-
     app.route('/api/regions/:regionId')
         .all(
             jwt({ secret: config.jwtSecret, credentialsRequired: false }),
@@ -264,7 +242,6 @@ module.exports = function(app) {
     app.param('voteId', votes.voteByID);
     app.param('suggestionId', suggestions.suggestionByID);
     app.param('endorsementId', endorsement.endorsementByID);
-    app.param('mediaId', media.mediaByID);
     app.param('regionId', regions.regionByID);
     app.param('countryId', countries.countryByID);
 };
