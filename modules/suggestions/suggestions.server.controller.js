@@ -110,7 +110,6 @@ exports.create = function (req, res) {
                 return voteController.attachVotes([suggestion], req.user, req.query.regions)
             })
             .then((suggestions) => {
-                // console.log('mailer success: ', data);
                 return res.status(200).json(suggestions[0]);
             })
             .catch(err => {

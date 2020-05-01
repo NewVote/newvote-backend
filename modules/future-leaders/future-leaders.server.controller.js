@@ -82,7 +82,6 @@ exports.update = function (req, res) {
             return sendVerificationCodeViaEmail(req, res, savedLeader);
         })
         .catch((err) => {
-            console.log(err, 'this is err');
             return res.status(400)
                 .send({
                     message: errorHandler.getErrorMessage(err)

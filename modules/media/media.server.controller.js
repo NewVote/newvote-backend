@@ -209,7 +209,7 @@ exports.list = function (req, res) {
             } else {
                 return votes.attachVotes(medias, req.user)
                     .then(function (mediaArr) {
-                        return res.json(mediaArr);
+                        res.json(mediaArr);
                     })
                     .catch(function (err) {
                         res.status(500)
