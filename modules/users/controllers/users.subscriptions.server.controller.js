@@ -92,11 +92,27 @@ exports.delete = (req, res) => {
 exports.test = (req, res) => {
     const { _id } = req
 
+    const notificationPayload = {
+        "notification": {
+            "title": "Angular News",
+            "body": "Newsletter Available!",
+            "vibrate": [100, 50, 100],
+            "data": {
+                "dateOfArrival": Date.now(),
+                "primaryKey": 1
+            },
+            "actions": [{
+                "action": "explore",
+                "title": "Go to the site"
+            }]
+        }
+    };
+
     User.findOne({ _id })
         .then((user) => {
             if (!req.organization.subscriptions[req.organization.url]) throw('User is not registered')
             const subscription = user.subscriptions[req.organization.url]
-            return webPush.sendNotification(subscription, payload, options)
+            return webPush.sendNotification(subscription, notificationPayload, options)
         })
         .then((res) => {
             return res.json({ found: res })
