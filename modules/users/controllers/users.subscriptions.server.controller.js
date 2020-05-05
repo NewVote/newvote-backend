@@ -28,7 +28,8 @@ const options = {
 }
 
 exports.create = (req, res) => {
-    console.log(req.user, 'this user')
+    console.log(req.body, 'this is req.body')
+    console.log(req.user, 'this is user')
     const { _id: id } = req.user
     const { subscription } = req.body
 
