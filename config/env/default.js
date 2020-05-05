@@ -45,5 +45,9 @@ module.exports = {
                 fileSize: 1 * 1024 * 1024 // Max file size in bytes (1 MB)
             }
         }
+    },
+    vapid: {
+        VAPID_PUB: process.env.VAPID_PUB,
+        VAPID_PRIV: process.env.VAPID_PRIV
     }
 };

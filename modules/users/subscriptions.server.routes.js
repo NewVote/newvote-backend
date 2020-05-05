@@ -17,4 +17,7 @@ module.exports = function (app) {
         .post(subscriptionController.create)
         .put(subscriptionController.update)
         .delete(subscriptionController.delete);
+
+    app.route('/api/subscriptions/push')
+        .post(subscriptionController.test)
 }
