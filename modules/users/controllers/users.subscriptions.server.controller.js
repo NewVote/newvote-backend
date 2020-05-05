@@ -28,9 +28,11 @@ const options = {
 }
 
 exports.create = (req, res) => {
-    console.log(req.body, 'this is req.body')
-    console.log(req.user, 'this is user')
-    const { _id: id } = req.user
+    console.log(req.params)
+    // console.log(req.body, 'this is req.body')
+    // console.log(req.user, 'this is user')
+    const { subscriptionId: id } = req.params
+    // const { _id: id } = req.user
     const { subscription } = req.body
 
     User.findOne({ _id: id })
