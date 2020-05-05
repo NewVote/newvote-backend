@@ -9,11 +9,11 @@ let subscriptionController = require('./controllers/users.subscriptions.server.c
 module.exports = function (app) {
 
     // Single Rep
-    app.route('/api/subscriptions/:repId')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed
-        )
+    app.route('/api/subscriptions/:subscriptionId')
+        // .all(
+        //     jwt({ secret: config.jwtSecret, credentialsRequired: false }),
+        //     policy.isAllowed
+        // )
         .post(subscriptionController.create)
         .put(subscriptionController.update)
         .delete(subscriptionController.delete);

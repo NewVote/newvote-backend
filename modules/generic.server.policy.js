@@ -28,7 +28,8 @@ let collectionRoutes = [
     '/api/countries',
     '/api/progress',
     '/api/reps',
-    '/api/notifications'
+    '/api/notifications',
+    '/api/subscriptions'
 ];
 let objectRoutes = [
     '/api/organizations/:organizationId',
@@ -45,7 +46,8 @@ let objectRoutes = [
     '/api/regions/:regionId',
     '/api/progress/:progressId',
     '/api/reps/:repId',
-    '/api/notifications/:notificationId'
+    '/api/notifications/:notificationId',
+    '/api/subscriptions/:subscriptionId'
 ];
 /**
  * Invoke Articles Permissions
