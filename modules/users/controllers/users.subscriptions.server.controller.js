@@ -112,7 +112,7 @@ exports.test = (req, res) => {
         .then((user) => {
             if (!req.organization.subscriptions[req.organization.url]) throw('User is not registered')
             const subscription = user.subscriptions[req.organization.url]
-            return webPush.sendNotification(subscription, notificationPayload, options)
+            return webPush.sendNotification(subscription, JSON.stringify(notificationPayload), options)
         })
         .then((res) => {
             return res.json({ found: res })
