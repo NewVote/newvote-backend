@@ -4,8 +4,8 @@
  * Module dependencies.
  */
 let _ = require('lodash'),
-    config = require(path.resolve('./config/config')),
     path = require('path'),
+    config = require(path.resolve('./config/config')),
     mongoose = require('mongoose'),
     User = mongoose.model('User'),
     errorHandler = require(path.resolve(
