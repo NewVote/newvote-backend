@@ -94,7 +94,7 @@ exports.delete = (req, res) => {
 }
 
 exports.test = (req, res) => {
-    const { _id } = req
+    const { subscriptionId: id } = req.params
 
     const notificationPayload = {
         "notification": {
@@ -112,14 +112,14 @@ exports.test = (req, res) => {
         }
     };
 
-    User.findOne({ _id })
+    User.findOne({ id })
         .then((user) => {
             if (!req.organization.subscriptions[req.organization.url]) throw('User is not registered')
             const subscription = user.subscriptions[req.organization.url]
             return webPush.sendNotification(subscription, JSON.stringify(notificationPayload), options)
         })
-        .then((res) => {
-            return res.json({ found: res })
+        .then((data) => {
+            return res.json({ found: data })
         })
         .catch((err) => {
             return res.status(400).send({

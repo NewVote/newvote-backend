@@ -18,6 +18,6 @@ module.exports = function (app) {
         .put(subscriptionController.update)
         .delete(subscriptionController.delete);
 
-    app.route('/api/subscriptions/push')
-        .post(subscriptionController.test)
+    app.route('/api/subscriptions/push/:subscriptionId')
+        .get(subscriptionController.test)
 }
