@@ -44,7 +44,7 @@ exports.create = (req, res) => {
                 }
             }
 
-            user.subscriptions = Object.assign(user.subscriptions, {
+            user.subscriptions = Object.assign({}, user.subscriptions, {
                 [req.organization.url]: subscription
             })
 
