@@ -135,6 +135,7 @@ const sendPushNotification = (notification, organization) => {
         "notification": {
             "title": `${organization.name} Issue Update`,
             "body": `${bodyText}`,
+            "icon": "assets/logo-no-text.png",
             "vibrate": [100, 50, 100],
             "data": {
                 "dateOfArrival": Date.now(),
@@ -147,17 +148,12 @@ const sendPushNotification = (notification, organization) => {
         }
     };
     
-    // We search the subscription object by matching the organization url
-    // to the subscription object property keys
 
-    // const organizationUrl = organization.url
-    // const value = { $exists: true }
     const field = 'subscriptions.' + organization.url
     const value = { $exists: true }
     let query = {
         [field]: value
     };
-    // query.subscriptions[organizationUrl] = value
 
     return User.find(query)
         .then((users) => {
