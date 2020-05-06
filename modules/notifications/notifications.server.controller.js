@@ -7,12 +7,25 @@ let path = require('path'),
     mongoose = require('mongoose'),
     Notification = mongoose.model('Notification'),
     Issue = mongoose.model('Issue'),
+    User = mongoose.model('User'),
+    config = require(path.resolve('./config/config')),
     errorHandler = require(
         path.resolve(
             './modules/core/errors.server.controller'
         )
     ),
-    _ = require('lodash');
+    _ = require('lodash'),
+    webPush = require('web-push');
+
+const options = {
+    vapidDetails: {
+        subject: 'https://newvote.org',
+        publicKey: config.vapid.VAPID_PUB,
+        privateKey: config.vapid.VAPID_PRIV
+    },
+    TTL: 60
+}
+    
     
 exports.create = function (req, res) {
     delete req.body._id
@@ -29,7 +42,10 @@ exports.create = function (req, res) {
                 .populate(item, [{ path: 'user', select: '_id displayName firstName' }, { path: 'rep' }])
         })
         .then((data) => {
-            res.json(data);
+            // take the notification and send it to users
+            sendPushNotification(data, req.organization)
+            // return data to client
+            return res.json(data);
         })
         .catch((err) => {
             console.log(err, 'this is err')
@@ -109,3 +125,43 @@ exports.notificationByID = function(req, res, next, id) {
             next();
         })
 };
+
+const sendPushNotification = (notification, organization) => {
+    const { url } = organization
+    const { description } = notification
+
+    const notificationPayload = {
+        "notification": {
+            "title": `${organization.name} Issue Update`,
+            "body": `${description}`,
+            "vibrate": [100, 50, 100],
+            "data": {
+                "dateOfArrival": Date.now(),
+                "primaryKey": 1
+            },
+            "actions": [{
+                "action": "explore",
+                "title": "Go to Issue"
+            }]
+        }
+    };
+
+   return User.find({ subscriptions: {
+        [organization.url]: { $exists: true }
+    } })
+        .then((users) => {
+            console.log(users, 'this is users on sendPushNotification')
+            if (!users.length) throw('No users to send notification to')
+
+            return users.forEach((user) => {
+                const subscription = user.subscription[organization.url]
+                return webPush.sendNotification(subscription, JSON.stringify(notificationPayload), options)
+            })
+        })
+        .then((res) => {
+            return true
+        })
+        .catch((err) => {
+            return err;
+        })
+}

@@ -14,10 +14,6 @@ let _ = require('lodash'),
     webPush = require('web-push');
 
 
-// Track and update the push notification subscriptions of each user
-
-const payload = "Payloadddddd"
-
 const options = {
     vapidDetails: {
         subject: 'https://newvote.org',
@@ -117,18 +113,14 @@ exports.test = (req, res) => {
 
     User.findOne({ _id: id })
         .then((user) => {
-            console.log(user, 'this is user')
             if (!user.subscriptions[req.organization.url]) throw('User is not subscribed to organization')
-            console.log(user, 'this is user')
             const subscription = user.subscriptions[req.organization.url]
             return webPush.sendNotification(subscription, JSON.stringify(notificationPayload), options)
         })
         .then((data) => {
-            console.log(data, 'this is data')
-            return res.json({ found: data })
+            return res.json(data)
         })
         .catch((err) => {
-            console.log(err, 'this is err')
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });    
