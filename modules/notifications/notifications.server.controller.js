@@ -152,7 +152,7 @@ const sendPushNotification = (notification, organization) => {
     // const organizationUrl = organization.url
     // const value = { $exists: true }
     let query = {
-        subscriptions: { $exists: true }
+        subscriptions: { [organization.url]: { $exists: true } }
     };
     // query.subscriptions[organizationUrl] = value
 
