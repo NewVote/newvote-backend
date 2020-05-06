@@ -33,7 +33,12 @@ exports.create = (req, res) => {
     // console.log(req.user, 'this is user')
     const { subscriptionId: id } = req.params
     // const { _id: id } = req.user
-    const { subscription } = req.body
+    const { endpoint, expirationTime, keys } = req.body
+    const subscription = {
+        endpoint,
+        expirationTime,
+        keys
+    }
     console.log(subscription, 'this is sub')
     console.log(req.body, 'this is req.body')
     User.findOne({ _id: id })
