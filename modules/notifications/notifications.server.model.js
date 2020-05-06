@@ -30,6 +30,14 @@ let NotificationSchema = new Schema({
     softDeleted: {
         type: Boolean,
         default: false
+    },
+    rep: {
+        type: Schema.ObjectId,
+        ref: 'Rep'
+    },
+    position: {
+        type: String,
+        default: ''
     }
 }, {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
