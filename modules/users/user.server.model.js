@@ -150,7 +150,9 @@ let UserSchema = new Schema({
     provider: {
         type: String
     },
-    subscriptions: {},
+    subscriptions: {
+        type: Schema.Types.Mixed
+    },
     providerData: {},
     additionalProvidersData: {},
     roles: {

@@ -39,26 +39,23 @@ exports.create = (req, res) => {
         expirationTime,
         keys
     }
-    console.log(subscription, 'this is sub')
-    console.log(req.body, 'this is req.body')
+
     User.findOne({ _id: id })
         .then((user) => {
             if (!user) throw('User does not exist')
 
             const subscriptions = user.subscriptions || {}
 
-            console.log(subscriptions, 'this is user before assigning anything')
             if (!subscriptions[req.organization.url]) {
-                console.log('DOESNT EXIST')
                 subscriptions[req.organization.url] = subscription
             }
-            console.log(subscriptions, 'this is subs after')
             user.subscriptions = subscriptions
-            console.log(user, 'this is user after everything')
+
+            user.markModified('subscriptions')
             return user.save()
         })
         .then((user) => {
-            return res.json(user);
+            return res.json(user.subscriptions);
         })
         .catch((err) => {
             return res.status(400).send({
