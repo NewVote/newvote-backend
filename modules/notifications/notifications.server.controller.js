@@ -149,12 +149,12 @@ const sendPushNotification = (notification, organization) => {
     // We search the subscription object by matching the organization url
     // to the subscription object property keys
 
-    const organizationUrl = organization.url
-    const value = { $exists: true }
+    // const organizationUrl = organization.url
+    // const value = { $exists: true }
     let query = {
-        'subscriptions': value
+        subscriptions: { $exists: true }
     };
-    query.subscriptions[organizationUrl] = value
+    // query.subscriptions[organizationUrl] = value
 
     return User.find(query)
         .then((users) => {
