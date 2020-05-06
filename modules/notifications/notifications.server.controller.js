@@ -145,10 +145,19 @@ const sendPushNotification = (notification, organization) => {
             }]
         }
     };
+    
+    // We search the subscription object by matching the organization url
+    // to the subscription object property keys
 
-   return User.find({ subscriptions: {
-        [organization.url]: { $exists: true }
-    } })
+    const organizationUrl = organization.url
+    const value = { $exists: true }
+    let query = {
+        'subscriptions' : {
+        }
+    };
+    query.subscriptions[organizationUrl] = value
+
+    return User.find(query)
         .then((users) => {
             console.log(users, 'this is users on sendPushNotification')
             if (!users.length) throw('No users to send notification to')
