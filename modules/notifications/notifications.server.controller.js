@@ -17,22 +17,22 @@ let path = require('path'),
 exports.create = function (req, res) {
     delete req.body._id
     let notification = new Notification(req.body);
-    
     Issue.findById(notification.parent)
         .then((issue) => {
             issue.notifications.push(notification._id)
             return issue.save();
         })
 
-    
     notification.save()
         .then((item) => {
-            return Notification.populate(item, { path: 'user', select: '_id displayName firstName' })
+            return Notification
+                .populate(item, [{ path: 'user', select: '_id displayName firstName' }, { path: 'rep' }])
         })
         .then((data) => {
             res.json(data);
         })
         .catch((err) => {
+            console.log(err, 'this is err')
             return res.status(400)
                 .send({
                     message: errorHandler.getErrorMessage(err)
@@ -79,6 +79,7 @@ exports.delete = function (req, res) {
 exports.list = function (req, res) {
     Notification.find()
         .populate('user', '_id displayName firstName')
+        .populate('rep')
         .then((progresss) => {
             res.json(progresss);
         })
