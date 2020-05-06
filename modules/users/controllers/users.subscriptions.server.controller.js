@@ -43,9 +43,10 @@ exports.create = (req, res) => {
 
             console.log(subscriptions, 'this is user before assigning anything')
             if (!subscriptions[req.organization.url]) {
+                console.log('DOESNT EXIST')
                 subscriptions[req.organization.url] = subscription
             }
-
+            console.log(subscriptions, 'this is subs after')
             user.subscriptions = subscriptions
             console.log(user, 'this is user after everything')
             return user.save()
