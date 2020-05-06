@@ -24,11 +24,7 @@ const options = {
 }
 
 exports.create = (req, res) => {
-    console.log(req.params)
-    // console.log(req.body, 'this is req.body')
-    // console.log(req.user, 'this is user')
     const { subscriptionId: id } = req.params
-    // const { _id: id } = req.user
     const { endpoint, expirationTime, keys } = req.body
     const subscription = {
         endpoint,
@@ -91,10 +87,9 @@ exports.delete = (req, res) => {
 }
 
 exports.test = (req, res) => {
-    console.log(req.organization, 'this is req.org')
-    console.log(req.params, 'this is params')
+    const { url } = req.organization
     const { subscriptionId: id } = req.params
-
+    const { title, description } = req.body
     const notificationPayload = {
         "notification": {
             "title": "Angular News",
@@ -126,3 +121,4 @@ exports.test = (req, res) => {
             });    
         })
 }
+

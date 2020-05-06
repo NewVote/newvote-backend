@@ -130,10 +130,11 @@ const sendPushNotification = (notification, organization) => {
     const { url } = organization
     const { description } = notification
 
+    const bodyText = stripHtml(description);
     const notificationPayload = {
         "notification": {
             "title": `${organization.name} Issue Update`,
-            "body": `${description}`,
+            "body": `${bodyText}`,
             "vibrate": [100, 50, 100],
             "data": {
                 "dateOfArrival": Date.now(),
@@ -163,17 +164,23 @@ const sendPushNotification = (notification, organization) => {
             if (!users.length) throw('No users to send notification to')
 
             return users.forEach((user) => {
-                console.log(user, 'this is user')
                 const subscription = user.subscriptions[organization.url]
                 return webPush.sendNotification(subscription, JSON.stringify(notificationPayload), options)
             })
         })
         .then((res) => {
-            console.log(res, 'this is res')
             return true
         })
         .catch((err) => {
-            console.log(err, 'this is err')
             return err;
         })
+}
+
+function stripHtml(html){
+    // Create a new div element
+    var temporalDivElement = document.createElement("div");
+    // Set the HTML content with the providen
+    temporalDivElement.innerHTML = html;
+    // Retrieve the text property of the element (cross-browser support)
+    return temporalDivElement.textContent || temporalDivElement.innerText || "";
 }
