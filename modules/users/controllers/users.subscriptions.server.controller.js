@@ -41,15 +41,12 @@ exports.create = (req, res) => {
 
             if (!user.subscriptions) {
                 user.subscriptions = {
-                    [req.organization.url]: subscription
                 }
             }
 
-            if (!user.subscriptions[req.organization.url]) {
-                user.subscriptions = {
-                    [req.organization.url]: subscription
-                }
-            }
+            user.subscriptions = Object.assign(user.subscriptions, {
+                [req.organization.url]: subscription
+            })
 
             return user.save()
         })
