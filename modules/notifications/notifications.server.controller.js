@@ -162,7 +162,7 @@ const sendPushNotification = (notification, organization) => {
 
             return users.forEach((user) => {
                 console.log(user, 'this is user')
-                const subscription = user.subscription[organization.url]
+                const subscription = user.subscriptions[organization.url]
                 return webPush.sendNotification(subscription, JSON.stringify(notificationPayload), options)
             })
         })
