@@ -111,10 +111,10 @@ exports.test = (req, res) => {
         }
     };
 
-    User.findOne({ id })
+    User.findOne({ _id: id })
         .then((user) => {
             console.log(user, 'this is user')
-            if (!req.organization.subscriptions[req.organization.url]) throw('User is not registered')
+            if (!user.subscriptions[req.organization.url]) throw('User is not subscribed to organization')
             console.log(user, 'this is user')
             const subscription = user.subscriptions[req.organization.url]
             return webPush.sendNotification(subscription, JSON.stringify(notificationPayload), options)
