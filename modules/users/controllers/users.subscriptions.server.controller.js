@@ -39,16 +39,14 @@ exports.create = (req, res) => {
         .then((user) => {
             if (!user) throw('User does not exist')
 
-            if (!user.subscriptions) {
-                user.subscriptions = {
-                }
-            }
-            console.log(user, 'this is user before assigning anything')
-            if (!user.subscriptions.hasProperty(req.organization.url)) {
-                user.subscriptions[req.organization.url] = subscription
+            const subscriptions = user.subscriptions || {}
+
+            console.log(subscriptions, 'this is user before assigning anything')
+            if (!subscriptions[req.organization.url]) {
+                subscriptions[req.organization.url] = subscription
             }
 
-            user.subscriptions[req.organization.url] = subscription
+            user.subscriptions = subscriptions
             console.log(user, 'this is user after everything')
             return user.save()
         })
