@@ -43,11 +43,13 @@ exports.create = (req, res) => {
                 user.subscriptions = {
                 }
             }
+            console.log(user, 'this is user before assigning anything')
+            if (!user.subscriptions.hasProperty(req.organization.url)) {
+                user.subscriptions[req.organization.url] = subscription
+            }
 
-            user.subscriptions = Object.assign({}, user.subscriptions, {
-                [req.organization.url]: subscription
-            })
-
+            user.subscriptions[req.organization.url] = subscription
+            console.log(user, 'this is user after everything')
             return user.save()
         })
         .then((user) => {
