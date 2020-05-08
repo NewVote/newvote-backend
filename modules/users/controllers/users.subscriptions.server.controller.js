@@ -36,14 +36,18 @@ exports.create = (req, res) => {
         .then((user) => {
             if (!user) throw('User does not exist')
 
-            const subscriptions = user.subscriptions || {}
+            let subscriptions = user.subscriptions || {}
 
             if (!subscriptions[req.organization.url]) {
                 subscriptions[req.organization.url] = subscription
             }
-            user.subscriptions = subscriptions
 
+            _.merge(subscriptions[req.organization.url], subscription)
+            user.subscriptions[req.organization.url] = subscriptions
             user.markModified('subscriptions')
+            
+            let path = 'subscriptions' + '.' + req.organization.url
+            user.markModified(path)
             return user.save()
         })
         .then((user) => {
