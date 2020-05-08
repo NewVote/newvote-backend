@@ -66,20 +66,16 @@ exports.create = (req, res) => {
 }
 
 exports.update = (req, res) => {
-    console.log('UPDATE RUNNING')
     const { subscriptionId: id } = req.params
-    console.log(req.params, 'this is params')
     User.findOne({ _id: id })
         .then((user) => {
-            console.log(user, 'this is user')
             if (!user) throw('User does not exist')
-            user.pushSubscription = null
+            user.pushSubscription = {}
             user.markModified('pushSubscription')
             return user.save()
         })
-        .then((res) => {
-            console.log('RETURNING')
-            return res.json(res)
+        .then((data) => {
+            return res.json(data)
         })
         .catch((err) => {
             console.log(err, 'err on update')
