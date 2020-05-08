@@ -157,10 +157,11 @@ const sendPushNotification = (notification, organization) => {
 
     return User.find(query)
         .then((users) => {
+            console.log(users, 'this is users')
             if (!users.length) throw('No users to send notification to')
 
             return users.forEach((user) => {
-                const subscription = user.subscriptions[organization.url]
+                const subscription = user.pushSubscription
                 return webPush.sendNotification(subscription, JSON.stringify(notificationPayload), options)
             })
         })
