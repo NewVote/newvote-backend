@@ -42,8 +42,10 @@ exports.create = (req, res) => {
                 subscriptions[req.organization.url] = subscription
             }
 
-            _.merge(subscriptions[req.organization.url], subscription)
-            user.subscriptions[req.organization.url] = subscriptions
+            console.log(subscriptions)
+            console.log(subscription)
+
+            user.subscriptions[req.organization.url] = subscription
 
             let path = 'subscriptions' + '.' + req.organization.url
             user.markModified(path)
@@ -56,6 +58,7 @@ exports.create = (req, res) => {
             return res.json(user.subscriptions);
         })
         .catch((err) => {
+            console.log(err, 'this is err')
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });
