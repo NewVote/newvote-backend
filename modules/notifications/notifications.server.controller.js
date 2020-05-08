@@ -151,7 +151,7 @@ const sendPushNotification = (notification, organization) => {
  
     const field = 'subscriptions.' + organization.url
     let query = {
-        pushSubscription: { $exists: true, $type: ['string'] },
+       'pushSubscription.endpoint': { $exists: true, $type: ['string'] },
     };
 
     // let query = {
