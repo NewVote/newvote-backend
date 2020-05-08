@@ -152,9 +152,12 @@ const sendPushNotification = (notification, organization) => {
     const field = 'subscriptions.' + organization.url
     let query = {
         pushSubscription: { $exists: true, $type: ['string'] },
-        [field]: true
     };
 
+    // let query = {
+    //     pushSubscription: { $exists: true, $type: ['string'] },
+    //     [field]: true
+    // };
     return User.find(query)
         .then((users) => {
             console.log(users, 'this is users')
