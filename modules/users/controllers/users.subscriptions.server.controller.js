@@ -24,6 +24,7 @@ const options = {
 }
 
 exports.create = (req, res) => {
+    // id is the _id of the user that made the subscription request
     const { subscriptionId: id } = req.params
     const { endpoint, expirationTime, keys } = req.body
     const subscription = {
@@ -33,19 +34,18 @@ exports.create = (req, res) => {
     }
 
     User.findOne({ _id: id })
+        .select('_id pushSubscription subscriptions')
         .then((user) => {
             if (!user) throw('User does not exist')
-
-            let subscriptions = user.subscriptions || {}
+            let { pushSubscription = {}, subscriptions = {} } = user
+           
+            pushSubscription = subscription
+            user.pushSubscription = pushSubscription
+            user.markModified('pushSubscription')
 
             if (!subscriptions[req.organization.url]) {
-                subscriptions[req.organization.url] = subscription
+                subscriptions[req.organization.url] = true
             }
-
-            console.log(subscriptions)
-            console.log(subscription)
-
-            user.subscriptions[req.organization.url] = subscription
 
             let path = 'subscriptions' + '.' + req.organization.url
             user.markModified(path)
