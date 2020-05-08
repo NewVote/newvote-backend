@@ -66,12 +66,17 @@ exports.create = (req, res) => {
 }
 
 exports.update = (req, res) => {
-    const { _id: id } = req.user
-    const { subscription } = req.body
+    const { subscriptionId: id } = req.params
 
     User.findOne({ _id: id })
         .then((user) => {
             if (!user) throw('User does not exist')
+            user.pushSubscription = null
+            user.markModified('pushSubscription')
+            return user.save()
+        })
+        .then((res) => {
+            return res.json(res)
         })
         .catch((err) => {
             return res.status(400).send({
