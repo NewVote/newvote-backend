@@ -44,7 +44,9 @@ exports.create = (req, res) => {
 
             _.merge(subscriptions[req.organization.url], subscription)
             user.subscriptions[req.organization.url] = subscriptions
-            user.markModified('subscriptions')
+
+            let path = 'subscriptions' + '.' + req.organization.url
+            user.markModified(path)
 
             // let path = 'subscriptions' + '.' + req.organization.url
             // user.markModified(path)
