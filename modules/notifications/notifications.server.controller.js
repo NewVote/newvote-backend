@@ -133,8 +133,8 @@ exports.notificationByID = function(req, res, next, id) {
 };
 
 const sendPushNotification = (notification, organization) => {
-    const { url } = organization
-    const { description } = notification
+    const { url, _id } = organization
+    const { description, parent } = notification
 
     const bodyText = stripHtml(description);
     const notificationPayload = {
@@ -153,30 +153,49 @@ const sendPushNotification = (notification, organization) => {
             }]
         }
     };
+
     
- 
-    const field = 'subscriptions.' + organization.url
+    // To find users to send notifications to we search 
+    // subscriptions for corresponding organization
+    // AND
+    // whether they have a subscription to the current issue
+    const field = 'subscriptions.' + _id + '.issues'
+
+    // convert ObjectId to string as comparing with objectId fails, issues saved on subscriptions object
+    // are saved as string
+    const parentId = mongoose.Types.ObjectId(parent).toString();
     let query = {
-        'pushSubscription.endpoint': { $exists: true, $type: ['string'] },
-    };
+        [field]: { $in: [parentId] }
+    }
 
     // let query = {
     //     pushSubscription: { $exists: true, $type: ['string'] },
     //     [field]: true
     // };
+
     return User.find(query)
         .then((users) => {
             if (!users.length) throw('No users to send notification to')
 
-            return users.forEach((user) => {
-                const subscription = user.pushSubscription
-                return webPush.sendNotification(subscription, JSON.stringify(notificationPayload), options)
+            // Converts user objects array to array of pushSubscription arrays
+            return users.map((user) => {
+                return user.pushSubscription
             })
+                // concat all push subscriptions to return a 1 dimensional array
+                // of push subscriptions
+                .reduce((prev, curr) => {
+                    return prev.concat(curr);
+                }, [])
+                // iterate through array and send of notifications for each subscription
+                .forEach((subscription) => {
+                    return webPush.sendNotification(subscription, JSON.stringify(notificationPayload), options)
+                })
         })
         .then((res) => {
             return true
         })
         .catch((err) => {
+            console.log(err, 'this is err')
             return err;
         })
 }
