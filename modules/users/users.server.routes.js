@@ -55,12 +55,18 @@ module.exports = function (app) {
         }))
         .get(users.count);
 
-    app.route('/api/users')
+    // app.route('/api/users')
+    //     .all(jwt({
+    //         secret: config.jwtSecret,
+    //         credentialsRequired: false
+    //     }))
+        
+    app.route('/api/users/:userId/edit')
         .all(jwt({
             secret: config.jwtSecret,
             credentialsRequired: false
         }))
-        .put(users.update);
+        .put(users.updateProfile);
 
     app.route('/api/users/accounts')
         .all(jwt({

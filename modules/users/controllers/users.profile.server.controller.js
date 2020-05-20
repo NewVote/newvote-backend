@@ -78,6 +78,51 @@ exports.update = function(req, res) {
     }
 };
 
+exports.updateProfile = function(req, res) {
+    // Init Variables
+    const { displayName, subscriptions = {} } = req.body
+
+    User.findOne({ _id: req.user._id })
+        .select('-password -verificationCode -email -salt')
+        .then((user) => {
+            if (!user) throw('User is not signed in')
+
+            if (displayName) {
+                user.displayName = displayName
+            }
+
+            if (subscriptions) {
+                user.subscriptions = subscriptions
+            }
+
+            user.updated = Date.now();
+
+            return user.save()
+        })
+        .then((savedUser) => {
+            req.login(savedUser, function(err) {
+                if (err) {
+                    res.status(400).send(err);
+                } else {
+                    res.json(savedUser);
+                }
+            });
+        })
+        .catch((err) => {
+            return res.status(400).send({
+                message: errorHandler.getErrorMessage(err)
+            });
+        })
+
+
+
+
+
+        
+}
+
+
+
 /**
  * Update profile picture
  */

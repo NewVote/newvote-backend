@@ -28,6 +28,10 @@ const options = {
     
     
 exports.create = function (req, res) {
+    // Flag to inform whether the created notification is to be sent to all users who subscribe
+    // to the notifications related issue
+    const { isNotification } = req.query;
+
     delete req.body._id
     let notification = new Notification(req.body);
     Issue.findById(notification.parent)
@@ -43,8 +47,10 @@ exports.create = function (req, res) {
         })
         .then((data) => {
             // take the notification and send it to users
-            sendPushNotification(data, req.organization)
-            // return data to client
+            if (isNotification === 'true') {
+                sendPushNotification(data, req.organization)
+            }
+
             return res.json(data);
         })
         .catch((err) => {
@@ -160,7 +166,6 @@ const sendPushNotification = (notification, organization) => {
     // };
     return User.find(query)
         .then((users) => {
-            console.log(users, 'this is users')
             if (!users.length) throw('No users to send notification to')
 
             return users.forEach((user) => {

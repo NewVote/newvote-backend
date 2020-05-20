@@ -198,9 +198,17 @@ exports.delete = function (req, res) {
  * List of Organizations
  */
 exports.list = function (req, res) {
-    let query = req.query.url ? {
-        url: req.query.url
-    } : {};
+    let { orgs = '' } = req.query
+    let orgQuery = {}
+    if (orgs.length) {
+        orgs = orgs.split(',')
+        orgs = orgs.map((item) => {
+            return mongoose.Types.ObjectId(item)
+        })
+        orgQuery = orgs.length ? {
+            _id: { $all: orgs }
+        } : {};
+    }
     let showDeleted = req.query.showDeleted || 'null';
 
     let showPrivateOrgs = req.query.showPrivate || 'false';
@@ -230,7 +238,7 @@ exports.list = function (req, res) {
         showNonDeletedItemsMatch;
 
     Organization.aggregate([{
-        $match: query
+        $match: { _id: { $in: orgs } }
     },
     {
         $match: softDeleteMatch
