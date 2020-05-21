@@ -203,3 +203,29 @@ exports.count = function(req, res) {
             return res.json(users.length);
         });
 };
+
+exports.patchSubscription = function(req, res) {
+    const { subscriptionsActive } = req.body;
+    let user = req.user;
+
+    if (!user) {
+        return res.status(400).send({
+            message: 'User is not signed in'
+        });
+    }
+
+    User.findById(user._id)
+        .then(userDoc => {
+            if (!userDoc) throw 'User does not exist';
+            userDoc.subscriptionsActive = subscriptionsActive
+            return userDoc.save();
+        })
+        .then((user) => {
+            res.status(200).send({ subscriptionsActive: user.subscriptionsActive });
+        })
+        .catch(err => {
+            return res.status(404).send({
+                message: errorHandler.getErrorMessage(err)
+            });
+        });
+};

@@ -96,6 +96,13 @@ module.exports = function (app) {
         }))
         .patch(users.patch);
 
+    app.route('/api/users/subscription/:userId')
+        .all(jwt({
+            secret: config.jwtSecret,
+            credentialsRequired: false
+        }))
+        .patch(users.patchSubscription);
+
     // Finish by binding the user middleware
     app.param('userId', users.userByID);
 };
