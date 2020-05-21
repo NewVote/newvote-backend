@@ -37,28 +37,25 @@ exports.create = (req, res) => {
         .select('_id pushSubscription subscriptions')
         .then((user) => {
             if (!user) throw('User does not exist')
-            let { pushSubscription = {}, subscriptions = {} } = user
+            let { pushSubscription = [], subscriptions = {} } = user
            
-            pushSubscription = subscription
+            pushSubscription.push(subscription)
             user.pushSubscription = pushSubscription
             user.markModified('pushSubscription')
 
-            if (!subscriptions[req.organization.url]) {
-                subscriptions[req.organization.url] = true
+            if (!subscriptions[req.organization._id]) {
+                subscriptions[req.organization._id] = { issues: [], isSubscribed: false }
             }
 
-            let path = 'subscriptions' + '.' + req.organization.url
+            let path = 'subscriptions' + '.' + req.organization._id
             user.markModified(path)
 
-            // let path = 'subscriptions' + '.' + req.organization.url
-            // user.markModified(path)
             return user.save()
         })
         .then((user) => {
             return res.json(user.subscriptions);
         })
         .catch((err) => {
-            console.log(err, 'this is err')
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });

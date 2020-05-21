@@ -54,7 +54,6 @@ exports.create = function (req, res) {
             return res.json(data);
         })
         .catch((err) => {
-            console.log(err, 'this is err')
             return res.status(400)
                 .send({
                     message: errorHandler.getErrorMessage(err)
