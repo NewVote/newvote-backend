@@ -167,7 +167,7 @@ exports.handleIssueSubscription = (req, res) => {
             console.log('does the issue exist')
 
             const doesIssueIdExistInIssuesArray = issuesAsObjectIds.some((item) => {
-                return item === issueId;
+                return item.toString() === issueId.toString();
             })
             console.log(doesIssueIdExistInIssuesArray, 'well does it?')
             console.log('normal handler')
