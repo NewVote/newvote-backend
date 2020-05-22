@@ -135,7 +135,7 @@ exports.test = (req, res) => {
 }
 
 exports.handleIssueSubscription = (req, res) => {
-    const issueId = mongoose.Types.ObjectId(req.body.issueId).toString();
+    const issueId = req.body.issueId;
     const { subscriptionId: userId } = req.params; 
     const organization = req.organization;
     const userPromise = User.findOne({ _id: userId })
@@ -147,10 +147,15 @@ exports.handleIssueSubscription = (req, res) => {
             let { issues = [] } = subscriptions[organization._id]
             if (!issue) throw('Issue does not exist')
 
+            console.log('before check')
             // Use the original issueId since we converted it to string
-            const doesIssueIdExistInIssuesArray = issues.map((item) => {
+            const issuesAsObjectIds = issues.map((item) => {
                 return mongoose.Types.ObjectId(item).toString()
-            }).includes(issueId)
+            })
+
+            const doesIssueIdExistInIssuesArray = issuesAsObjectIds.some((item) => {
+                return item.equals(issueId);
+            })
 
             // add or remove issue id from subscriptions object
             if (!doesIssueIdExistInIssuesArray) {
