@@ -20,4 +20,7 @@ module.exports = function (app) {
 
     app.route('/api/subscriptions/push/:subscriptionId')
         .get(subscriptionController.test)
+
+    app.route('/api/subscriptions/issue/:subscriptionId')
+        .put(subscriptionController.handleIssueSubscription)
 }

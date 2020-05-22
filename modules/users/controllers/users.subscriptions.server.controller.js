@@ -8,6 +8,7 @@ let _ = require('lodash'),
     config = require(path.resolve('./config/config')),
     mongoose = require('mongoose'),
     User = mongoose.model('User'),
+    Issue = mongoose.model('Issue'),
     errorHandler = require(path.resolve(
         './modules/core/errors.server.controller'
     )),
@@ -133,3 +134,46 @@ exports.test = (req, res) => {
         })
 }
 
+exports.handleIssueSubscription = (req, res) => {
+    const issueId = mongoose.Types.ObjectId(req.body.issueId).toString();
+    const { subscriptionId: userId } = req.params; 
+    const organization = req.organization;
+    const userPromise = User.findOne({ _id: userId })
+    const issuePromise = Issue.findOne({ _id: issueId })
+    
+    Promise.all([userPromise, issuePromise])
+        .then(([user, issue]) => {
+            const { subscriptions } = user
+            let { issues = [] } = subscriptions[organization._id]
+            if (!issue) throw('Issue does not exist')
+
+            // Use the original issueId since we converted it to string
+            const doesIssueIdExistInIssuesArray = issues.map((item) => {
+                return mongoose.Types.ObjectId(item).toString()
+            }).includes(issueId)
+
+            // add or remove issue id from subscriptions object
+            if (!doesIssueIdExistInIssuesArray) {
+                issues.push(issue._id)
+            } else {
+                const index = issues.findIndex((item) => {
+                    return item.equals(issueId);
+                })
+                issues = [...issues.splice(0, index), ...issues.splice(index+1, issues.length)] 
+            }
+            
+            user.subscriptions[organization._id].issues = issues;
+            let path = 'subscriptions' + '.' + organization._id
+            user.markModified(path)
+
+            return user.save()
+        })
+        .then((user) => {
+            return res.json({ subscriptions: user.subscriptions })
+        })
+        .catch((err) => {
+            return res.status(500).send({
+                message: errorHandler.getErrorMessage(err)
+            });
+        })
+}
