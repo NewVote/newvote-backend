@@ -137,6 +137,9 @@ exports.test = (req, res) => {
 
 exports.handleIssueSubscription = (req, res) => {
     const issueId = req.body.issueId;
+
+    console.log(req.body, 'this is req.body')
+    console.log(issueId, 'this is original issueId')
     const { subscriptionId: userId } = req.params; 
     const organization = req.organization;
     const userPromise = User.findOne({ _id: userId })
@@ -161,18 +164,18 @@ exports.handleIssueSubscription = (req, res) => {
             }
             console.log('issues as objectIds')
             // Use the original issueId since we converted it to string
-            const issuesAsObjectIds = issues.map((item) => {
-                return mongoose.Types.ObjectId(item).toString()
-            })
+            // const issuesAsObjectIds = issues.map((item) => {
+            //     return mongoose.Types.ObjectId(item).toString()
+            // })
 
             console.log('does the issue exist')
 
-            const doesIssueIdExistInIssuesArray = issuesAsObjectIds.some((item) => {
+            const doesIssueIdExistInIssuesArray = issues.some((item) => {
                 const itemString = new ObjectId(item).toString();
                 // const issueIdString = new ObjectId(issueId);
-                console.log(itemString)
-                console.log(issueId)
-                console.log(itemString === issueId)
+                console.log(itemString, 'this is itemString')
+                console.log(issueId, 'this is issueId')
+                console.log(itemString === issueId, 'comparison')
                 return itemString === issueId;
             })
             console.log(doesIssueIdExistInIssuesArray, 'well does it?')
