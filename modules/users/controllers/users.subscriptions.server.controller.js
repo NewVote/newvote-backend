@@ -167,9 +167,9 @@ exports.handleIssueSubscription = (req, res) => {
             console.log('does the issue exist')
 
             const doesIssueIdExistInIssuesArray = issuesAsObjectIds.some((item) => {
-                return mongoose.Types.ObjectId(item).equals(issueId);
+                return item === issueId;
             })
-
+            console.log(doesIssueIdExistInIssuesArray, 'well does it?')
             console.log('normal handler')
             // add or remove issue id from subscriptions object
             if (!doesIssueIdExistInIssuesArray) {
