@@ -146,26 +146,31 @@ exports.handleIssueSubscription = (req, res) => {
             const { subscriptions } = user
             let { issues = [] } = subscriptions[organization._id]
             if (!issue) throw('Issue does not exist')
-
+            console.log(issues, 'before issues length')
             // No issues currently so can short circuit objectId checks and return
             // subscription object to client
             if (!issues.length) {
+                console.log('inside issues as no length')
                 issues.push(issue._id)
                 user.subscriptions[organization._id].issues = issues;
                 let path = 'subscriptions' + '.' + organization._id
                 user.markModified(path)
-    
+                console.log('before user save')
                 return user.save()
             }
+            console.log('issues as objectIds')
             // Use the original issueId since we converted it to string
             const issuesAsObjectIds = issues.map((item) => {
                 return mongoose.Types.ObjectId(item).toString()
             })
 
+            console.log('does the issue exist')
+
             const doesIssueIdExistInIssuesArray = issuesAsObjectIds.some((item) => {
                 return item.equals(issueId);
             })
 
+            console.log('normal handler')
             // add or remove issue id from subscriptions object
             if (!doesIssueIdExistInIssuesArray) {
                 issues.push(issue._id)
@@ -175,7 +180,8 @@ exports.handleIssueSubscription = (req, res) => {
                 })
                 issues = [...issues.splice(0, index), ...issues.splice(index+1, issues.length)] 
             }
-            issues.push(issue._id)
+
+            console.log('assigning the issues object to user');
             user.subscriptions[organization._id].issues = issues;
             let path = 'subscriptions' + '.' + organization._id
             user.markModified(path)
@@ -186,6 +192,7 @@ exports.handleIssueSubscription = (req, res) => {
             return res.json({ subscriptions: user.subscriptions })
         })
         .catch((err) => {
+            console.log(err, 'this is err')
             return res.status(500).send({
                 message: errorHandler.getErrorMessage(err)
             });
