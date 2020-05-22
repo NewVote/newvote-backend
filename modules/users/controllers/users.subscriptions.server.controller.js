@@ -12,6 +12,7 @@ let _ = require('lodash'),
     errorHandler = require(path.resolve(
         './modules/core/errors.server.controller'
     )),
+    ObjectId = require('mongoose').Types.ObjectId,
     webPush = require('web-push');
 
 
@@ -167,7 +168,9 @@ exports.handleIssueSubscription = (req, res) => {
             console.log('does the issue exist')
 
             const doesIssueIdExistInIssuesArray = issuesAsObjectIds.some((item) => {
-                return item.toString() === issueId.toString();
+                const itemString = new ObjectId(item);
+                // const issueIdString = new ObjectId(issueId);
+                return itemString.equals(issueId);
             })
             console.log(doesIssueIdExistInIssuesArray, 'well does it?')
             console.log('normal handler')
