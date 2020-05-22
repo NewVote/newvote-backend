@@ -189,6 +189,7 @@ exports.handleIssueSubscription = (req, res) => {
             return user.save()
         })
         .then((user) => {
+            console.log(user, 'this is user before response');
             return res.json({ subscriptions: user.subscriptions })
         })
         .catch((err) => {
