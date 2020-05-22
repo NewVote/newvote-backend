@@ -147,7 +147,16 @@ exports.handleIssueSubscription = (req, res) => {
             let { issues = [] } = subscriptions[organization._id]
             if (!issue) throw('Issue does not exist')
 
-            console.log('before check')
+            // No issues currently so can short circuit objectId checks and return
+            // subscription object to client
+            if (!issues.length) {
+                issues.push(issue._id)
+                user.subscriptions[organization._id].issues = issues;
+                let path = 'subscriptions' + '.' + organization._id
+                user.markModified(path)
+    
+                return user.save()
+            }
             // Use the original issueId since we converted it to string
             const issuesAsObjectIds = issues.map((item) => {
                 return mongoose.Types.ObjectId(item).toString()
@@ -166,7 +175,7 @@ exports.handleIssueSubscription = (req, res) => {
                 })
                 issues = [...issues.splice(0, index), ...issues.splice(index+1, issues.length)] 
             }
-            
+            issues.push(issue._id)
             user.subscriptions[organization._id].issues = issues;
             let path = 'subscriptions' + '.' + organization._id
             user.markModified(path)
