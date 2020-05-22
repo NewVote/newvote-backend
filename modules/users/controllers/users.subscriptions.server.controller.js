@@ -137,9 +137,6 @@ exports.test = (req, res) => {
 
 exports.handleIssueSubscription = (req, res) => {
     const issueId = req.body.issueId;
-
-    console.log(req.body, 'this is req.body')
-    console.log(issueId, 'this is original issueId')
     const { subscriptionId: userId } = req.params; 
     const organization = req.organization;
     const userPromise = User.findOne({ _id: userId })
@@ -150,11 +147,9 @@ exports.handleIssueSubscription = (req, res) => {
             const { subscriptions } = user
             let { issues = [] } = subscriptions[organization._id]
             if (!issue) throw('Issue does not exist')
-            console.log(issues, 'before issues length')
             // No issues currently so can short circuit objectId checks and return
             // subscription object to client
             if (!issues.length) {
-                console.log('inside issues as no length')
                 issues.push(issue._id)
                 user.subscriptions[organization._id].issues = issues;
                 let path = 'subscriptions' + '.' + organization._id
@@ -162,24 +157,16 @@ exports.handleIssueSubscription = (req, res) => {
                 console.log('before user save')
                 return user.save()
             }
-            console.log('issues as objectIds')
             // Use the original issueId since we converted it to string
             // const issuesAsObjectIds = issues.map((item) => {
             //     return mongoose.Types.ObjectId(item).toString()
             // })
 
-            console.log('does the issue exist')
 
             const doesIssueIdExistInIssuesArray = issues.some((item) => {
                 const itemString = new ObjectId(item).toString();
-                // const issueIdString = new ObjectId(issueId);
-                console.log(itemString, 'this is itemString')
-                console.log(issueId, 'this is issueId')
-                console.log(itemString === issueId, 'comparison')
                 return itemString === issueId;
             })
-            console.log(doesIssueIdExistInIssuesArray, 'well does it?')
-            console.log('normal handler')
             // add or remove issue id from subscriptions object
             if (!doesIssueIdExistInIssuesArray) {
                 issues.push(issue._id)
@@ -190,7 +177,6 @@ exports.handleIssueSubscription = (req, res) => {
                 issues = [...issues.splice(0, index), ...issues.splice(index+1, issues.length)] 
             }
 
-            console.log('assigning the issues object to user');
             user.subscriptions[organization._id].issues = issues;
             let path = 'subscriptions' + '.' + organization._id
             user.markModified(path)
@@ -198,7 +184,6 @@ exports.handleIssueSubscription = (req, res) => {
             return user.save()
         })
         .then((user) => {
-            console.log(user, 'this is user before response');
             return res.json({ subscriptions: user.subscriptions })
         })
         .catch((err) => {
