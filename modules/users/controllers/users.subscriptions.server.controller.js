@@ -167,7 +167,7 @@ exports.handleIssueSubscription = (req, res) => {
             console.log('does the issue exist')
 
             const doesIssueIdExistInIssuesArray = issuesAsObjectIds.some((item) => {
-                return item.equals(issueId);
+                return mongoose.Types.ObjectId(item).equals(issueId);
             })
 
             console.log('normal handler')
