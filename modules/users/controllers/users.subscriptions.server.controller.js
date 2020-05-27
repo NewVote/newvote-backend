@@ -165,7 +165,8 @@ exports.handleIssueSubscription = (req, res) => {
             // subscription object to client
             if (!issues.length) {
                 issues.push(issue._id)
-                user.subscriptions[organization._id].issues = issues;
+                subscriptions[organization._id].issues = issues
+                user.subscriptions = subscriptions
                 let path = 'subscriptions' + '.' + organization._id
                 user.markModified(path)
                 console.log('before user save')
