@@ -39,8 +39,13 @@ exports.create = (req, res) => {
         .select('_id pushSubscription subscriptions')
         .then((user) => {
             if (!user) throw('User does not exist')
-            let { pushSubscription = [], subscriptions = {} } = user
-           
+            let { pushSubscription = [], subscriptions = {}, subscriptionsActive = 'DEFAULT' } = user
+            
+            // User has not been prompted before to accept notifications
+            if (subscriptionsActive === 'DEFAULT') {
+                subscriptionsActive = 'ACCEPTED'
+            }
+
             pushSubscription.push(subscription)
             user.pushSubscription = pushSubscription
             user.markModified('pushSubscription')
@@ -141,10 +146,19 @@ exports.handleIssueSubscription = (req, res) => {
     const organization = req.organization;
     const userPromise = User.findOne({ _id: userId })
     const issuePromise = Issue.findOne({ _id: issueId })
-    
+    console.log(userId, 'this is userId')
     Promise.all([userPromise, issuePromise])
         .then(([user, issue]) => {
+            console.log(user, 'this is user');
             const { subscriptions } = user
+
+            if (!subscriptions[organization._id]) {
+                subscriptions[organization._id] = {
+                    issues: [],
+                    isSubscribed: false
+                }
+            }
+
             let { issues = [] } = subscriptions[organization._id]
             if (!issue) throw('Issue does not exist')
             // No issues currently so can short circuit objectId checks and return
