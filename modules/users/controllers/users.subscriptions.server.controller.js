@@ -39,8 +39,13 @@ exports.create = (req, res) => {
         .select('_id pushSubscription subscriptions')
         .then((user) => {
             if (!user) throw('User does not exist')
-            let { pushSubscription = [], subscriptions = {} } = user
-           
+            let { pushSubscription = [], subscriptions = {}, subscriptionsActive = 'DEFAULT' } = user
+            
+            // User has not been prompted before to accept notifications
+            if (subscriptionsActive === 'DEFAULT') {
+                subscriptionsActive = 'ACCEPTED'
+            }
+
             pushSubscription.push(subscription)
             user.pushSubscription = pushSubscription
             user.markModified('pushSubscription')
