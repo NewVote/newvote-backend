@@ -146,9 +146,10 @@ exports.handleIssueSubscription = (req, res) => {
     const organization = req.organization;
     const userPromise = User.findOne({ _id: userId })
     const issuePromise = Issue.findOne({ _id: issueId })
-    
+    console.log(userId, 'this is userId')
     Promise.all([userPromise, issuePromise])
         .then(([user, issue]) => {
+            console.log(user, 'this is user');
             const { subscriptions } = user
 
             if (!subscriptions[organization._id]) {
