@@ -150,6 +150,14 @@ exports.handleIssueSubscription = (req, res) => {
     Promise.all([userPromise, issuePromise])
         .then(([user, issue]) => {
             const { subscriptions } = user
+
+            if (subscriptions[organization._id]) {
+                subscriptions[organization._id] = {
+                    issues: [],
+                    isSubscribed: false
+                }
+            }
+
             let { issues = [] } = subscriptions[organization._id]
             if (!issue) throw('Issue does not exist')
             // No issues currently so can short circuit objectId checks and return
