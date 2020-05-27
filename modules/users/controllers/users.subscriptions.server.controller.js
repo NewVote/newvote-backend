@@ -151,7 +151,7 @@ exports.handleIssueSubscription = (req, res) => {
         .then(([user, issue]) => {
             const { subscriptions } = user
 
-            if (subscriptions[organization._id]) {
+            if (!subscriptions[organization._id]) {
                 subscriptions[organization._id] = {
                     issues: [],
                     isSubscribed: false
