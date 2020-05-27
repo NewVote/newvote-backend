@@ -150,7 +150,7 @@ exports.handleIssueSubscription = (req, res) => {
     Promise.all([userPromise, issuePromise])
         .then(([user, issue]) => {
             console.log(user, 'this is user');
-            const { subscriptions } = user
+            const { subscriptions = {} } = user
 
             if (!subscriptions[organization._id]) {
                 subscriptions[organization._id] = {
