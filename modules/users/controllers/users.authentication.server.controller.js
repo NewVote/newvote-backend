@@ -211,7 +211,7 @@ exports.signin = function (req, res, next) {
         info
     ) {
         if (err || !user) {
-            res.status(400).send(info);
+            return res.status(400).send(info);
         } else {
             // need to update user orgs in case they've voted on a new org
             // exports.updateOrgs(user);
@@ -235,19 +235,9 @@ exports.signin = function (req, res, next) {
                         throw 'Invalid token';
                     }
 
-                    const organizationPromise = Organization.findOne({
-                        _id: req.organization._id
-                    });
-                    const userPromise = User.findOne({
+                    User.findOne({
                         _id: verifiedUser._id
-                    });
-
-                    return Promise.all([organizationPromise, userPromise])
-                        .then(promises => {
-                            const [organization, user] = promises;
-                            user.organizations.push(organization._id);
-                            return user.save();
-                        })
+                    })
                         .then(savedUser => {
                             savedUser.password = undefined;
                             savedUser.salt = undefined;
