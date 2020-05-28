@@ -70,7 +70,7 @@ exports.checkAuthStatus = function (req, res, next) {
                     expiresIn: config.jwtExpiry
                 });
                 const creds = {
-                    user,
+                    // user,
                     token
                 };
                 const opts = {
@@ -263,7 +263,7 @@ exports.signin = function (req, res, next) {
                                 expiresIn: config.jwtExpiry
                             });
                             const creds = {
-                                user,
+                                // user,
                                 token
                             };
 
@@ -790,7 +790,7 @@ function loginUser(req, res, user) {
                 expiresIn: config.jwtExpiry
             });
             return res.json({
-                user: user,
+                // user: user,
                 token: token
             });
         }
