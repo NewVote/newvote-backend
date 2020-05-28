@@ -273,11 +273,11 @@ exports.signin = function (req, res, next) {
                                 overwrite: true
                             }
 
-                            res.cookie(
-                                'credentials',
-                                JSON.stringify(creds),
-                                opts
-                            );
+                            // res.cookie(
+                            //     'credentials',
+                            //     JSON.stringify(creds),
+                            //     opts
+                            // );
                             res.json(creds);
                         });
                 });
@@ -313,7 +313,7 @@ exports.signin = function (req, res, next) {
                             secure: false
                         };
 
-                        res.cookie('credentials', JSON.stringify(creds), opts);
+                        // res.cookie('credentials', JSON.stringify(creds), opts);
                         res.json(creds);
                     }
                 });
@@ -401,7 +401,7 @@ exports.oauthCallback = function (strategy) {
                     httpOnly: false,
                     secure: false
                 };
-                res.cookie('credentials', JSON.stringify(creds), opts);
+                // res.cookie('credentials', JSON.stringify(creds), opts);
                 const redirect = sessionRedirectURL ?
                     host + sessionRedirectURL :
                     host + '/';
