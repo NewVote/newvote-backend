@@ -273,11 +273,11 @@ exports.signin = function (req, res, next) {
                                 overwrite: true
                             }
 
-                            // res.cookie(
-                            //     'credentials',
-                            //     JSON.stringify(creds),
-                            //     opts
-                            // );
+                            res.cookie(
+                                'credentials',
+                                JSON.stringify(creds),
+                                opts
+                            );
                             res.json(creds);
                         });
                 });
@@ -304,7 +304,7 @@ exports.signin = function (req, res, next) {
                             expiresIn: config.jwtExpiry
                         });
                         const creds = {
-                            user,
+                            // user,
                             token
                         };
                         const opts = {
@@ -313,7 +313,7 @@ exports.signin = function (req, res, next) {
                             secure: false
                         };
 
-                        // res.cookie('credentials', JSON.stringify(creds), opts);
+                        res.cookie('credentials', JSON.stringify(creds), opts);
                         res.json(creds);
                     }
                 });
@@ -393,7 +393,7 @@ exports.oauthCallback = function (strategy) {
                     expiresIn: config.jwtExpiry
                 });
                 const creds = {
-                    user,
+                    // user,
                     token
                 };
                 const opts = {
