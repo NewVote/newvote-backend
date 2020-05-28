@@ -61,26 +61,15 @@ exports.checkAuthStatus = function (req, res, next) {
             if (err) {
                 res.status(400).send(err);
             } else {
-                const payload = {
-                    _id: user._id,
-                    roles: user.roles,
-                    verified: user.verified
-                };
-                const token = jwt.sign(payload, config.jwtSecret, {
-                    expiresIn: config.jwtExpiry
-                });
-                const creds = {
-                    // user,
-                    token
-                };
+                const token = createJWT(user)
                 const opts = {
                     domain: 'newvote.org',
                     httpOnly: false,
                     secure: false
                 };
 
-                res.cookie('credentials', JSON.stringify(creds), opts);
-                res.json(creds);
+                res.cookie('credentials', JSON.stringify({ token }), opts);
+                res.json(user);
             }
         });
     })(req, res, next);
@@ -238,24 +227,10 @@ exports.signin = function (req, res, next) {
                     User.findOne({
                         _id: verifiedUser._id
                     })
+                        .select('-password -salt -verificationCode')
                         .then(savedUser => {
-                            savedUser.password = undefined;
-                            savedUser.salt = undefined;
-                            savedUser.verificationCode = undefined;
-
                             // updated user so create new token
-                            const payload = {
-                                _id: savedUser._id,
-                                roles: savedUser.roles,
-                                verified: savedUser.verified
-                            };
-                            const token = jwt.sign(payload, config.jwtSecret, {
-                                expiresIn: config.jwtExpiry
-                            });
-                            const creds = {
-                                // user,
-                                token
-                            };
+                            const token = createJWT(savedUser)
 
                             const opts = {
                                 domain: 'newvote.org',
@@ -265,10 +240,10 @@ exports.signin = function (req, res, next) {
 
                             res.cookie(
                                 'credentials',
-                                JSON.stringify(creds),
+                                JSON.stringify({ token }),
                                 opts
                             );
-                            res.json(creds);
+                            res.json(savedUser);
                         });
                 });
             }
@@ -771,18 +746,25 @@ function loginUser(req, res, user) {
         if (err) {
             return res.status(400).send(err);
         } else {
-            const payload = {
-                _id: user._id,
-                roles: user.roles,
-                verified: user.verified
-            };
-            const token = jwt.sign(payload, config.jwtSecret, {
-                expiresIn: config.jwtExpiry
-            });
+            const token = createJWT(user);
             return res.json({
                 // user: user,
-                token: token
+                token
             });
         }
+    });
+}
+
+
+const createJWT = (user) => {
+    const { _id, roles, verified } = user
+    const payload = {
+        _id,
+        roles,
+        verified
+    };
+
+    return jwt.sign(payload, config.jwtSecret, {
+        expiresIn: config.jwtExpiry
     });
 }
