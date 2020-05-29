@@ -21,7 +21,7 @@ module.exports = function (app, db) {
 
     // Deserialize sessions
     passport.deserializeUser(function (id, done) {
-        User.findOne({ _id: id }, '-salt -password -verificationCode')
+        User.findById(id, '-salt -password -verificationCode')
             .populate('country')
             .exec(function (err, user) {
                 done(err, user);

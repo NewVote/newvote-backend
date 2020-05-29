@@ -199,7 +199,6 @@ const sendPushNotification = (notification, organization) => {
             return true
         })
         .catch((err) => {
-            console.log(err, 'this is err')
             return err;
         })
 }

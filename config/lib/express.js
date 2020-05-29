@@ -251,7 +251,6 @@ module.exports.initErrorRoutes = function (app) {
         if (err.joi) {
             return next(err);
         }
-        console.log(err, 'this is err');
         return res.status(500).json({
             message: 'Server error'
         })

@@ -41,38 +41,26 @@ const addToMailingList = function(user) {
 };
 
 exports.checkAuthStatus = function(req, res, next) {
-    passport.authenticate(
-        'check-status',
-        {
-            session: false
-        },
-        function(err, user, info) {
-            if (err || !user) {
-                return res.status(400).send(info);
-            }
-
-            // Remove sensitive data before login
-            user.password = undefined;
-            user.salt = undefined;
-            user.verificationCode = undefined;
-
-            req.login(user, function(err) {
-                if (err) {
-                    res.status(400).send(err);
-                } else {
-                    const token = createJWT(user);
-                    const opts = {
-                        domain: 'newvote.org',
-                        httpOnly: false,
-                        secure: false
-                    };
-
-                    res.cookie('credentials', JSON.stringify({ token }), opts);
-                    res.json(user);
-                }
-            });
+    passport.authenticate('check-status', function(err, user, info) {
+        if (err || !user) {
+            return res.status(400).send(info);
         }
-    )(req, res, next);
+
+        // Remove sensitive data before login
+        user.password = undefined;
+        user.salt = undefined;
+        user.verificationCode = undefined;
+
+        const token = createJWT(user);
+        const opts = {
+            domain: 'newvote.org',
+            httpOnly: false,
+            secure: false
+        };
+
+        res.cookie('credentials', JSON.stringify({ token }), opts);
+        return res.json(user);
+    })(req, res, next);
 };
 
 /**
@@ -151,7 +139,6 @@ exports.signup = function(req, res) {
                 return loginUser(req, res, doc);
             })
             .catch(err => {
-                console.log(err, 'this is err');
                 return res.status(400).send({
                     message: errorHandler.getErrorMessage(err)
                 });
@@ -195,7 +182,7 @@ exports.signin = function(req, res, next) {
             } else {
                 // need to update user orgs in case they've voted on a new org
                 // exports.updateOrgs(user);
-
+                console.log(req.user, 'this is req.uer')
                 // User is already signed to another organization and is verifying with current org
                 if (req.cookies.credentials) {
                     let { credentials } = req.cookies;
@@ -232,7 +219,6 @@ exports.signin = function(req, res, next) {
                                         JSON.stringify({ token }),
                                         opts
                                     );
-                                    console.log(savedUser, 'this is user');
                                     return res.json(savedUser);
                                 });
                         }
@@ -241,33 +227,32 @@ exports.signin = function(req, res, next) {
 
                 User.populate(user, {
                     path: 'country'
-                })
-                    .then(function(user) {
-                        // // Remove sensitive data before login
-                        user.password = undefined;
-                        user.salt = undefined;
-                        user.verificationCode = undefined;
+                }).then(function(user) {
+                    // // Remove sensitive data before login
+                    user.password = undefined;
+                    user.salt = undefined;
+                    user.verificationCode = undefined;
 
-                        req.login(user, function(err) {
-                            if (err) {
-                                res.status(400).send(err);
-                            } else {
-                                const token = createJWT(user)
-                                const opts = {
-                                    domain: 'newvote.org',
-                                    httpOnly: false,
-                                    secure: false
-                                };
+                    req.login(user, function(err) {
+                        if (err) {
+                            res.status(400).send(err);
+                        } else {
+                            const token = createJWT(user);
+                            const opts = {
+                                domain: 'newvote.org',
+                                httpOnly: false,
+                                secure: false
+                            };
 
-                                res.cookie(
-                                    'credentials',
-                                    JSON.stringify({ token }),
-                                    opts
-                                );
-                                res.json(user);
-                            }
-                        });
+                            res.cookie(
+                                'credentials',
+                                JSON.stringify({ token }),
+                                opts
+                            );
+                            res.json(user);
+                        }
                     });
+                });
             }
         }
     )(req, res, next);
@@ -724,7 +709,6 @@ function handleLeaderVerification(user, verificationCode) {
             return user.save();
         })
         .catch(err => {
-            console.log(err, 'this is err');
             throw 'Error during verification';
         });
 }

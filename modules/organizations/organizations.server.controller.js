@@ -206,7 +206,7 @@ exports.list = function (req, res) {
             return mongoose.Types.ObjectId(item)
         })
         orgQuery = orgs.length ? {
-            _id: { $all: orgs }
+            _id: { $in: orgs }
         } : {};
     }
     let showDeleted = req.query.showDeleted || 'null';
@@ -238,7 +238,7 @@ exports.list = function (req, res) {
         showNonDeletedItemsMatch;
 
     Organization.aggregate([{
-        $match: { _id: { $in: orgs } }
+        $match: orgQuery
     },
     {
         $match: softDeleteMatch
