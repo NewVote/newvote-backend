@@ -200,7 +200,6 @@ exports.handleIssueSubscription = (req, res) => {
             return res.json({ subscriptions: user.subscriptions })
         })
         .catch((err) => {
-            console.log(err, 'this is err')
             return res.status(500).send({
                 message: errorHandler.getErrorMessage(err)
             });

@@ -245,15 +245,12 @@ exports.verify = function (req, res) {
                 });
         });
 };
-
 exports.verifyWithCommunity = function (req, res) {
-    const {
-        user
-    } = req;
-    const org = JSON.parse(req.cookies.organization);
+    const { id } = req.body;    
+    const org = JSON.parse(req.cookies.organization) || req.organization;
 
     const organizationPromise = Organization.findById(org._id);
-    const userPromise = User.findById(user._id)
+    const userPromise = User.findOne({ _id: id })
         .select('-salt -password -verificationCode');
 
     Promise.all([organizationPromise, userPromise])
@@ -262,7 +259,15 @@ exports.verifyWithCommunity = function (req, res) {
             if (!user) throw ('User does not exist');
             if (!organization) throw ('Organization does not exist');
 
-            user.organizations.push(organization);
+            const { organizations } = user
+            const doesOrganizationIdExistinOrganizationsArray = organizations.some((org) => {
+                return organization._id.equals(org);
+            })
+
+            if (doesOrganizationIdExistinOrganizationsArray) {
+                throw('User is already part of organization')
+            }
+            // user.organizations.push(organization);
             return user.save();
         })
         .then((user) => {
