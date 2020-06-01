@@ -46,6 +46,7 @@ exports.checkAuthStatus = function(req, res, next) {
             return res.status(400).send(info);
         }
 
+        console.log(user, 'this is user on checkStatus')
         // Remove sensitive data before login
         user.password = undefined;
         user.salt = undefined;
@@ -171,91 +172,70 @@ const sendEmail = function(user, pass, req) {
  * Signin after passport authentication
  */
 exports.signin = function(req, res, next) {
-    passport.authenticate(
-        'local',
-        {
-            session: false
-        },
-        function(err, user, info) {
-            if (err || !user) {
-                return res.status(400).send(info);
-            } else {
-                // need to update user orgs in case they've voted on a new org
-                // exports.updateOrgs(user);
-                console.log(req.user, 'this is req.uer')
-                // User is already signed to another organization and is verifying with current org
-                if (req.cookies.credentials) {
-                    let { credentials } = req.cookies;
-                    credentials = JSON.parse(credentials);
+    passport.authenticate('local', function(err, user, info) {
+        if (err || !user) {
+            return res.status(400).send(info);
+        }
 
-                    return jwt.verify(
-                        credentials.token,
-                        config.jwtSecret,
-                        function(err, verifiedUser) {
-                            if (err) {
-                                res.clearCookie('credentials', {
-                                    path: '/',
-                                    domain: 'newvote.org'
-                                });
-                                throw 'Invalid token';
-                            }
+        if (req.cookies.credentials) {
+            let { credentials } = req.cookies;
+            credentials = JSON.parse(credentials);
 
-                            User.findOne({
-                                _id: verifiedUser._id
-                            })
-                                .select('-password -salt -verificationCode')
-                                .then(savedUser => {
-                                    // updated user so create new token
-                                    const token = createJWT(savedUser);
-
-                                    const opts = {
-                                        domain: 'newvote.org',
-                                        secure: false,
-                                        overwrite: true
-                                    };
-
-                                    res.cookie(
-                                        'credentials',
-                                        JSON.stringify({ token }),
-                                        opts
-                                    );
-                                    return res.json(savedUser);
-                                });
-                        }
-                    );
+            return jwt.verify(credentials.token, config.jwtSecret, function(
+                err,
+                verifiedUser
+            ) {
+                if (err) {
+                    res.clearCookie('credentials', {
+                        path: '/',
+                        domain: 'newvote.org'
+                    });
+                    throw 'Invalid token';
                 }
 
-                User.populate(user, {
-                    path: 'country'
-                }).then(function(user) {
-                    // // Remove sensitive data before login
-                    user.password = undefined;
-                    user.salt = undefined;
-                    user.verificationCode = undefined;
+                User.findOne({
+                    _id: verifiedUser._id
+                })
+                    .select('-password -salt -verificationCode')
+                    .then(savedUser => {
+                        // updated user so create new token
+                        const token = createJWT(savedUser);
 
-                    req.login(user, function(err) {
-                        if (err) {
-                            res.status(400).send(err);
-                        } else {
-                            const token = createJWT(user);
-                            const opts = {
-                                domain: 'newvote.org',
-                                httpOnly: false,
-                                secure: false
-                            };
+                        const opts = {
+                            domain: 'newvote.org',
+                            secure: false,
+                            overwrite: true
+                        };
 
-                            res.cookie(
-                                'credentials',
-                                JSON.stringify({ token }),
-                                opts
-                            );
-                            res.json(user);
-                        }
+                        res.cookie(
+                            'credentials',
+                            JSON.stringify({ token }),
+                            opts
+                        );
+                        return res.json(savedUser);
                     });
-                });
-            }
+            });
         }
-    )(req, res, next);
+
+        User.populate(user, {
+            path: 'country'
+        }).then(function(user) {
+            // // Remove sensitive data before login
+            user.password = undefined;
+            user.salt = undefined;
+            user.verificationCode = undefined;
+
+            const token = createJWT(user);
+            const opts = {
+                domain: 'newvote.org',
+                httpOnly: false,
+                secure: false
+            };
+
+            res.cookie('credentials', JSON.stringify({ token }), opts);
+            res.json(user);
+        });
+    })(req, res, next);
 };
 
 /**
