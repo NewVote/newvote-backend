@@ -166,6 +166,7 @@ module.exports.initSession = function (app, db) {
         saveUninitialized: true,
         resave: true,
         secret: config.sessionSecret,
+        unset: 'destroy',
         cookie: {
             maxAge: config.sessionCookie.maxAge,
             httpOnly: config.sessionCookie.httpOnly,
@@ -303,7 +304,7 @@ module.exports.init = function (db) {
 
     // Initialize Express session
     // Replaced session with JWT
-    // this.initSession(app, db);
+    this.initSession(app, db);
 
     // Initialize Modules configuration
     this.initModulesConfiguration(app);

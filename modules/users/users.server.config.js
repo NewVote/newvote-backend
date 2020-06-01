@@ -16,8 +16,6 @@ let passport = require('passport'),
 module.exports = function (app, db) {
     // Serialize sessions
     passport.serializeUser(function (user, done) {
-        console.log(user, 'we are serialized')
-        console.log(user.id, 'this is the string to serialize')
         done(null, user.id);
     });
 
@@ -27,7 +25,6 @@ module.exports = function (app, db) {
             .select('-salt -password -verificationCode')
             .populate('country')
             .exec(function (err, user) {
-                console.log(user, 'we are deserialized')
                 done(err, user);
             });
     });

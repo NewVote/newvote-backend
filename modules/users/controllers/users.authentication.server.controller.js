@@ -41,27 +41,25 @@ const addToMailingList = function(user) {
 };
 
 exports.checkAuthStatus = function(req, res, next) {
-    passport.authenticate('check-status', function(err, user, info) {
-        if (err || !user) {
-            return res.status(400).send(info);
-        }
+    const { user } = req
 
-        console.log(user, 'this is user on checkStatus')
-        // Remove sensitive data before login
-        user.password = undefined;
-        user.salt = undefined;
-        user.verificationCode = undefined;
+    if (!user) throw('User does not exist on Check Status')
+    // Remove sensitive data before login
+    user.password = undefined;
+    user.salt = undefined;
+    user.verificationCode = undefined;
 
-        const token = createJWT(user);
-        const opts = {
-            domain: 'newvote.org',
-            httpOnly: false,
-            secure: false
-        };
+    res.clearCookie('credentials');
 
-        res.cookie('credentials', JSON.stringify({ token }), opts);
-        return res.json(user);
-    })(req, res, next);
+    const token = createJWT(user);
+    const opts = {
+        domain: 'newvote.org',
+        httpOnly: false,
+        secure: false
+    };
+
+    res.cookie('credentials', JSON.stringify({ token }), opts);
+    return res.json(user);
 };
 
 /**
@@ -172,78 +170,83 @@ const sendEmail = function(user, pass, req) {
  * Signin after passport authentication
  */
 exports.signin = function(req, res, next) {
-    passport.authenticate('local', function(err, user, info) {
-        if (err || !user) {
-            return res.status(400).send(info);
-        }
+    // passport.authenticate('local', function(err, user, info) {
+    //     console.log(user, 'this is user')
+    //     if (err || !user) {
+    //         console.log(err, 'this is first err')
+    //         return res.status(400).send(info);
+    //     }
 
-        if (req.cookies.credentials) {
-            let { credentials } = req.cookies;
-            credentials = JSON.parse(credentials);
+    // if (req.cookies.credentials) {
+    //     console.log('checking cookies for credentials')
+    //     console.log(req.cookies);
+    //     let { credentials } = req.cookies;
+    //     credentials = JSON.parse(credentials);
 
-            return jwt.verify(credentials.token, config.jwtSecret, function(
-                err,
-                verifiedUser
-            ) {
-                if (err) {
-                    res.clearCookie('credentials', {
-                        path: '/',
-                        domain: 'newvote.org'
-                    });
-                    throw 'Invalid token';
-                }
+    //     return jwt.verify(credentials.token, config.jwtSecret, function(
+    //         jwtErr,
+    //         verifiedUser
+    //     ) {
+    //         if (jwtErr) {
+    //             console.log(jwtErr, 'this is an error with the web token')
+    //             res.clearCookie('credentials', {
+    //                 path: '/',
+    //                 domain: 'newvote.org'
+    //             });
+    //             throw 'Invalid token';
+    //         }
 
-                User.findOne({
-                    _id: verifiedUser._id
-                })
-                    .select('-password -salt -verificationCode')
-                    .then(savedUser => {
-                        // updated user so create new token
-                        const token = createJWT(savedUser);
+    //         User.findOne({
+    //             _id: verifiedUser._id
+    //         })
+    //             .select('-password -salt -verificationCode')
+    //             .then(savedUser => {
+    //                 // updated user so create new token
+    //                 const token = createJWT(savedUser);
 
-                        const opts = {
-                            domain: 'newvote.org',
-                            secure: false,
-                            overwrite: true
-                        };
+    //                 const opts = {
+    //                     domain: 'newvote.org',
+    //                     secure: false,
+    //                     overwrite: true
+    //                 };
 
-                        res.cookie(
-                            'credentials',
-                            JSON.stringify({ token }),
-                            opts
-                        );
-                        return res.json(savedUser);
-                    });
-            });
-        }
+    //                 res.cookie(
+    //                     'credentials',
+    //                     JSON.stringify({ token }),
+    //                     opts
+    //                 );
+    //                 return res.json(savedUser);
+    //             });
+    //     });
+    // }
 
-        User.populate(user, {
-            path: 'country'
-        }).then(function(user) {
-            // // Remove sensitive data before login
-            user.password = undefined;
-            user.salt = undefined;
-            user.verificationCode = undefined;
+    const { user } = req;
+    res.clearCookie('credentials');
 
-            const token = createJWT(user);
-            const opts = {
-                domain: 'newvote.org',
-                httpOnly: false,
-                secure: false
-            };
+    user.password = undefined;
+    user.salt = undefined;
+    user.verificationCode = undefined;
 
-            res.cookie('credentials', JSON.stringify({ token }), opts);
-            res.json(user);
-        });
-    })(req, res, next);
+    const token = createJWT(user);
+    const opts = {
+        domain: 'newvote.org',
+        httpOnly: false,
+        secure: false
+    };
+
+    res.cookie('credentials', JSON.stringify({ token }), opts);
+    res.json(user);
 };
 
 /**
  * Signout
  */
 exports.signout = function(req, res) {
-    req.logout();
-    res.redirect('/');
+    req.session.destroy(function(err) {
+        if (err) throw(err);
+        req.logout();
+        res.status(200).send({ success: true });
+    });
 };
 
 /**

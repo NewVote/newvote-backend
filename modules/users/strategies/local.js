@@ -20,6 +20,7 @@ module.exports = function () {
             email: username.toLowerCase()
         }, function (err, user) {
             if(err) {
+                console.log(err, 'this is err')
                 return done(err);
             }
             if(!user) {
@@ -28,6 +29,7 @@ module.exports = function () {
                     status: 404
                 });
             }
+           
             else if(!user.authenticate(password)) {
                 return done(null, false, {
                     message: 'Invalid email or password',
