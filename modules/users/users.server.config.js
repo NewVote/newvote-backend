@@ -16,14 +16,18 @@ let passport = require('passport'),
 module.exports = function (app, db) {
     // Serialize sessions
     passport.serializeUser(function (user, done) {
+        console.log(user, 'we are serialized')
+        console.log(user.id, 'this is the string to serialize')
         done(null, user.id);
     });
 
     // Deserialize sessions
     passport.deserializeUser(function (id, done) {
-        User.findById(id, '-salt -password -verificationCode')
+        User.findById(id)
+            .select('-salt -password -verificationCode')
             .populate('country')
             .exec(function (err, user) {
+                console.log(user, 'we are deserialized')
                 done(err, user);
             });
     });
@@ -36,5 +40,5 @@ module.exports = function (app, db) {
 
     // Add passport's middleware
     app.use(passport.initialize());
-    // app.use(passport.session());
+    app.use(passport.session());
 };
