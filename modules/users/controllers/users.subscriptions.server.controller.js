@@ -156,13 +156,16 @@ exports.handleIssueSubscription = (req, res) => {
                     isSubscribed: false
                 }
             }
+            // if issue._id is not saved as a string then it will fail in search
+            // when creating a notification
+            const issueIdAsString = issue._id.toString()
 
             let { issues = [] } = subscriptions[organization._id]
             if (!issue) throw('Issue does not exist')
             // No issues currently so can short circuit objectId checks and return
             // subscription object to client
             if (!issues.length) {
-                issues.push(issue._id)
+                issues.push(issueIdAsString)
                 subscriptions[organization._id].issues = issues
                 user.subscriptions = subscriptions
                 let path = 'subscriptions' + '.' + organization._id
@@ -180,7 +183,7 @@ exports.handleIssueSubscription = (req, res) => {
             })
             // add or remove issue id from subscriptions object
             if (!doesIssueIdExistInIssuesArray) {
-                issues.push(issue._id.toString())
+                issues.push(issueIdAsString)
             } else {
                 const index = issues.findIndex((item) => {
                     return issueId === item.toString()
@@ -191,12 +194,12 @@ exports.handleIssueSubscription = (req, res) => {
 
             user.subscriptions[organization._id].issues = issues;
             let path = 'subscriptions' + '.' + organization._id
+            let issuePath = path + '.issues'
             user.markModified(path)
-
+            user.markModified(issuePath)
             return user.save()
         })
         .then((user) => {
-            console.log('userrrrr at the end')
             return res.json({ subscriptions: user.subscriptions })
         })
         .catch((err) => {

@@ -94,7 +94,6 @@ exports.updateProfile = function(req, res) {
             if (subscriptions) {
                 user.subscriptions = subscriptions
             }
-            console.log(user.subscriptions, 'this is subscriptions from profiel upadte')
             user.updated = Date.now();
 
             return user.save()
