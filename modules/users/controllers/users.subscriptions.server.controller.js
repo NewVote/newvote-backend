@@ -180,7 +180,7 @@ exports.handleIssueSubscription = (req, res) => {
             })
             // add or remove issue id from subscriptions object
             if (!doesIssueIdExistInIssuesArray) {
-                issues.push(issue._id)
+                issues.push(issue._id.toString())
             } else {
                 const index = issues.findIndex((item) => {
                     return issueId === item.toString()
