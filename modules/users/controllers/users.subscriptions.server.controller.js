@@ -183,15 +183,13 @@ exports.handleIssueSubscription = (req, res) => {
                 issues.push(issue._id)
             } else {
                 const index = issues.findIndex((item) => {
-                    return issueId == item
+                    return issueId === item.toString()
                 })
-                console.log(index, 'this is index')
+                console.log(index, 'this is index');
                 issues = [...issues.splice(0, index), ...issues.splice(index+1, issues.length)] 
             }
 
-            console.log('before issue assign', user.subscriptions[organization._id].issues)
             user.subscriptions[organization._id].issues = issues;
-            console.log('after', user.subscriptions[organization._id].issues)
             let path = 'subscriptions' + '.' + organization._id
             user.markModified(path)
 
