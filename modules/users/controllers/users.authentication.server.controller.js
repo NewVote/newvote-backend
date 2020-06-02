@@ -30,6 +30,12 @@ const recaptcha = new Recaptcha({
     verbose: true
 });
 
+const tokenOptions = {
+    domain: 'newvote.org',
+    httpOnly: false,
+    secure: false
+};
+
 const addToMailingList = function(user) {
     const mailchimp = new Mailchimp(config.mailchimp.api);
     const MAILCHIMP_LIST_ID = config.mailchimp.list;
@@ -41,26 +47,32 @@ const addToMailingList = function(user) {
 };
 
 exports.checkAuthStatus = function(req, res, next) {
-    const { user } = req
+    passport.authenticate('check-status', function(err, loggedInUser, info) {
+        if (err || !loggedInUser) {
+            return res.status(403).send(err)
+        }
 
-    if (!user) throw('User does not exist on Check Status')
-    // Remove sensitive data before login
-    user.password = undefined;
-    user.salt = undefined;
-    user.verificationCode = undefined;
+        req.login(loggedInUser, function (loginErr) {
+            if (err) {
+                return res.status(400).send(loginErr);
+            }
+            const user = prepareUserData(loggedInUser)
+            const token = createJWT(user);
+            res.cookie('credentials', JSON.stringify({ token }), tokenOptions);
+            return res.json(user);
+        })
 
-    res.clearCookie('credentials');
-
-    const token = createJWT(user);
-    const opts = {
-        domain: 'newvote.org',
-        httpOnly: false,
-        secure: false
-    };
-
-    res.cookie('credentials', JSON.stringify({ token }), opts);
-    return res.json(user);
+        
+    })(req, res, next);
 };
+
+function prepareUserData(userData) {
+    const copiedUser = JSON.parse(JSON.stringify(userData));
+    copiedUser.password = undefined;
+    copiedUser.salt = undefined;
+    copiedUser.verificationCode = undefined;
+    return copiedUser;
+}
 
 /**
  * Signup
@@ -228,13 +240,8 @@ exports.signin = function(req, res, next) {
     user.verificationCode = undefined;
 
     const token = createJWT(user);
-    const opts = {
-        domain: 'newvote.org',
-        httpOnly: false,
-        secure: false
-    };
 
-    res.cookie('credentials', JSON.stringify({ token }), opts);
+    res.cookie('credentials', JSON.stringify({ token }), tokenOptions);
     res.json(user);
 };
 
@@ -317,12 +324,8 @@ exports.oauthCallback = function(strategy) {
                     // user,
                     token
                 };
-                const opts = {
-                    domain: 'newvote.org',
-                    httpOnly: false,
-                    secure: false
-                };
-                // res.cookie('credentials', JSON.stringify(creds), opts);
+
+                res.cookie('credentials', JSON.stringify(creds), tokenOptions);
                 const redirect = sessionRedirectURL
                     ? host + sessionRedirectURL
                     : host + '/';
