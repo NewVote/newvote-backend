@@ -20,7 +20,6 @@ module.exports = function () {
             email: username.toLowerCase()
         }, function (err, user) {
             if(err) {
-                console.log(err, 'this is err')
                 return done(err);
             }
             if(!user) {
