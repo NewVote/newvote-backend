@@ -191,7 +191,7 @@ exports.handleIssueSubscription = (req, res) => {
                 issues.push(issue._id)
             } else {
                 const index = issues.findIndex((item) => {
-                    return issueId === item
+                    return issueId.equals(item)
                 })
                 issues = [...issues.splice(0, index), ...issues.splice(index+1, issues.length)] 
             }
