@@ -173,11 +173,11 @@ const sendPushNotification = (notification, organization) => {
     // };
 
     return User.find(query)
-        // .and([
-        //     {
-        //         subscriptionsActive: true
-        //     }
-        // ])
+        .and([
+            {
+                subscriptionsActive: 'ACCEPTED'
+            }
+        ])
         .then((users) => {
             console.log(users, 'this is users on notification send')
             if (!users.length) throw('No users to send notification to')
