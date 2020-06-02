@@ -193,8 +193,10 @@ exports.handleIssueSubscription = (req, res) => {
                 const index = issues.findIndex((item) => {
                     console.log(item, 'this is item')
                     console.log(issueId, 'this is issueId')
+                    console.log(issueId === item, 'this is issueId ==== item')
                     return issueId === item
                 })
+                console.log(index, 'this is index')
                 issues = [...issues.splice(0, index), ...issues.splice(index+1, issues.length)] 
             }
 
