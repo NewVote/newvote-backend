@@ -82,7 +82,6 @@ exports.update = (req, res) => {
             return res.json(data)
         })
         .catch((err) => {
-            console.log(err, 'err on update')
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });
@@ -149,7 +148,6 @@ exports.handleIssueSubscription = (req, res) => {
     Promise.all([userPromise, issuePromise])
         .then(([user, issue]) => {
             const { subscriptions = {} } = user
-            console.log(user.subscriptions[organization._id].issues, 'start of promise')
             if (!subscriptions[organization._id]) {
                 subscriptions[organization._id] = {
                     issues: [],
@@ -188,7 +186,6 @@ exports.handleIssueSubscription = (req, res) => {
                 const index = issues.findIndex((item) => {
                     return issueId === item.toString()
                 })
-                console.log(index, 'this is index');
                 issues = [...issues.splice(0, index), ...issues.splice(index+1, issues.length)] 
             }
 
@@ -203,7 +200,6 @@ exports.handleIssueSubscription = (req, res) => {
             return res.json({ subscriptions: user.subscriptions })
         })
         .catch((err) => {
-            console.log(err, 'this is err when hitting notification bell')
             return res.status(500).send({
                 message: errorHandler.getErrorMessage(err)
             });

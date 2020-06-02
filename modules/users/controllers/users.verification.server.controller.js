@@ -155,7 +155,6 @@ function saveVerificationSmsCode(user, code, number, res) {
                     });
                 })
                 .catch(err => {
-                    console.log('error saving user: ', err);
                     return res.status(400)
                         .send({
                             message: err
@@ -238,7 +237,6 @@ exports.verify = function (req, res) {
             });
         })
         .catch((err) => {
-            console.log('error finding user: ', err);
             return res.status(400)
                 .send({
                     message: errorHandler.getErrorMessage(err)

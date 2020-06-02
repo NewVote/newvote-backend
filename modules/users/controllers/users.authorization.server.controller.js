@@ -11,7 +11,6 @@ let _ = require('lodash'),
  * User middleware
  */
 exports.userByID = function(req, res, next, id) {
-    console.log('id in user middleware: ', id);
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).send({
             message: 'User is invalid'
@@ -28,7 +27,6 @@ exports.userByID = function(req, res, next, id) {
             } else if (!user) {
                 return next(new Error('Failed to load User ' + id));
             }
-            console.log('got user by id: ', user);
             req.profile = user;
             next();
         });

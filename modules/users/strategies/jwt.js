@@ -27,7 +27,6 @@ module.exports = function () {
             let profile = jwtPayload['https://aaf.edu.au/attributes']
             profile.jwt = req.body.assertion
             profile.jti = jwtPayload.jti
-            console.log('got profile in JWT: ', profile);
 
             users.saveRapidProfile(req, profile, done);
         }
