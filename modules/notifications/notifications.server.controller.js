@@ -166,19 +166,20 @@ const sendPushNotification = (notification, organization) => {
     let query = {
         [field]: { $in: [parentId] }
     }
-
+    console.log(query, 'this is query')
     // let query = {
     //     pushSubscription: { $exists: true, $type: ['string'] },
     //     [field]: true
     // };
 
     return User.find(query)
-        .and([
-            {
-                subscriptionsActive: true
-            }
-        ])
+        // .and([
+        //     {
+        //         subscriptionsActive: true
+        //     }
+        // ])
         .then((users) => {
+            console.log(users, 'this is users on notification send')
             if (!users.length) throw('No users to send notification to')
 
             // Converts user objects array to array of pushSubscription arrays

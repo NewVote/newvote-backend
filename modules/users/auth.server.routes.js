@@ -24,7 +24,7 @@ module.exports = function (app) {
         .get(users.signout);
 
     app.route('/api/auth/check-status')
-        .get(passport.authenticate('check-status'), users.checkAuthStatus);
+        .get(users.checkAuthStatus);
 
     app.route('/api/auth/jwt/callback')
         .post(users.oauthCallback('jwt'));
