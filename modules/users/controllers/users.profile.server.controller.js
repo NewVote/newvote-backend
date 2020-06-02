@@ -206,6 +206,8 @@ exports.count = function(req, res) {
 
 exports.patchSubscription = function(req, res) {
     const { subscriptionsActive } = req.body;
+    console.log(subscriptionsActive, 'this is subscriptionsActive')
+
     let user = req.user;
 
     if (!user) {
