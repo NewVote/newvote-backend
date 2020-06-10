@@ -43,12 +43,12 @@ exports.create = function (req, res) {
     notification.save()
         .then((item) => {
             return Notification
-                .populate(item, [{ path: 'parent' }, { path: 'user', select: '_id displayName firstName' }, { path: 'rep' }])
+                .populate(item, [{ path: 'parent', select: '_id slug' }, { path: 'user', select: '_id displayName firstName' }, { path: 'rep' }])
         })
         .then((data) => {
             // take the notification and send it to users
             if (isNotification === 'true') {
-                sendPushNotification(data, req.organization)
+                sendPushNotification(data, req.organization, req.get('host'))
             }
 
             return res.json(data);
@@ -131,26 +131,27 @@ exports.notificationByID = function(req, res, next, id) {
         })
 };
 
-const sendPushNotification = (notification, organization) => {
+const sendPushNotification = (notification, organization, originUrl) => {
     const { url, _id } = organization
     const { description, parent } = notification
 
     // console.log(parent, 'this is parent');
 
     const bodyText = stripHtml(description);
+    
     const notificationPayload = {
         "notification": {
             "title": `${organization.name} Issue Update`,
             "body": `${bodyText}`,
             "icon": "assets/logo-no-text.png",
             "badge": "assets/logo-no-text.png",
-            "image": "assets/logo-no-text.png",
             "vibrate": [100, 50, 100],
             "data": {
                 "dateOfArrival": Date.now(),
                 "primaryKey": 1,
                 "organization": url,
-                "url": parent.slug
+                "url": parent.slug,
+                "originUrl": originUrl
             },
             "actions": [{
                 "action": "explore",
@@ -168,7 +169,7 @@ const sendPushNotification = (notification, organization) => {
 
     // convert ObjectId to string as comparing with objectId fails, issues saved on subscriptions object
     // are saved as string
-    const parentId = mongoose.Types.ObjectId(parent).toString();
+    const parentId = mongoose.Types.ObjectId(parent._id).toString();
     let query = {
         [field]: { $in: [parentId] }
     }
