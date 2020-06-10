@@ -43,7 +43,7 @@ exports.create = function (req, res) {
     notification.save()
         .then((item) => {
             return Notification
-                .populate(item, [{ path: 'parent' }, { path: 'user', select: '_id displayName firstName' }, { path: 'rep' }])
+                .populate(item, [{ path: 'parent', select: '_id slug' }, { path: 'user', select: '_id displayName firstName' }, { path: 'rep' }])
         })
         .then((data) => {
             // take the notification and send it to users
@@ -168,7 +168,7 @@ const sendPushNotification = (notification, organization) => {
 
     // convert ObjectId to string as comparing with objectId fails, issues saved on subscriptions object
     // are saved as string
-    const parentId = mongoose.Types.ObjectId(parent).toString();
+    const parentId = mongoose.Types.ObjectId(parent._id).toString();
     let query = {
         [field]: { $in: [parentId] }
     }
