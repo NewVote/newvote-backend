@@ -9,6 +9,7 @@ let mongoose = require('mongoose'),
 let NotificationSchema = new Schema({
     parent: {
         type: Schema.ObjectId,
+        refPath: 'parentType'
     },
     parentType: {
         type: String
