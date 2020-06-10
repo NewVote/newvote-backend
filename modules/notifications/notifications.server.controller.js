@@ -43,7 +43,7 @@ exports.create = function (req, res) {
     notification.save()
         .then((item) => {
             return Notification
-                .populate(item, [{ path: 'user', select: '_id displayName firstName' }, { path: 'rep' }])
+                .populate(item, [{ path: 'parent' }, { path: 'user', select: '_id displayName firstName' }, { path: 'rep' }])
         })
         .then((data) => {
             // take the notification and send it to users
@@ -135,7 +135,7 @@ const sendPushNotification = (notification, organization) => {
     const { url, _id } = organization
     const { description, parent } = notification
 
-    console.log(parent, 'this is parent');
+    // console.log(parent, 'this is parent');
 
     const bodyText = stripHtml(description);
     const notificationPayload = {
@@ -149,7 +149,7 @@ const sendPushNotification = (notification, organization) => {
             "data": {
                 "dateOfArrival": Date.now(),
                 "primaryKey": 1,
-                "organization": organization.url,
+                "organization": url,
                 "url": parent.slug
             },
             "actions": [{
@@ -159,6 +159,7 @@ const sendPushNotification = (notification, organization) => {
         }
     };
 
+    console.log('after notification data create')
     // To find users to send notifications to we search 
     // subscriptions for corresponding organization
     // AND
@@ -183,6 +184,7 @@ const sendPushNotification = (notification, organization) => {
             }
         ])
         .then((users) => {
+            console.log(users, 'this is users')
             if (!users.length) throw('No users to send notification to')
 
             // Converts user objects array to array of pushSubscription arrays
@@ -203,6 +205,7 @@ const sendPushNotification = (notification, organization) => {
             return true
         })
         .catch((err) => {
+            console.log(err, 'this is err on webpush')
             return err;
         })
 }
