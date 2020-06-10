@@ -135,16 +135,22 @@ const sendPushNotification = (notification, organization) => {
     const { url, _id } = organization
     const { description, parent } = notification
 
+    console.log(parent, 'this is parent');
+
     const bodyText = stripHtml(description);
     const notificationPayload = {
         "notification": {
             "title": `${organization.name} Issue Update`,
             "body": `${bodyText}`,
             "icon": "assets/logo-no-text.png",
+            "badge": "assets/logo-no-text.png",
+            "image": "assets/logo-no-text.png",
             "vibrate": [100, 50, 100],
             "data": {
                 "dateOfArrival": Date.now(),
-                "primaryKey": 1
+                "primaryKey": 1,
+                "organization": organization.url,
+                "url": parent.slug
             },
             "actions": [{
                 "action": "explore",
@@ -153,7 +159,6 @@ const sendPushNotification = (notification, organization) => {
         }
     };
 
-    
     // To find users to send notifications to we search 
     // subscriptions for corresponding organization
     // AND
