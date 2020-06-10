@@ -43,10 +43,11 @@ exports.create = (req, res) => {
             
             // User has not been prompted before to accept notifications
             if (subscriptionsActive === 'DEFAULT') {
-                subscriptionsActive = 'ACCEPTED'
+                user.subscriptionsActive = 'ACCEPTED'
             }
 
             pushSubscription.push(subscription)
+
             user.pushSubscription = pushSubscription
             user.markModified('pushSubscription')
 
