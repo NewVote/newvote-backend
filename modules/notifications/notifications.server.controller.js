@@ -144,7 +144,6 @@ const sendPushNotification = (notification, organization) => {
             "body": `${bodyText}`,
             "icon": "assets/logo-no-text.png",
             "badge": "assets/logo-no-text.png",
-            "image": "assets/logo-no-text.png",
             "vibrate": [100, 50, 100],
             "data": {
                 "dateOfArrival": Date.now(),
