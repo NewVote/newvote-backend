@@ -43,7 +43,7 @@ exports.create = function (req, res) {
     notification.save()
         .then((item) => {
             return Notification
-                .populate(item, [{ path: 'user', select: '_id displayName firstName' }, { path: 'rep' }])
+                .populate(item, [{ path: 'parent' }, { path: 'user', select: '_id displayName firstName' }, { path: 'rep' }])
         })
         .then((data) => {
             // take the notification and send it to users
