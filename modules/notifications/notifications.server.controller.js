@@ -48,7 +48,7 @@ exports.create = function (req, res) {
         .then((data) => {
             // take the notification and send it to users
             if (isNotification === 'true') {
-                sendPushNotification(data, req.organization)
+                sendPushNotification(data, req.organization, req.get('host'))
             }
 
             return res.json(data);
@@ -131,13 +131,14 @@ exports.notificationByID = function(req, res, next, id) {
         })
 };
 
-const sendPushNotification = (notification, organization) => {
+const sendPushNotification = (notification, organization, originUrl) => {
     const { url, _id } = organization
     const { description, parent } = notification
 
     // console.log(parent, 'this is parent');
 
     const bodyText = stripHtml(description);
+    
     const notificationPayload = {
         "notification": {
             "title": `${organization.name} Issue Update`,
@@ -149,7 +150,8 @@ const sendPushNotification = (notification, organization) => {
                 "dateOfArrival": Date.now(),
                 "primaryKey": 1,
                 "organization": url,
-                "url": parent.slug
+                "url": parent.slug,
+                "originUrl": originUrl
             },
             "actions": [{
                 "action": "explore",
