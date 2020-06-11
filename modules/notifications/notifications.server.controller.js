@@ -149,7 +149,7 @@ const sendPushNotification = (notification, organization, originUrl) => {
                 "dateOfArrival": Date.now(),
                 "primaryKey": 1,
                 "organization": url,
-                "url": parent.slug,
+                "url": parent.slug || parent._id,
                 "originUrl": originUrl.includes('api.staging') ? 'staging' : 'production'
             },
             "actions": [{
