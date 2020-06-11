@@ -136,8 +136,6 @@ const sendPushNotification = (notification, organization, originUrl) => {
     const { url, _id } = organization
     const { description, parent } = notification
 
-    // console.log(parent, 'this is parent');
-
     const bodyText = stripHtml(description);
     
     const notificationPayload = {

@@ -265,7 +265,7 @@ exports.verifyWithCommunity = function (req, res) {
             if (doesOrganizationIdExistinOrganizationsArray) {
                 throw('User is already part of organization')
             }
-            // user.organizations.push(organization);
+            user.organizations.push(organization);
             return user.save();
         })
         .then((user) => {
