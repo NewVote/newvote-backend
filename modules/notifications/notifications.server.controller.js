@@ -50,7 +50,8 @@ exports.create = function (req, res) {
             if (isNotification === 'true') {
                 sendPushNotification(data, req.organization, req.get('host'))
             }
-
+            data.depopulate('parent');
+            // depopulate parent field for client side notification list rendering
             return res.json(data);
         })
         .catch((err) => {
