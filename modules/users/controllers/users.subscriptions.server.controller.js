@@ -29,6 +29,7 @@ exports.create = (req, res) => {
     // id is the _id of the user that made the subscription request
     const { subscriptionId: id } = req.params
     const { endpoint, expirationTime, keys } = req.body
+    const { _id: organizationId } = req.organization
     const subscription = {
         endpoint,
         expirationTime,
@@ -36,26 +37,27 @@ exports.create = (req, res) => {
     }
 
     User.findOne({ _id: id })
-        .select('_id pushSubscription subscriptions')
+        .select('_id subscriptions')
         .then((user) => {
             if (!user) throw('User does not exist')
-            let { pushSubscription = [], subscriptions = {}, subscriptionsActive = 'DEFAULT' } = user
+            let { subscriptions = {}, subscriptionsActive = 'DEFAULT' } = user
             
             // User has not been prompted before to accept notifications
             if (subscriptionsActive === 'DEFAULT') {
                 user.subscriptionsActive = 'ACCEPTED'
             }
 
-            pushSubscription.push(subscription)
-
-            user.pushSubscription = pushSubscription
-            user.markModified('pushSubscription')
-
-            if (!subscriptions[req.organization._id]) {
-                subscriptions[req.organization._id] = { issues: [], isSubscribed: false }
+            if (!subscriptions[organizationId]) {
+                subscriptions[organizationId] = { issues: [], isSubscribed: false, pushSubscriptions: [] }
             }
 
-            let path = 'subscriptions' + '.' + req.organization._id
+            if (!subscriptions[organizationId].pushSubscriptions) {
+                subscriptions[organizationId].pushSubscriptions = []
+            }
+            subscriptions[organizationId].pushSubscriptions.push(subscription)
+            user.subscriptions = subscriptions
+
+            let path = 'subscriptions' + '.' + organizationId
             user.markModified(path)
 
             return user.save()
@@ -75,8 +77,8 @@ exports.update = (req, res) => {
     User.findOne({ _id: id })
         .then((user) => {
             if (!user) throw('User does not exist')
-            user.pushSubscription = {}
-            user.markModified('pushSubscription')
+            // user.pushSubscription = {}
+            // user.markModified('pushSubscription')
             return user.save()
         })
         .then((data) => {
@@ -104,42 +106,6 @@ exports.delete = (req, res) => {
         })
 }
 
-exports.test = (req, res) => {
-    const { url } = req.organization
-    const { subscriptionId: id } = req.params
-    const { title, description } = req.body
-    const notificationPayload = {
-        "notification": {
-            "title": "Angular News",
-            "body": "Newsletter Available!",
-            "vibrate": [100, 50, 100],
-            "data": {
-                "dateOfArrival": Date.now(),
-                "primaryKey": 1
-            },
-            "actions": [{
-                "action": "explore",
-                "title": "Go to the site"
-            }]
-        }
-    };
-
-    User.findOne({ _id: id })
-        .then((user) => {
-            if (!user.subscriptions[req.organization.url]) throw('User is not subscribed to organization')
-            const subscription = user.subscriptions[req.organization.url]
-            return webPush.sendNotification(subscription, JSON.stringify(notificationPayload), options)
-        })
-        .then((data) => {
-            return res.json(data)
-        })
-        .catch((err) => {
-            return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });    
-        })
-}
-
 exports.handleIssueSubscription = (req, res) => {
     const issueId = req.body.issueId;
     const { subscriptionId: userId } = req.params; 
@@ -152,7 +118,8 @@ exports.handleIssueSubscription = (req, res) => {
             if (!subscriptions[organization._id]) {
                 subscriptions[organization._id] = {
                     issues: [],
-                    isSubscribed: false
+                    isSubscribed: false,
+                    pushSubscription: []
                 }
             }
             // if issue._id is not saved as a string then it will fail in search
