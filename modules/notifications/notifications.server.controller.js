@@ -171,10 +171,6 @@ const sendPushNotification = (notification, organization, originUrl) => {
     let query = {
         [field]: { $in: [parentId] }
     }
-    // let query = {
-    //     pushSubscription: { $exists: true, $type: ['string'] },
-    //     [field]: true
-    // };
 
     return User.find(query)
         .and([
@@ -187,10 +183,9 @@ const sendPushNotification = (notification, organization, originUrl) => {
 
             // Converts user objects array to array of pushSubscription arrays
             return users.map((user) => {
-                return user.pushSubscription
+                return user.subscriptions[_id].pushSubscriptions
             })
-                // concat all push subscriptions to return a 1 dimensional array
-                // of push subscriptions
+                // flatten 2d array of push subscriptions
                 .reduce((prev, curr) => {
                     return prev.concat(curr);
                 }, [])
