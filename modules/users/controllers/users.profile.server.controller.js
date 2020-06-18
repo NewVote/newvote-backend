@@ -80,20 +80,34 @@ exports.update = function(req, res) {
 
 exports.updateProfile = function(req, res) {
     // Init Variables
-    const { displayName, subscriptions = {} } = req.body
+    const { _id } = req.organization 
+    const { displayName, subscriptions: newSubscriptions = {} } = req.body
 
+    console.log()
     User.findOne({ _id: req.user._id })
         .select('-password -verificationCode -email -salt')
         .then((user) => {
+            const { subscriptions = {} } = user
             if (!user) throw('User is not signed in')
 
             if (displayName) {
                 user.displayName = displayName
             }
 
-            if (subscriptions) {
-                user.subscriptions = subscriptions
+            if (newSubscriptions[_id]) {
+                if (!subscriptions[_id]) {
+                    subscriptions[_id] = {
+                        isSubscribed: false,
+                        pushSubscriptions: [],
+                        issues: []
+                    }
+                }
+
+                subscriptions[_id].issues = newSubscriptions[_id].issues;
+                user.subscriptions = subscriptions;
+                user.markModified('subscriptions');
             }
+    
             user.updated = Date.now();
 
             return user.save()
