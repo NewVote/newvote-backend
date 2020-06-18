@@ -1,5 +1,7 @@
 'use strict';
 
+const { issueByID } = require('../issues/issues.server.controller');
+
 /**
  * Module dependencies.
  */
@@ -8,6 +10,8 @@ let path = require('path'),
     Vote = mongoose.model('Vote'),
     Region = mongoose.model('Region'),
     Organization = mongoose.model('Organization'),
+    Solution = mongoose.model('Solution'),
+    Proposal = mongoose.model('Proposal'),
     User = mongoose.model('User'),
     errorHandler = require(path.resolve(
         './modules/core/errors.server.controller'
@@ -467,4 +471,45 @@ function checkPermissions(userRole, organizationRoles) {
     if (!filteredRole) throw ('User does not have permission to vote');
 
     return filteredRole.active;
+}
+
+
+exports.getTotalVotes = async function (req, res) {
+    const { organization } = req;
+
+    const solutions = await Solution.find({ organizations: { $in: [organization._id] } })
+        .then((solutions) => {
+            return {
+                objectIds: solutions.map((solution) => {
+                    return solution._id
+                }),
+                total: solutions.length
+            }
+        })
+
+
+    const proposals = await Proposal.find({ organizations: { $in: [organization._id] } })
+        .then((proposals) => {
+            return {
+                objectIds: proposals.map((proposal) => {
+                    return proposal._id
+                }),
+                total: proposals.length
+            }
+        })
+
+    await Vote.find({ user: req.user._id, object: { $in: solutions.objectIds.concat(proposals.objectIds) } })
+        .then((data) => {
+            const totalVotes = data.filter((vote) => {
+                return vote.voteValue !== 0
+            })
+
+            const totals = {
+                votes: totalVotes.length,
+                entities: solutions.total + proposals.total
+            }
+            return res.json(totals)
+        })
+
+
 }
