@@ -48,7 +48,7 @@ exports.create = (req, res) => {
             }
 
             if (!subscriptions[organizationId]) {
-                subscriptions[organizationId] = { issues: [], isSubscribed: false, pushSubscriptions: [] }
+                subscriptions[organizationId] = { issues: [], communityUpdates: false, pushSubscriptions: [] }
             }
 
             if (!subscriptions[organizationId].pushSubscriptions) {
@@ -117,8 +117,9 @@ exports.handleIssueSubscription = (req, res) => {
             const { subscriptions = {} } = user
             if (!subscriptions[organization._id]) {
                 subscriptions[organization._id] = {
+                    autoUpdates: false,
                     issues: [],
-                    isSubscribed: false,
+                    communityUpdates: false,
                     pushSubscription: []
                 }
             }

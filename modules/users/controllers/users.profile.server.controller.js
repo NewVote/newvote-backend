@@ -81,7 +81,7 @@ exports.update = function(req, res) {
 exports.updateProfile = function(req, res) {
     // Init Variables
     const { _id } = req.organization 
-    const { displayName, subscriptions: newSubscriptions = {} } = req.body
+    const { displayName, subscriptions: newSubscriptions = {}, autoUpdates = false, communityUpdates = false } = req.body
 
     console.log()
     User.findOne({ _id: req.user._id })
@@ -97,7 +97,8 @@ exports.updateProfile = function(req, res) {
             if (newSubscriptions[_id]) {
                 if (!subscriptions[_id]) {
                     subscriptions[_id] = {
-                        isSubscribed: false,
+                        autoUpdates: autoUpdates,
+                        communityUpdates: communityUpdates,
                         pushSubscriptions: [],
                         issues: []
                     }
