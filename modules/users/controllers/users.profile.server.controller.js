@@ -81,9 +81,8 @@ exports.update = function(req, res) {
 exports.updateProfile = function(req, res) {
     // Init Variables
     const { _id } = req.organization 
-    const { displayName, subscriptions: newSubscriptions = {} } = req.body
+    const { displayName, subscriptions: newSubscriptions = {}, autoUpdates = false, communityUpdates = false } = req.body
 
-    console.log()
     User.findOne({ _id: req.user._id })
         .select('-password -verificationCode -email -salt')
         .then((user) => {
@@ -97,7 +96,8 @@ exports.updateProfile = function(req, res) {
             if (newSubscriptions[_id]) {
                 if (!subscriptions[_id]) {
                     subscriptions[_id] = {
-                        isSubscribed: false,
+                        autoUpdates: autoUpdates,
+                        communityUpdates: communityUpdates,
                         pushSubscriptions: [],
                         issues: []
                     }
@@ -127,11 +127,6 @@ exports.updateProfile = function(req, res) {
             });
         })
 
-
-
-
-
-        
 }
 
 
@@ -218,9 +213,10 @@ exports.count = function(req, res) {
 };
 
 exports.patchSubscription = function(req, res) {
-    const { subscriptionsActive } = req.body;
-
+    const { subscriptionsActive, subscriptions: userSubscription } = req.body;
     let user = req.user;
+    const { _id } = req.organization
+    const status = userSubscription[_id].communityUpdates
 
     if (!user) {
         return res.status(400).send({
@@ -231,11 +227,12 @@ exports.patchSubscription = function(req, res) {
     User.findById(user._id)
         .then(userDoc => {
             if (!userDoc) throw 'User does not exist';
-            userDoc.subscriptionsActive = subscriptionsActive
+            userDoc.subscriptions[_id].communityUpdates = status
+            userDoc.markModified('subscriptions');
             return userDoc.save();
         })
         .then((user) => {
-            res.status(200).send({ subscriptionsActive: user.subscriptionsActive });
+            res.status(200).send({ subscriptionsActive: user.subscriptionsActive, subscriptions: user.subscriptions });
         })
         .catch(err => {
             return res.status(404).send({

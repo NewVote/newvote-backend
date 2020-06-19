@@ -48,7 +48,7 @@ exports.create = (req, res) => {
             }
 
             if (!subscriptions[organizationId]) {
-                subscriptions[organizationId] = { issues: [], isSubscribed: false, pushSubscriptions: [] }
+                subscriptions[organizationId] = { issues: [], communityUpdates: false, pushSubscriptions: [] }
             }
 
             if (!subscriptions[organizationId].pushSubscriptions) {
@@ -106,7 +106,7 @@ exports.delete = (req, res) => {
         })
 }
 
-exports.handleIssueSubscription = (req, res) => {
+exports.handleSubscriptionCreation = (req, res) => {
     const issueId = req.body.issueId;
     const { subscriptionId: userId } = req.params; 
     const organization = req.organization;
@@ -115,11 +115,15 @@ exports.handleIssueSubscription = (req, res) => {
     Promise.all([userPromise, issuePromise])
         .then(([user, issue]) => {
             const { subscriptions = {} } = user
+            // if subscriptions object does not exist initialize it
+            // communityUpdates to true, as existence of a subscription shows 
+            // users giving permission
             if (!subscriptions[organization._id]) {
                 subscriptions[organization._id] = {
+                    autoUpdates: false,
                     issues: [],
-                    isSubscribed: false,
-                    pushSubscription: []
+                    communityUpdates: true,
+                    pushSubscriptions: []
                 }
             }
             // if issue._id is not saved as a string then it will fail in search
@@ -139,10 +143,6 @@ exports.handleIssueSubscription = (req, res) => {
                 return user.save()
             }
             // Use the original issueId since we converted it to string
-            // const issuesAsObjectIds = issues.map((item) => {
-            //     return mongoose.Types.ObjectId(item).toString()
-            // })
-
             const doesIssueIdExistInIssuesArray = issues.some((item) => {
                 const itemString = new ObjectId(item).toString();
                 return itemString === issueId;

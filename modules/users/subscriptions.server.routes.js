@@ -19,5 +19,5 @@ module.exports = function (app) {
         .delete(subscriptionController.delete);
 
     app.route('/api/subscriptions/issue/:subscriptionId')
-        .put(subscriptionController.handleIssueSubscription)
+        .put(subscriptionController.handleSubscriptionCreation)
 }
