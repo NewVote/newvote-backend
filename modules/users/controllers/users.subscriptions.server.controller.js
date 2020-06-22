@@ -43,12 +43,12 @@ exports.create = (req, res) => {
             let { subscriptions = {}, subscriptionsActive = 'DEFAULT' } = user
             
             // User has not been prompted before to accept notifications
-            if (subscriptionsActive === 'DEFAULT') {
-                user.subscriptionsActive = 'ACCEPTED'
-            }
+            // if (subscriptionsActive === 'DEFAULT') {
+            //     user.subscriptionsActive = 'ACCEPTED'
+            // }
 
             if (!subscriptions[organizationId]) {
-                subscriptions[organizationId] = { issues: [], communityUpdates: false, pushSubscriptions: [] }
+                subscriptions[organizationId] = { isSubscribed: true, issues: [], communityUpdates: false, pushSubscriptions: [] }
             }
 
             if (!subscriptions[organizationId].pushSubscriptions) {
@@ -120,16 +120,16 @@ exports.handleSubscriptionCreation = (req, res) => {
             // users giving permission
             if (!subscriptions[organization._id]) {
                 subscriptions[organization._id] = {
-                    autoUpdates: false,
                     issues: [],
-                    communityUpdates: true,
+                    autoUpdates: false,
+                    communityUpdates: false,
+                    isSubscribed: true,
                     pushSubscriptions: []
                 }
             }
             // if issue._id is not saved as a string then it will fail in search
             // when creating a notification
             const issueIdAsString = issue._id.toString()
-
             let { issues = [] } = subscriptions[organization._id]
             if (!issue) throw('Issue does not exist')
             // No issues currently so can short circuit objectId checks and return
@@ -160,6 +160,8 @@ exports.handleSubscriptionCreation = (req, res) => {
             user.subscriptions[organization._id].issues = issues;
             let path = 'subscriptions' + '.' + organization._id
             let issuePath = path + '.issues'
+
+            // With a schema type mixed, need to mark as modified to update the user object field
             user.markModified(path)
             user.markModified(issuePath)
             return user.save()
