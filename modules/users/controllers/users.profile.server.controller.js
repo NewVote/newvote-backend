@@ -216,8 +216,8 @@ exports.patchSubscription = function(req, res) {
     const { subscriptions: userSubscription } = req.body;
     let user = req.user;
     const { _id } = req.organization
-    const status = userSubscription[_id].isSubscribed
-
+    console.log(userSubscription, 'this is userSubscription on patch')
+    console.log(userSubscription[_id], 'this is the organization on user subcription on patch')
     if (!user) {
         return res.status(400).send({
             message: 'User is not signed in'
@@ -227,12 +227,12 @@ exports.patchSubscription = function(req, res) {
     User.findById(user._id)
         .then(userDoc => {
             if (!userDoc) throw 'User does not exist';
-            userDoc.subscriptions[_id].isSubscribed = status
+            userDoc.subscriptions[_id].isSubscribed = userSubscription[_id].isSubscribed
             userDoc.markModified('subscriptions');
             return userDoc.save();
         })
-        .then((user) => {
-            res.status(200).send({ subscriptions: user.subscriptions });
+        .then((data) => {
+            res.status(200).send({ subscriptions: data.subscriptions });
         })
         .catch(err => {
             return res.status(404).send({
