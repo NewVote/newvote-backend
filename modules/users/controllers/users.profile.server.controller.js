@@ -81,51 +81,53 @@ exports.update = function(req, res) {
 exports.updateProfile = function(req, res) {
     // Init Variables
     const { _id } = req.organization 
-    const { displayName, subscriptions: newSubscriptions = {}, autoUpdates = false, communityUpdates = false } = req.body
+    const { displayName } = req.body
+    console.log(req.body, 'this is body');
+    return res.json(true);
 
-    User.findOne({ _id: req.user._id })
-        .select('-password -verificationCode -email -salt')
-        .then((user) => {
-            const { subscriptions = {} } = user
-            if (!user) throw('User is not signed in')
+    // User.findOne({ _id: req.user._id })
+    //     .select('-password -verificationCode -email -salt')
+    //     .then((user) => {
+    //         const { subscriptions = {} } = user
+    //         if (!user) throw('User is not signed in')
 
-            if (displayName) {
-                user.displayName = displayName
-            }
+    //         if (displayName) {
+    //             user.displayName = displayName
+    //         }
 
-            if (newSubscriptions[_id]) {
-                if (!subscriptions[_id]) {
-                    subscriptions[_id] = {
-                        autoUpdates: autoUpdates,
-                        communityUpdates: communityUpdates,
-                        pushSubscriptions: [],
-                        issues: []
-                    }
-                }
+    //         if (newSubscriptions[_id]) {
+    //             if (!subscriptions[_id]) {
+    //                 subscriptions[_id] = {
+    //                     autoUpdates: autoUpdates,
+    //                     communityUpdates: communityUpdates,
+    //                     pushSubscriptions: [],
+    //                     issues: []
+    //                 }
+    //             }
 
-                subscriptions[_id].issues = newSubscriptions[_id].issues;
-                user.subscriptions = subscriptions;
-                user.markModified('subscriptions');
-            }
+    //             subscriptions[_id].issues = newSubscriptions[_id].issues;
+    //             user.subscriptions = subscriptions;
+    //             user.markModified('subscriptions');
+    //         }
     
-            user.updated = Date.now();
+    //         user.updated = Date.now();
 
-            return user.save()
-        })
-        .then((savedUser) => {
-            req.login(savedUser, function(err) {
-                if (err) {
-                    res.status(400).send(err);
-                } else {
-                    res.json(savedUser);
-                }
-            });
-        })
-        .catch((err) => {
-            return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
-        })
+    //         return user.save()
+    //     })
+    //     .then((savedUser) => {
+    //         req.login(savedUser, function(err) {
+    //             if (err) {
+    //                 res.status(400).send(err);
+    //             } else {
+    //                 res.json(savedUser);
+    //             }
+    //         });
+    //     })
+    //     .catch((err) => {
+    //         return res.status(400).send({
+    //             message: errorHandler.getErrorMessage(err)
+    //         });
+    //     })
 
 }
 
@@ -213,11 +215,11 @@ exports.count = function(req, res) {
 };
 
 exports.patchSubscription = function(req, res) {
-    const { subscriptionsActive, subscriptions: userSubscription } = req.body;
+    const { subscriptions: userSubscription } = req.body;
     let user = req.user;
     const { _id } = req.organization
-    const status = userSubscription[_id].communityUpdates
-
+    console.log(userSubscription, 'this is userSubscription on patch')
+    console.log(userSubscription[_id], 'this is the organization on user subcription on patch')
     if (!user) {
         return res.status(400).send({
             message: 'User is not signed in'
@@ -227,12 +229,12 @@ exports.patchSubscription = function(req, res) {
     User.findById(user._id)
         .then(userDoc => {
             if (!userDoc) throw 'User does not exist';
-            userDoc.subscriptions[_id].communityUpdates = status
+            userDoc.subscriptions[_id].isSubscribed = userSubscription[_id].isSubscribed
             userDoc.markModified('subscriptions');
             return userDoc.save();
         })
-        .then((user) => {
-            res.status(200).send({ subscriptionsActive: user.subscriptionsActive, subscriptions: user.subscriptions });
+        .then((data) => {
+            res.status(200).send({ subscriptions: data.subscriptions });
         })
         .catch(err => {
             return res.status(404).send({
