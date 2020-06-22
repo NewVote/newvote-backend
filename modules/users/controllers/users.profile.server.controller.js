@@ -213,10 +213,10 @@ exports.count = function(req, res) {
 };
 
 exports.patchSubscription = function(req, res) {
-    const { subscriptionsActive, subscriptions: userSubscription } = req.body;
+    const { subscriptions: userSubscription } = req.body;
     let user = req.user;
     const { _id } = req.organization
-    const status = userSubscription[_id].communityUpdates
+    const status = userSubscription[_id].isSubscribed
 
     if (!user) {
         return res.status(400).send({
@@ -227,12 +227,12 @@ exports.patchSubscription = function(req, res) {
     User.findById(user._id)
         .then(userDoc => {
             if (!userDoc) throw 'User does not exist';
-            userDoc.subscriptions[_id].communityUpdates = status
+            userDoc.subscriptions[_id].isSubscribed = status
             userDoc.markModified('subscriptions');
             return userDoc.save();
         })
         .then((user) => {
-            res.status(200).send({ subscriptionsActive: user.subscriptionsActive, subscriptions: user.subscriptions });
+            res.status(200).send({ subscriptions: user.subscriptions });
         })
         .catch(err => {
             return res.status(404).send({
