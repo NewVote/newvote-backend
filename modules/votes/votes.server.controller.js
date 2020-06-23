@@ -630,10 +630,7 @@ const updateUserSubscriptionsWithSolutionsIssueIds = (issueIds, user, organizati
                 // search the subscriptions obejct for the issues array
                 // then compare the current issueId with each issue
                 const idExists = subscriptions[organization._id].issues.find((id) => {
-                    console.log(id, 'this is id')
-                    console.log(issueId, 'this is issueId')
-                    console.log(id.equals(issueId))
-                    if (id === issueId) {
+                    if (id.equals(issueId)) {
                         console.log(id, 'matches')
                         return true
                     }
