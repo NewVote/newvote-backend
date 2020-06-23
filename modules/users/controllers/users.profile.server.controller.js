@@ -81,53 +81,56 @@ exports.update = function(req, res) {
 exports.updateProfile = function(req, res) {
     // Init Variables
     const { _id } = req.organization 
-    const { displayName } = req.body
-    console.log(req.body, 'this is body');
-    return res.json(true);
+    const { displayName, autoUpdates, communityUpdates, subscriptions: newSubscriptions } = req.body
 
-    // User.findOne({ _id: req.user._id })
-    //     .select('-password -verificationCode -email -salt')
-    //     .then((user) => {
-    //         const { subscriptions = {} } = user
-    //         if (!user) throw('User is not signed in')
+    User.findOne({ _id: req.user._id })
+        .select('-password -verificationCode -email -salt')
+        .then((user) => {
+            const { subscriptions = {} } = user
+            if (!user) throw('User is not signed in')
 
-    //         if (displayName) {
-    //             user.displayName = displayName
-    //         }
+            if (displayName) {
+                user.displayName = displayName
+            }
 
-    //         if (newSubscriptions[_id]) {
-    //             if (!subscriptions[_id]) {
-    //                 subscriptions[_id] = {
-    //                     autoUpdates: autoUpdates,
-    //                     communityUpdates: communityUpdates,
-    //                     pushSubscriptions: [],
-    //                     issues: []
-    //                 }
-    //             }
+            // Limit profile subscription setting updates to the current organization
+            if (newSubscriptions[_id]) {
+                if (!subscriptions[_id]) {
+                    subscriptions[_id] = {
+                        autoUpdates: autoUpdates,
+                        communityUpdates: communityUpdates,
+                        pushSubscriptions: [],
+                        issues: [],
+                        isSubscribed: false
+                    }
+                }
 
-    //             subscriptions[_id].issues = newSubscriptions[_id].issues;
-    //             user.subscriptions = subscriptions;
-    //             user.markModified('subscriptions');
-    //         }
+                subscriptions[_id].issues = newSubscriptions[_id].issues;
+                subscriptions[_id].communityUpdates = communityUpdates
+                subscriptions[_id].autoUpdates = autoUpdates
+
+                user.subscriptions = subscriptions;
+                user.markModified('subscriptions');
+            }
     
-    //         user.updated = Date.now();
+            user.updated = Date.now();
 
-    //         return user.save()
-    //     })
-    //     .then((savedUser) => {
-    //         req.login(savedUser, function(err) {
-    //             if (err) {
-    //                 res.status(400).send(err);
-    //             } else {
-    //                 res.json(savedUser);
-    //             }
-    //         });
-    //     })
-    //     .catch((err) => {
-    //         return res.status(400).send({
-    //             message: errorHandler.getErrorMessage(err)
-    //         });
-    //     })
+            return user.save()
+        })
+        .then((savedUser) => {
+            req.login(savedUser, function(err) {
+                if (err) {
+                    res.status(400).send(err);
+                } else {
+                    res.json(savedUser);
+                }
+            });
+        })
+        .catch((err) => {
+            return res.status(400).send({
+                message: errorHandler.getErrorMessage(err)
+            });
+        })
 
 }
 

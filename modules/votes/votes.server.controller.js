@@ -27,6 +27,46 @@ exports.create = function (req, res) {
     let vote = new Vote(req.body);
     vote.user = req.user;
 
+    // Check if user had auto issue subscriptions from votes in profile
+    const userPromise = User.findOne({ _id: req.user._id })
+    const votePromise = Vote.populate(vote, { path: 'object' })
+    
+    Promise.all([userPromise, votePromise])
+        .then(([ userData, voteData ]) => {
+            const { subscriptions } = userData
+            const { objectType } = voteData
+
+            // do notsubscribe to suggestion parents
+            if (voteData.objectType === 'Suggestion') {
+                return false
+            }
+
+            // User has not setup profile
+            if (!subscriptions[req.organization._id]) {
+                return false;
+            }
+
+            // user has not signed up to auto updates so do nothing
+            if (!subscriptions[req.organization._id].autoUpdates) {
+                return false
+            }
+            // user has signed up to auto issue subscriptions on current organization
+            // take the current vote and check whether it is for a solution / action 
+            // and find it's parent
+
+            if (objectType === 'Proposal') {
+                return getIssueIdsFromProposalObject(voteData.object.solutions)
+                    .then((issueIds) => {
+                        return updateUserSubscriptionsWithSolutionsIssueIds(issueIds, req.user, req.organization)
+                    })
+            }
+
+            if (objectType === 'Solution') {
+                const { object: { issues } } = voteData
+                return updateUserSubscriptionsWithSolutionsIssueIds(issues, req.user, req.organization)
+            }
+        })
+ 
     vote.save()
         .then((vote) => {
             return Vote.find({
@@ -90,6 +130,8 @@ exports.updateOrCreate = async function (req, res) {
         });
     }
 
+
+
     Vote.findOne({
         user: user,
         object: object
@@ -125,8 +167,47 @@ exports.update = function (req, res) {
     if (req.body.voteValue === 0) {
         vote.voteValue = 0;
     }
-    // vote.title = req.body.title;
-    // vote.content = req.body.content;
+
+    // Check if user had auto issue subscriptions from votes in profile
+    const userPromise = User.findOne({ _id: req.user._id })
+    const votePromise = Vote.populate(vote, { path: 'object' })
+ 
+    Promise.all([userPromise, votePromise])
+        .then(([ userData, voteData ]) => {
+            const { subscriptions } = userData
+            const { objectType } = voteData
+
+            // do notsubscribe to suggestion parents
+            if (voteData.objectType === 'Suggestion') {
+                return false
+            }
+
+            // User has not setup profile
+            if (!subscriptions[req.organization._id]) {
+                return false;
+            }
+
+            // user has not signed up to auto updates so do nothing
+            if (!subscriptions[req.organization._id].autoUpdates) {
+                return false
+            }
+            // user has signed up to auto issue subscriptions on current organization
+            // take the current vote and check whether it is for a solution / action 
+            // and find it's parent
+
+            if (objectType === 'Proposal') {
+                return getIssueIdsFromProposalObject(voteData.object.solutions)
+                    .then((issueIds) => {
+                        return updateUserSubscriptionsWithSolutionsIssueIds(issueIds, req.user, req.organization)
+                    })
+            }
+
+            if (objectType === 'Solution') {
+                const { object: { issues } } = voteData
+                return updateUserSubscriptionsWithSolutionsIssueIds(issues, req.user, req.organization)
+            }
+        })
+
     vote.save()
         .then((vote) => {
             // search for all votes related to the updated object
@@ -512,4 +593,59 @@ exports.getTotalVotes = async function (req, res) {
         })
 
 
+}
+
+const getIssueIdsFromProposalObject = (solutionIds) => {
+    return Solution.find({ _id: { $in: solutionIds } })
+        .then((solutions) => {
+            const issueIds = [];
+            // map the array of solutions to return a 2d array of parent issues
+            return solutions.map((solution) => {
+                return solution.issues
+            }).reduce((prev, curr) => {
+                // flatten the 2d array to we are left with a 1d array of issue ids
+                return prev.concat(...curr)
+            }, [])
+                .forEach((issueId) => {
+                    // push unique object ids to issueIds array
+                    if (issueIds.includes(issueId)) {
+                        return false
+                    }
+
+                    return issueIds.push(issueId);
+                })
+        })
+}
+
+const updateUserSubscriptionsWithSolutionsIssueIds = (issueIds, user, organization) => {
+    return User.findOne({ _id: user._id })
+        .then((user) => {
+            const { subscriptions } = user
+
+            if (!subscriptions[organization._id]) {
+                return false
+            }
+
+            issueIds.forEach((issueId) => {
+                // search the subscriptions obejct for the issues array
+                // then compare the current issueId with each issue
+                const idExists = subscriptions[organization._id].issues.find((id) => {
+                    if (id === issueId) {
+                        console.log(id, 'matches')
+                        return true
+                    }
+                    console.log(id, 'does not match')
+                    return false
+                })
+
+                if (idExists) return false
+
+                user.subscriptions[organization._id].issues.push(issueId);
+                return true
+            })
+
+            user.markModified('subscriptions')
+            console.log(user.subscriptions, 'this is subscriptions')
+            return user.save()
+        })
 }
