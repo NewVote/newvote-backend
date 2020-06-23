@@ -91,8 +91,15 @@ exports.create = function (req, res) {
 
             return vote;
         })
-        .then((vote) => {
-            return res.json(vote);
+        .then((data) => {
+            return User.findOne({ _id: req.user._id })
+                .select('-password -verificationCode -email -salt')
+                .then((user) => {
+                    res.json({
+                        vote: data,
+                        subscriptions: user.subscriptions
+                    })
+                })
         })
         .catch(err => {
             return res.status(400)
@@ -231,7 +238,14 @@ exports.update = function (req, res) {
             voteMetaData.total = voteMetaData.up + voteMetaData.down
 
             socket.send(req, voteMetaData, 'vote', org);
-            return res.json(vote)
+            return User.findOne({ _id: req.user._id })
+                .select('-password -verificationCode -email -salt')
+                .then((user) => {
+                    return res.json({
+                        vote,
+                        subscriptions: user.subscriptions
+                    })
+                })
         })
         .catch(err => {
             return res.status(400)
