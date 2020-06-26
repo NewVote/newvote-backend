@@ -26,7 +26,6 @@ exports.create = function (req, res) {
     const org = JSON.parse(req.cookies.organization).url;
     let vote = new Vote(req.body);
     vote.user = req.user;
-
     // Check if user had auto issue subscriptions from votes in profile
     const userPromise = User.findOne({ _id: req.user._id })
     const votePromise = Vote.populate(vote, { path: 'object' })
@@ -78,7 +77,7 @@ exports.create = function (req, res) {
                 up: 0,
                 down: 0,
                 total: 0,
-                _id: vote.object
+                _id: vote.object._id
             };
 
             votes.forEach((item) => {
@@ -95,6 +94,8 @@ exports.create = function (req, res) {
             return User.findOne({ _id: req.user._id })
                 .select('-password -verificationCode -email -salt')
                 .then((user) => {
+                    // depopulate object field client only needs the objectId in vote data structure
+                    vote.depopulate('object')
                     res.json({
                         vote: data,
                         subscriptions: user.subscriptions
@@ -228,7 +229,7 @@ exports.update = function (req, res) {
                 up: 0,
                 down: 0,
                 total: 0,
-                _id: vote.object
+                _id: vote.object._id
             };
 
             votes.forEach((item) => {
@@ -241,6 +242,8 @@ exports.update = function (req, res) {
             return User.findOne({ _id: req.user._id })
                 .select('-password -verificationCode -email -salt')
                 .then((user) => {
+                    // depopulate object field client only needs the objectId in vote data structure
+                    vote.depopulate('object')
                     return res.json({
                         vote,
                         subscriptions: user.subscriptions
@@ -282,7 +285,6 @@ exports.list = function (req, res) {
     if (regionIds) {
         getPostcodes(regionIds).then(
             function (postCodes) {
-                console.log(postCodes);
                 // Find votes submitted from users with those postcodes
                 getVotesResponse({}, {
                     path: 'user',
@@ -408,11 +410,8 @@ function fixVoteTypes(vote) {
     // now the database is populated with votes with objectType of 'proposal'
 
     if (vote.objectType === 'proposal') {
-        console.log('found vote to fix');
         vote.objectType = 'Proposal';
-        vote.save().then(function (vote) {
-            console.log('vote updated: ', vote._id);
-        });
+        vote.save()
     }
 }
 
@@ -645,10 +644,8 @@ const updateUserSubscriptionsWithSolutionsIssueIds = (issueIds, user, organizati
                 // then compare the current issueId with each issue
                 const idExists = subscriptions[organization._id].issues.find((id) => {
                     if (id.equals(issueId)) {
-                        console.log(id, 'matches')
                         return true
                     }
-                    console.log(id, 'does not match')
                     return false
                 })
 
@@ -659,7 +656,6 @@ const updateUserSubscriptionsWithSolutionsIssueIds = (issueIds, user, organizati
             })
 
             user.markModified('subscriptions')
-            console.log(user.subscriptions, 'this is subscriptions')
             return user.save()
         })
 }

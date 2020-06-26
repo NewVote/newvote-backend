@@ -185,13 +185,10 @@ exports.signin = function(req, res, next) {
     // passport.authenticate('local', function(err, user, info) {
     //     console.log(user, 'this is user')
     //     if (err || !user) {
-    //         console.log(err, 'this is first err')
     //         return res.status(400).send(info);
     //     }
 
     // if (req.cookies.credentials) {
-    //     console.log('checking cookies for credentials')
-    //     console.log(req.cookies);
     //     let { credentials } = req.cookies;
     //     credentials = JSON.parse(credentials);
 

@@ -96,11 +96,9 @@ exports.sendVerificationCodeViaSms = function (req, res, next) {
     //             return res.status(400)
     //                 .send({ message: 'There was a problem sending your verification code, please make sure the phone number you have entered is correct.' });
     //         } else if(responseMessage[0] == 'ERROR') {
-    //             console.log('SMS BROADCAST ERROR: ' + responseMessage[1]);
     //             return res.status(400)
     //                 .send({ message: 'There was a problem sending your verification code. There was an internal server error, please try again later.' });
     //         } else {
-    //             console.log('SMS BROADCAST ERROR: ' + responseMessage[1]);
     //             return res.status(400)
     //                 .send({ message: 'Something went wrong: ' + responseMessage[1] });
     //         }
