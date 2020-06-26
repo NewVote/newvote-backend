@@ -1,11 +1,11 @@
-process.env.NODE_ENV = 'test';
+process.env.NODE_ENV = 'test'
 
-let mongoose = require('mongoose');
-let User = mongoose.model('User');
+let mongoose = require('mongoose')
+let User = mongoose.model('User')
 
 // Dependencies
-let chai = require('chai');
-let should = chai.should();
+let chai = require('chai')
+let should = chai.should()
 
 // describe('User', () => {
 //     beforeEach((done) => {
@@ -36,12 +36,12 @@ let should = chai.should();
 //             done();
 //         });
 //     })
-    
+
 //     it('Should have one User', () => {
 //         return User.find({})
 //             .then((users) => {
 //                 users.should.be.an('array');
-//                 users.length.should.equal(1);            
+//                 users.length.should.equal(1);
 //             })
 //     })
 // })

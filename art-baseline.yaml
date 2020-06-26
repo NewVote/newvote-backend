@@ -1,57 +1,56 @@
 config:
-  target: 'http://api.newvote.org/api'
-  phases:
-    - duration: 60
-      arrivalRate: 1
-      name: "Warm up phase"
-    - duration: 120
-      arrivalRate: 1
-      rampTo: 20
-      name: "Ramp up phase"
-    - duration: 300
-      arrivalRate: 20
-      name: "Max load phase"
-  defaults:
-    headers:
-      x-my-service-auth: '987401838271002188298567'
+    target: 'http://api.newvote.org/api'
+    phases:
+        - duration: 60
+          arrivalRate: 1
+          name: 'Warm up phase'
+        - duration: 120
+          arrivalRate: 1
+          rampTo: 20
+          name: 'Ramp up phase'
+        - duration: 300
+          arrivalRate: 20
+          name: 'Max load phase'
+    defaults:
+        headers:
+            x-my-service-auth: '987401838271002188298567'
 scenarios:
-  - name: "Flux Homepage"
-    flow:
-        - get:
-            url: "/organizations?url=flux&organization=flux"
-        - get:
-            url: "/users/count?organization=flux"
-        - get:
-            url: "/proposals?organization=flux"
-        - get:
-            url: "/solutions?organization=flux"
-        - get:
-            url: "/issues?organization=flux"
-  - name: "UQU Homepage"
-    flow:
-        - get:
-            url: "/organizations?url=uq&organization=uq"
-        - get:
-            url: "/users/count?organization=uq"
-        - get:
-            url: "/proposals?organization=uq"
-        - get:
-            url: "/solutions?organization=uq"
-        - get:
-            url: "/issues?organization=uq"
-  - name: "UQU Browse Issues -> Single Issue"
-    flow:
-        - get:
-            url: "/organizations?url=uq&organization=uq"
-        - get:
-            url: "/issues?organization=uq"
-        - get:
-            url: "/topics?organization=uq"
-        - think:
-            1
-        - get:
-            url: "/issues/5bb9b647b163ca00182aefb1?organization=uq"
-        - get:
-            url: "/solutions?issueId=5bb9b647b163ca00182aefb1&organization=uq"
-        - get:
-            url: "/media?issueId=5bb9b647b163ca00182aefb1&organization=uq"
+    - name: 'Flux Homepage'
+      flow:
+          - get:
+                url: '/organizations?url=flux&organization=flux'
+          - get:
+                url: '/users/count?organization=flux'
+          - get:
+                url: '/proposals?organization=flux'
+          - get:
+                url: '/solutions?organization=flux'
+          - get:
+                url: '/issues?organization=flux'
+    - name: 'UQU Homepage'
+      flow:
+          - get:
+                url: '/organizations?url=uq&organization=uq'
+          - get:
+                url: '/users/count?organization=uq'
+          - get:
+                url: '/proposals?organization=uq'
+          - get:
+                url: '/solutions?organization=uq'
+          - get:
+                url: '/issues?organization=uq'
+    - name: 'UQU Browse Issues -> Single Issue'
+      flow:
+          - get:
+                url: '/organizations?url=uq&organization=uq'
+          - get:
+                url: '/issues?organization=uq'
+          - get:
+                url: '/topics?organization=uq'
+          - think: 1
+          - get:
+                url: '/issues/5bb9b647b163ca00182aefb1?organization=uq'
+          - get:
+                url: '/solutions?issueId=5bb9b647b163ca00182aefb1&organization=uq'
+          - get:
+                url: '/media?issueId=5bb9b647b163ca00182aefb1&organization=uq'

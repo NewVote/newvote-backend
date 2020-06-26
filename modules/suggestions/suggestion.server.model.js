@@ -1,11 +1,11 @@
-'use strict';
+'use strict'
 
 /**
  * Module dependencies.
  */
 let mongoose = require('mongoose'),
     Schema = mongoose.Schema,
-    createSlug = require('../helpers/slug');
+    createSlug = require('../helpers/slug')
 
 /**
  * Article Schema
@@ -13,50 +13,52 @@ let mongoose = require('mongoose'),
 let SuggestionSchema = new Schema({
     created: {
         type: Date,
-        default: Date.now
+        default: Date.now,
     },
     title: {
         type: String,
         trim: true,
-        required: 'Title cannot be empty'
+        required: 'Title cannot be empty',
     },
     type: {
         type: String,
-        enum: ['solution', 'action', 'issue', 'other']
+        enum: ['solution', 'action', 'issue', 'other'],
     },
     description: {
         type: String,
         default: '',
         trim: true,
-        required: 'Summary cannot be empty'
+        required: 'Summary cannot be empty',
     },
     statements: {
         type: String,
         default: '',
-        trim: true
+        trim: true,
     },
-    media: [{
-        type: String,
-        default: '',
-        trim: true
-    }],
+    media: [
+        {
+            type: String,
+            default: '',
+            trim: true,
+        },
+    ],
     user: {
         type: Schema.ObjectId,
-        ref: 'User'
+        ref: 'User',
     },
     parentType: {
-        type: String
+        type: String,
     },
     parentTitle: {
-        type: String
+        type: String,
     },
     parent: {
-        type: Schema.ObjectId
+        type: Schema.ObjectId,
     },
     status: {
         // status: 1=approved 0=pending -1=declined
         type: Number,
-        default: 0
+        default: 0,
     },
     votes: {
         up: Number,
@@ -64,45 +66,50 @@ let SuggestionSchema = new Schema({
         total: Number,
         currentUser: {
             type: Schema.ObjectId,
-            ref: 'Vote'
-        }
+            ref: 'Vote',
+        },
     },
     organizations: {
         type: Schema.ObjectId,
-        ref: 'Organization'
+        ref: 'Organization',
     },
     softDeleted: {
         type: Boolean,
-        default: false
+        default: false,
     },
     slug: {
-        type: String
-    }
-});
-
-SuggestionSchema.statics.generateUniqueSlug = function (title, suffix, callback) {
-    let _this = this;
-    let possibleSlug = createSlug(title) + (suffix || '');
-
-    _this.findOne({
-        slug: possibleSlug
+        type: String,
     },
-    function (err, slug) {
-        if (!err) {
-            if (!slug) {
-                callback(possibleSlug);
-            } else {
-                return _this.generateUniqueSlug(
-                    title,
-                    (suffix || 0) + 1,
-                    callback
-                );
-            }
-        } else {
-            callback(null);
-        }
-    }
-    );
-};
+})
 
-mongoose.model('Suggestion', SuggestionSchema);
+SuggestionSchema.statics.generateUniqueSlug = function (
+    title,
+    suffix,
+    callback,
+) {
+    let _this = this
+    let possibleSlug = createSlug(title) + (suffix || '')
+
+    _this.findOne(
+        {
+            slug: possibleSlug,
+        },
+        function (err, slug) {
+            if (!err) {
+                if (!slug) {
+                    callback(possibleSlug)
+                } else {
+                    return _this.generateUniqueSlug(
+                        title,
+                        (suffix || 0) + 1,
+                        callback,
+                    )
+                }
+            } else {
+                callback(null)
+            }
+        },
+    )
+}
+
+mongoose.model('Suggestion', SuggestionSchema)

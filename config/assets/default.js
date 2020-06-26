@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 module.exports = {
     server: {
@@ -10,6 +10,6 @@ module.exports = {
         sockets: 'modules/**/sockets/**/*.js',
         config: 'modules/**/*.config.js',
         policies: 'modules/**/*.policy.js',
-        views: 'modules/**/*.server.view.html'
-    }
-};
+        views: 'modules/**/*.server.view.html',
+    },
+}

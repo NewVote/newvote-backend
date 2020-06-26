@@ -1,4 +1,5 @@
-[{
+[
+    {
         "_id": {
             "$oid": "5d10a6771e649017c48d4119"
         },
@@ -10,9 +11,11 @@
         "verificationCode": "",
         "profileImageURL": "modules/users/client/img/profile/default.png",
         "roles": ["user", "admin"],
-        "organizations": [{
-            "$oid": "5d1227ee48b54f0d38323882"
-        }],
+        "organizations": [
+            {
+                "$oid": "5d1227ee48b54f0d38323882"
+            }
+        ],
         "created": {
             "$date": {
                 "$numberLong": "1561372279184"
@@ -24,7 +27,8 @@
         "__v": {
             "$numberInt": "1"
         }
-    }, {
+    },
+    {
         "_id": {
             "$oid": "5d12161f5502ec4ab8c14290"
         },
@@ -36,9 +40,11 @@
         "verificationCode": "",
         "profileImageURL": "modules/users/client/img/profile/default.png",
         "roles": ["user"],
-        "organizations": [{
-            "$oid": "5d1227ee48b54f0d38323882"
-        }],
+        "organizations": [
+            {
+                "$oid": "5d1227ee48b54f0d38323882"
+            }
+        ],
         "created": {
             "$date": {
                 "$numberLong": "1561466399102"
@@ -50,7 +56,8 @@
         "__v": {
             "$numberInt": "1"
         }
-    }, {
+    },
+    {
         "_id": {
             "$oid": "5d1216825502ec4ab8c14292"
         },
@@ -74,7 +81,8 @@
         "__v": {
             "$numberInt": "0"
         }
-    }, {
+    },
+    {
         "_id": {
             "$oid": "5d12168d5502ec4ab8c14293"
         },
@@ -98,7 +106,8 @@
         "__v": {
             "$numberInt": "0"
         }
-    }, {
+    },
+    {
         "_id": {
             "$oid": "5d1217185502ec4ab8c14294"
         },
@@ -123,5 +132,4 @@
             "$numberInt": "0"
         }
     }
-
 ]

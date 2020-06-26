@@ -1,10 +1,10 @@
 const socket = {
-    send: socketSendData
-};
-
-function socketSendData(request, data, event, channel) {
-    const io = request.app.get('io');
-    io.sockets.to(channel).emit(event, data);
+    send: socketSendData,
 }
 
-module.exports = socket;
+function socketSendData(request, data, event, channel) {
+    const io = request.app.get('io')
+    io.sockets.to(channel).emit(event, data)
+}
+
+module.exports = socket

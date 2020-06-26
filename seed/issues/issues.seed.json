@@ -1,5 +1,46 @@
 [
-    {"_id":{"$oid":"5d122e5048b54f0d38323886"},"description":"<p>You can act like a man! I'm your older brother, Mike, and I was stepped over! Just when I thought I was out... they pull me back in. Your enemies always get strong on what you leave behind. I have a sentimental weakness for my children and I spoil them, as you can see. They talk when they should listen.</p>","imageUrl":"https://res.cloudinary.com/newvote/image/upload/v1561473390/ymvpcm5v21knlyg5oyrb.jpg","topics":[{"$oid":"5d122d4148b54f0d38323884"}],"softDeleted":false,"name":"Test Issue 1","organizations":{"$oid":"5d1227ee48b54f0d38323882"},"created":{"$date":{"$numberLong":"1561472592821"}},"user":{"$oid":"5d10a6771e649017c48d4119"},"__v":{"$numberInt":"1"},"solutionMetaData":{"votes":{"up":{"$numberInt":"0"},"down":{"$numberInt":"0"},"total":{"$numberInt":"0"}},"solutionCount":{"$numberInt":"2"},"totalTrendingScore":{"$numberInt":"0"},"lastCreated":{"$date":{"$numberLong":"1561472766382"}}}}
-,{"_id":{"$oid":"5d122e7348b54f0d38323887"},"description":"<p>It's an old habit. I spent my whole life trying not to be careless. Women and children can afford to be careless, but not men. Never let anyone know what you are thinking. Fredo, you're my older brother, and I love you. But don't ever take sides with anyone against the Family again. Ever. I don't like violence, Tom. I'm a businessman; blood is a big expense. Friends and money - oil and water.</p>","imageUrl":"https://res.cloudinary.com/newvote/image/upload/v1561473374/ljyqsi4dpfmmjclqyu66.jpg","topics":[{"$oid":"5d122d7f48b54f0d38323885"}],"softDeleted":false,"name":"Test Issue 2","organizations":{"$oid":"5d1227ee48b54f0d38323882"},"created":{"$date":{"$numberLong":"1561472627722"}},"user":{"$oid":"5d10a6771e649017c48d4119"},"__v":{"$numberInt":"1"},"solutionMetaData":{"votes":{"up":{"$numberInt":"0"},"down":{"$numberInt":"0"},"total":{"$numberInt":"0"}},"solutionCount":{"$numberInt":"2"},"totalTrendingScore":{"$numberInt":"0"},"lastCreated":{"$date":{"$numberLong":"1561472766382"}}}}
-
+    {
+        "_id": { "$oid": "5d122e5048b54f0d38323886" },
+        "description": "<p>You can act like a man! I'm your older brother, Mike, and I was stepped over! Just when I thought I was out... they pull me back in. Your enemies always get strong on what you leave behind. I have a sentimental weakness for my children and I spoil them, as you can see. They talk when they should listen.</p>",
+        "imageUrl": "https://res.cloudinary.com/newvote/image/upload/v1561473390/ymvpcm5v21knlyg5oyrb.jpg",
+        "topics": [{ "$oid": "5d122d4148b54f0d38323884" }],
+        "softDeleted": false,
+        "name": "Test Issue 1",
+        "organizations": { "$oid": "5d1227ee48b54f0d38323882" },
+        "created": { "$date": { "$numberLong": "1561472592821" } },
+        "user": { "$oid": "5d10a6771e649017c48d4119" },
+        "__v": { "$numberInt": "1" },
+        "solutionMetaData": {
+            "votes": {
+                "up": { "$numberInt": "0" },
+                "down": { "$numberInt": "0" },
+                "total": { "$numberInt": "0" }
+            },
+            "solutionCount": { "$numberInt": "2" },
+            "totalTrendingScore": { "$numberInt": "0" },
+            "lastCreated": { "$date": { "$numberLong": "1561472766382" } }
+        }
+    },
+    {
+        "_id": { "$oid": "5d122e7348b54f0d38323887" },
+        "description": "<p>It's an old habit. I spent my whole life trying not to be careless. Women and children can afford to be careless, but not men. Never let anyone know what you are thinking. Fredo, you're my older brother, and I love you. But don't ever take sides with anyone against the Family again. Ever. I don't like violence, Tom. I'm a businessman; blood is a big expense. Friends and money - oil and water.</p>",
+        "imageUrl": "https://res.cloudinary.com/newvote/image/upload/v1561473374/ljyqsi4dpfmmjclqyu66.jpg",
+        "topics": [{ "$oid": "5d122d7f48b54f0d38323885" }],
+        "softDeleted": false,
+        "name": "Test Issue 2",
+        "organizations": { "$oid": "5d1227ee48b54f0d38323882" },
+        "created": { "$date": { "$numberLong": "1561472627722" } },
+        "user": { "$oid": "5d10a6771e649017c48d4119" },
+        "__v": { "$numberInt": "1" },
+        "solutionMetaData": {
+            "votes": {
+                "up": { "$numberInt": "0" },
+                "down": { "$numberInt": "0" },
+                "total": { "$numberInt": "0" }
+            },
+            "solutionCount": { "$numberInt": "2" },
+            "totalTrendingScore": { "$numberInt": "0" },
+            "lastCreated": { "$date": { "$numberLong": "1561472766382" } }
+        }
+    }
 ]

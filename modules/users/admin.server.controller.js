@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 /**
  * Module dependencies.
@@ -6,71 +6,74 @@
 let path = require('path'),
     mongoose = require('mongoose'),
     User = mongoose.model('User'),
-    errorHandler = require(path.resolve('./modules/core/errors.server.controller'));
+    errorHandler = require(path.resolve(
+        './modules/core/errors.server.controller',
+    ))
 
 /**
  * Show the current user
  */
 exports.read = function (req, res) {
-    res.json(req.model);
-};
+    res.json(req.model)
+}
 
 /**
  * Update a User
  */
 exports.update = function (req, res) {
-    let user = req.model;
+    let user = req.model
 
     //For security purposes only merge these parameters
-    user.firstName = req.body.firstName;
-    user.lastName = req.body.lastName;
-    user.displayName = user.firstName + ' ' + user.lastName;
-    user.roles = req.body.roles;
+    user.firstName = req.body.firstName
+    user.lastName = req.body.lastName
+    user.displayName = user.firstName + ' ' + user.lastName
+    user.roles = req.body.roles
 
     user.save(function (err) {
         if (err) {
             return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
+                message: errorHandler.getErrorMessage(err),
+            })
         }
 
-        res.json(user);
-    });
-};
+        res.json(user)
+    })
+}
 
 /**
  * Delete a user
  */
 exports.delete = function (req, res) {
-    let user = req.model;
+    let user = req.model
 
     user.remove(function (err) {
         if (err) {
             return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
+                message: errorHandler.getErrorMessage(err),
+            })
         }
 
-        res.json(user);
-    });
-};
+        res.json(user)
+    })
+}
 
 /**
  * List of Users
  */
 exports.list = function (req, res) {
-    User.find({}, '-salt -password -verificationCode').sort('-created')
+    User.find({}, '-salt -password -verificationCode')
+        .sort('-created')
         .populate('user', 'displayName')
         .exec(function (err, users) {
             if (err) {
                 return res.status(400).send({
-                    message: errorHandler.getErrorMessage(err)
-                });
+                    message: errorHandler.getErrorMessage(err),
+                })
             }
 
-            res.json(users);
-        });
-};
+            res.json(users)
+        })
+}
 
 /**
  * User middleware
@@ -78,18 +81,21 @@ exports.list = function (req, res) {
 exports.userByID = function (req, res, next, id) {
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).send({
-            message: 'User is invalid'
-        });
+            message: 'User is invalid',
+        })
     }
 
-    User.findById(id, '-salt -password -verificationCode').exec(function (err, user) {
+    User.findById(id, '-salt -password -verificationCode').exec(function (
+        err,
+        user,
+    ) {
         if (err) {
-            return next(err);
+            return next(err)
         } else if (!user) {
-            return next(new Error('Failed to load user ' + id));
+            return next(new Error('Failed to load user ' + id))
         }
 
-        req.model = user;
-        next();
-    });
-};
+        req.model = user
+        next()
+    })
+}

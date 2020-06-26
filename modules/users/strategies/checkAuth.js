@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 /**
  * Module dependencies.
@@ -8,35 +8,35 @@ let path = require('path'),
     passport = require('passport'),
     passportJWT = require('passport-jwt'),
     JWTStrategy = passportJWT.Strategy,
-    User = require('mongoose').model('User');
+    User = require('mongoose').model('User')
 
-module.exports = function() {
+module.exports = function () {
     const checkOptions = {
         jwtFromRequest: cookieExtractor,
-        secretOrKey: config.jwtSecret
-    };
+        secretOrKey: config.jwtSecret,
+    }
     passport.use(
         'check-status',
-        new JWTStrategy(checkOptions, function(jwtPayload, done) {
-            User.findOne({ _id: jwtPayload._id }, function(err, user) {
+        new JWTStrategy(checkOptions, function (jwtPayload, done) {
+            User.findOne({ _id: jwtPayload._id }, function (err, user) {
                 if (err) {
-                    return done(err, false);
+                    return done(err, false)
                 }
 
                 if (user) {
-                    return done(null, user);
+                    return done(null, user)
                 } else {
-                    return done(null, false);
+                    return done(null, false)
                 }
-            });
-        })
-    );
-};
+            })
+        }),
+    )
+}
 
 function cookieExtractor(req) {
-    const { credentials } = req.cookies;
-    if (!credentials) return null;
+    const { credentials } = req.cookies
+    if (!credentials) return null
 
-    const token = JSON.parse(credentials).token;
-    return token;
+    const token = JSON.parse(credentials).token
+    return token
 }

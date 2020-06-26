@@ -1,5 +1,5 @@
-const { Joi } = require('celebrate');
-Joi.objectId = require('joi-objectid')(Joi);
+const { Joi } = require('celebrate')
+Joi.objectId = require('joi-objectid')(Joi)
 
 const schema = {
     body: Joi.object().keys({
@@ -14,9 +14,9 @@ const schema = {
         issues: Joi.array(),
         solutions: Joi.array(),
         proposals: Joi.array(),
-    })
+    }),
 }
 
 module.exports = {
-    schema
+    schema,
 }

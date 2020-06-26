@@ -1,10 +1,10 @@
-'use strict';
+'use strict'
 
 /**
  * Module dependencies.
  */
 let mongoose = require('mongoose'),
-    Schema = mongoose.Schema;
+    Schema = mongoose.Schema
 
 /**
  * Article Schema
@@ -12,24 +12,24 @@ let mongoose = require('mongoose'),
 let OrganizationSchema = new Schema({
     created: {
         type: Date,
-        default: Date.now
+        default: Date.now,
     },
     name: {
         type: String,
         trim: true,
-        required: 'Name cannot be blank'
+        required: 'Name cannot be blank',
     },
     organizationName: {
         type: String,
-        trim: true
+        trim: true,
     },
     description: {
         type: String,
-        trim: true
+        trim: true,
     },
     longDescription: {
         type: String,
-        trim: true
+        trim: true,
     },
     url: {
         type: String,
@@ -39,70 +39,74 @@ let OrganizationSchema = new Schema({
     },
     organizationUrl: {
         type: String,
-        trim: true
+        trim: true,
     },
     imageUrl: {
         type: String,
-        trim: true
+        trim: true,
     },
     iconUrl: {
         type: String,
-        trim: true
+        trim: true,
     },
     owner: {
         type: Schema.ObjectId,
-        ref: 'User'
+        ref: 'User',
     },
     futureOwner: {
         type: Schema.ObjectId,
-        ref: 'FutureLeader'
+        ref: 'FutureLeader',
     },
-    moderators: [{
-        type: Schema.ObjectId,
-        ref: 'User'
-    }],
+    moderators: [
+        {
+            type: Schema.ObjectId,
+            ref: 'User',
+        },
+    ],
     softDeleted: {
         type: Boolean,
-        default: false
+        default: false,
     },
     authType: {
         type: Number,
         default: 0,
-        required: true
+        required: true,
     },
     authUrl: {
         type: String,
         trim: true,
         required: function () {
-            if(this.authType === 0) {
-                return false;
-            }else {
-                return true;
+            if (this.authType === 0) {
+                return false
+            } else {
+                return true
             }
-        }
+        },
     },
     authEntityId: {
-        type: String
+        type: String,
     },
     privateOrg: {
         type: Boolean,
         required: true,
-        default: false
+        default: false,
     },
-    voteRoles: [{
-        role: { type: String },
-        active: { type: Boolean }
-    }],
+    voteRoles: [
+        {
+            role: { type: String },
+            active: { type: Boolean },
+        },
+    ],
     representativeTitle: {
         type: String,
-        default: 'Rep'
+        default: 'Rep',
     },
     representativeTags: [
         {
             name: { type: String },
-            color: { type: String }
-        }
-    ]
-});
+            color: { type: String },
+        },
+    ],
+})
 
-mongoose.model('Organization', OrganizationSchema);
+mongoose.model('Organization', OrganizationSchema)

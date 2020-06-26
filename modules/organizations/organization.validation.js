@@ -1,9 +1,9 @@
-const { Joi } = require('celebrate');
-Joi.objectId = require('joi-objectid')(Joi);
+const { Joi } = require('celebrate')
+Joi.objectId = require('joi-objectid')(Joi)
 
 const schema = {
     params: {
-        organizationId: Joi.objectId()
+        organizationId: Joi.objectId(),
     },
     body: Joi.object().keys({
         name: Joi.string().required(),
@@ -21,10 +21,10 @@ const schema = {
         privateOrg: Joi.boolean(),
         voteRoles: Joi.array(),
         representativeTitle: Joi.string(),
-        representativeTags: Joi.array()
-    })
+        representativeTags: Joi.array(),
+    }),
 }
 
 module.exports = {
-    schema
+    schema,
 }
