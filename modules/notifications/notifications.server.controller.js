@@ -179,7 +179,6 @@ const sendPushNotification = (notification, organization, originUrl) => {
             }
         ])
         .then((users) => {
-            console.log(users, 'this is users who have subscribed')
             if (!users.length) throw('No users to send notification to')
 
             // Converts user objects array to array of pushSubscription arrays
