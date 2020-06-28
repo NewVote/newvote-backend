@@ -11,17 +11,12 @@ let config = require('../config'),
     bodyParser = require('body-parser'),
     session = require('express-session'),
     MongoStore = require('connect-mongo')(session),
-    favicon = require('serve-favicon'),
     compress = require('compression'),
     methodOverride = require('method-override'),
     cookieParser = require('cookie-parser'),
     helmet = require('helmet'),
-    flash = require('connect-flash'),
-    consolidate = require('consolidate'),
     path = require('path'),
-    csrf = require('csurf'),
     cors = require('cors'),
-    jwt = require('express-jwt'),
     celebrateWrap = require('celebrate');
 
 const {
@@ -46,7 +41,6 @@ module.exports.initLocalVariables = function (app) {
     app.locals.cssFiles = config.files.client.css;
     app.locals.livereload = config.livereload;
     app.locals.logo = config.social;
-    app.locals.favicon = config.favicon;
     app.locals.user = false;
     app.locals.config = false;
     app.locals.isPrerender = false;
@@ -94,9 +88,6 @@ module.exports.initMiddleware = function (app) {
         level: 9
     }));
 
-    // Initialize favicon middleware
-    app.use(favicon(app.locals.favicon));
-
     // Enable logger (morgan)
     app.use(morgan(logger.getFormat(), logger.getOptions()));
 
@@ -117,7 +108,6 @@ module.exports.initMiddleware = function (app) {
 
     // Add the cookie parser and flash middleware
     app.use(cookieParser());
-    app.use(flash());
 
 
     // set up csurf
@@ -148,14 +138,14 @@ module.exports.initMiddleware = function (app) {
 /**
  * Configure view engine
  */
-module.exports.initViewEngine = function (app) {
-    // Use the config file to set the server view engine
-    app.engine('server.view.html', consolidate[config.templateEngine]);
+// module.exports.initViewEngine = function (app) {
+//     // Use the config file to set the server view engine
+//     app.engine('server.view.html', consolidate[config.templateEngine]);
 
-    // Set views path and view engine
-    app.set('view engine', 'server.view.html');
-    app.set('views', './');
-};
+//     // Set views path and view engine
+//     app.set('view engine', 'server.view.html');
+//     app.set('views', './');
+// };
 
 /**
  * Configure Express session
@@ -202,7 +192,7 @@ module.exports.initHelmetHeaders = function (app) {
     app.use(helmet.ieNoOpen());
     app.use(helmet.hsts({
         maxAge: SIX_MONTHS,
-        includeSubdomains: true,
+        includeSubDomains: true,
         force: true
     }));
     app.disable('x-powered-by');
@@ -300,7 +290,7 @@ module.exports.init = function (db) {
     this.initMiddleware(app);
 
     // Initialize Express view engine
-    this.initViewEngine(app);
+    // this.initViewEngine(app);
 
     // Initialize Express session
     // Replaced session with JWT
