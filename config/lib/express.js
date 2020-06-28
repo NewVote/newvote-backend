@@ -93,7 +93,6 @@ module.exports.initMiddleware = function (app) {
         }),
     )
 
-
     // Enable logger (morgan)
     app.use(morgan(logger.getFormat(), logger.getOptions()))
 
@@ -198,7 +197,7 @@ module.exports.initHelmetHeaders = function (app) {
     app.use(
         helmet.hsts({
             maxAge: SIX_MONTHS,
-            includeSubdomains: true,
+            includeSubDomains: true,
             force: true,
         }),
     )

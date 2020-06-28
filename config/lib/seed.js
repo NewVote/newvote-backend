@@ -3,8 +3,7 @@
 let _ = require('lodash'),
     config = require('../config'),
     mongoose = require('mongoose'),
-    chalk = require('chalk'),
-    crypto = require('crypto')
+    chalk = require('chalk')
 
 // global seed options object
 let seedOptions = {}
@@ -82,7 +81,6 @@ function reportSuccess(password) {
 function seedTheUser(user) {
     return function (password) {
         return new Promise(function (resolve, reject) {
-            let User = mongoose.model('User')
             // set the new password
             user.password = password
 

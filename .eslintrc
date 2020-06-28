@@ -1,5 +1,5 @@
 {
-    "extends": ["eslint:recommended", "prettier"],
+    "extends": ["eslint:recommended", "prettier", "plugin:prettier/recommended"],
     "rules": {
         "indent": [
             "warn",
@@ -17,7 +17,8 @@
         "quotes": ["warn", "single", { "allowTemplateLiterals": true }],
         "no-var": "warn",
         "linebreak-style": ["error", "windows"],
-        "multiline-ternary": ["off", "always"]
+        "multiline-ternary": ["off", "always"],
+        "prettier/prettier": "error",
     },
     "parserOptions": {
         "ecmaVersion": 2017
