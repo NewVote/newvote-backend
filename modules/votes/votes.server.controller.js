@@ -116,7 +116,6 @@ exports.updateOrCreate = async function (req, res) {
         object,
         organizationId
     } = req.body;
-
     try {
         const isVerified = await isUserSignedToOrg(organizationId, user)
         if (!isVerified) throw ('User is not verified');
@@ -137,8 +136,6 @@ exports.updateOrCreate = async function (req, res) {
             message: 'You do not have permission to vote on this organization'
         });
     }
-
-
 
     Vote.findOne({
         user: user,
