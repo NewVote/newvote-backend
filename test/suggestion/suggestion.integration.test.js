@@ -206,7 +206,6 @@ describe('/api/suggestions/:suggestionId GET', async function () {
     })
 
     it('unauthenticated user cannot request single suggestion', async function () {
-        console.log(suggestionId, 'this is id');
         const res = await chai.request(server)
             .get(`/api/suggestions/${suggestionId}`)
         

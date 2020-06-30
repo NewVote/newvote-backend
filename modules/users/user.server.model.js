@@ -150,6 +150,9 @@ let UserSchema = new Schema({
     provider: {
         type: String
     },
+    subscriptions: {
+        type: Schema.Types.Mixed
+    },
     providerData: {},
     additionalProvidersData: {},
     roles: {
@@ -183,7 +186,12 @@ let UserSchema = new Schema({
     completedTour: {
         type: Boolean,
         default: false
-    }
+    },
+    subscriptionsActive: {
+        type: String,
+        enum: ['DEFAULT', 'DENIED', 'ACCEPTED'],
+        default: 'DEFAULT'
+    },
 });
 
 /**

@@ -28,6 +28,7 @@ module.exports = function () {
                     status: 404
                 });
             }
+           
             else if(!user.authenticate(password)) {
                 return done(null, false, {
                     message: 'Invalid email or password',

@@ -122,25 +122,23 @@ exports.delete = function (req, res) {
  * List of Issues
  */
 exports.list = function (req, res) {
-    let { orgs } = req.query
-    if (orgs) {
-        orgs = orgs.split(', ')
+    let { orgs = '' } = req.query
+    if (orgs.length) {
+        orgs = orgs.split(',')
+
+        orgs = orgs.map((item) => {
+            return mongoose.Types.ObjectId(item)
+        })
     }
-    let query = {};
     let topicId = req.query.topicId || null;
-    let org = req.organization;
-    let orgUrl = org ? org.url : null;
     let search = req.query.search || null;
     let showDeleted = req.query.showDeleted || null;
 
-    let orgMatch = orgUrl ? {
-        'organizations.url': orgUrl
-    } : {};
-    const newOrgMatch = {
-        'organizations.url': {
-            $all: orgs
+    const orgMatch = orgs.length ? {
+        'organizations._id': {
+            $in: orgs
         }
-    }
+    } : {}
     
     let topicMatch = topicId ? {
         topics: mongoose.Types.ObjectId(topicId)

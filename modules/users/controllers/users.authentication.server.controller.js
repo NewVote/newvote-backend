@@ -30,7 +30,13 @@ const recaptcha = new Recaptcha({
     verbose: true
 });
 
-const addToMailingList = function (user) {
+const tokenOptions = {
+    domain: 'newvote.org',
+    httpOnly: false,
+    secure: false
+};
+
+const addToMailingList = function(user) {
     const mailchimp = new Mailchimp(config.mailchimp.api);
     const MAILCHIMP_LIST_ID = config.mailchimp.list;
 
@@ -40,63 +46,41 @@ const addToMailingList = function (user) {
     });
 };
 
-exports.checkAuthStatus = function (req, res, next) {
-    passport.authenticate('check-status', {
-        session: false
-    }, function (
-        err,
-        user,
-        info
-    ) {
-        if (err || !user) {
-            return res.status(400).send(info);
+exports.checkAuthStatus = function(req, res, next) {
+    passport.authenticate('check-status', function(err, loggedInUser, info) {
+        if (err || !loggedInUser) {
+            return res.status(403).send(err)
         }
 
-        // Remove sensitive data before login
-        user.password = undefined;
-        user.salt = undefined;
-        user.verificationCode = undefined;
-
-        req.login(user, function (err) {
+        req.login(loggedInUser, function (loginErr) {
             if (err) {
-                res.status(400).send(err);
-            } else {
-                const payload = {
-                    _id: user._id,
-                    roles: user.roles,
-                    verified: user.verified
-                };
-                const token = jwt.sign(payload, config.jwtSecret, {
-                    expiresIn: config.jwtExpiry
-                });
-                const creds = {
-                    user,
-                    token
-                };
-                const opts = {
-                    domain: 'newvote.org',
-                    httpOnly: false,
-                    secure: false
-                };
-
-                res.cookie('credentials', JSON.stringify(creds), opts);
-                res.json(creds);
+                return res.status(400).send(loginErr);
             }
-        });
+            const user = prepareUserData(loggedInUser)
+            const token = createJWT(user);
+            res.cookie('credentials', JSON.stringify({ token }), tokenOptions);
+            return res.json(user);
+        })
+
+        
     })(req, res, next);
 };
+
+function prepareUserData(userData) {
+    const copiedUser = JSON.parse(JSON.stringify(userData));
+    copiedUser.password = undefined;
+    copiedUser.salt = undefined;
+    copiedUser.verificationCode = undefined;
+    return copiedUser;
+}
 
 /**
  * Signup
  */
-exports.signup = function (req, res) {
+exports.signup = function(req, res) {
     // Init Variables
     const user = new User(req.body);
-    const {
-        recaptchaResponse,
-        email,
-        password
-    } = req.body;
+    const { recaptchaResponse, email, password } = req.body;
     const verificationCode = req.params.verificationCode;
 
     if (!email || !password) {
@@ -109,7 +93,7 @@ exports.signup = function (req, res) {
     delete req.body.roles;
 
     //ensure captcha code is valid or return with an error
-    recaptcha.checkResponse(recaptchaResponse, function (err, response) {
+    recaptcha.checkResponse(recaptchaResponse, function(err, response) {
         if (err || !response.success) {
             return res.status(400).send({
                 message: 'Recaptcha verification failed.'
@@ -134,10 +118,7 @@ exports.signup = function (req, res) {
                                 // console.log('Added user to mailchimp');
                             })
                             .catch(err => {
-                                console.log(
-                                    'Error saving to mailchimp: ',
-                                    err
-                                );
+                                console.log('Error saving to mailchimp: ', err);
                             });
                     } catch (err) {
                         console.log('Issue with mailchimp: ', err);
@@ -169,16 +150,14 @@ exports.signup = function (req, res) {
                 return loginUser(req, res, doc);
             })
             .catch(err => {
-                console.log(err, 'this is err');
                 return res.status(400).send({
                     message: errorHandler.getErrorMessage(err)
                 });
             });
-
     });
 };
 
-const buildMessage = function (user, code, req) {
+const buildMessage = function(user, code, req) {
     let messageString = '';
     const url = req.protocol + '://' + req.get('host') + '/verify/' + code;
 
@@ -190,7 +169,7 @@ const buildMessage = function (user, code, req) {
     return messageString;
 };
 
-const sendEmail = function (user, pass, req) {
+const sendEmail = function(user, pass, req) {
     return transporter.sendMail({
         from: process.env.MAILER_FROM,
         to: user.email,
@@ -202,139 +181,83 @@ const sendEmail = function (user, pass, req) {
 /**
  * Signin after passport authentication
  */
-exports.signin = function (req, res, next) {
-    passport.authenticate('local', {
-        session: false
-    }, function (
-        err,
-        user,
-        info
-    ) {
-        if (err || !user) {
-            res.status(400).send(info);
-        } else {
-            // need to update user orgs in case they've voted on a new org
-            // exports.updateOrgs(user);
+exports.signin = function(req, res, next) {
+    // passport.authenticate('local', function(err, user, info) {
+    //     console.log(user, 'this is user')
+    //     if (err || !user) {
+    //         return res.status(400).send(info);
+    //     }
 
-            // User is already signed to another organization and is verifying with current org
-            if (req.cookies.credentials) {
-                let {
-                    credentials
-                } = req.cookies;
-                credentials = JSON.parse(credentials);
+    // if (req.cookies.credentials) {
+    //     let { credentials } = req.cookies;
+    //     credentials = JSON.parse(credentials);
 
-                return jwt.verify(credentials.token, config.jwtSecret, function (
-                    err,
-                    verifiedUser
-                ) {
-                    if (err) {
-                        res.clearCookie('credentials', {
-                            path: '/',
-                            domain: 'newvote.org'
-                        });
-                        throw 'Invalid token';
-                    }
+    //     return jwt.verify(credentials.token, config.jwtSecret, function(
+    //         jwtErr,
+    //         verifiedUser
+    //     ) {
+    //         if (jwtErr) {
+    //             console.log(jwtErr, 'this is an error with the web token')
+    //             res.clearCookie('credentials', {
+    //                 path: '/',
+    //                 domain: 'newvote.org'
+    //             });
+    //             throw 'Invalid token';
+    //         }
 
-                    const organizationPromise = Organization.findOne({
-                        _id: req.organization._id
-                    });
-                    const userPromise = User.findOne({
-                        _id: verifiedUser._id
-                    });
+    //         User.findOne({
+    //             _id: verifiedUser._id
+    //         })
+    //             .select('-password -salt -verificationCode')
+    //             .then(savedUser => {
+    //                 // updated user so create new token
+    //                 const token = createJWT(savedUser);
 
-                    return Promise.all([organizationPromise, userPromise])
-                        .then(promises => {
-                            const [organization, user] = promises;
-                            user.organizations.push(organization._id);
-                            return user.save();
-                        })
-                        .then(savedUser => {
-                            savedUser.password = undefined;
-                            savedUser.salt = undefined;
-                            savedUser.verificationCode = undefined;
+    //                 const opts = {
+    //                     domain: 'newvote.org',
+    //                     secure: false,
+    //                     overwrite: true
+    //                 };
 
-                            // updated user so create new token
-                            const payload = {
-                                _id: savedUser._id,
-                                roles: savedUser.roles,
-                                verified: savedUser.verified
-                            };
-                            const token = jwt.sign(payload, config.jwtSecret, {
-                                expiresIn: config.jwtExpiry
-                            });
-                            const creds = {
-                                user,
-                                token
-                            };
+    //                 res.cookie(
+    //                     'credentials',
+    //                     JSON.stringify({ token }),
+    //                     opts
+    //                 );
+    //                 return res.json(savedUser);
+    //             });
+    //     });
+    // }
 
-                            const opts = {
-                                domain: 'newvote.org',
-                                secure: false,
-                                overwrite: true
-                            }
+    const { user } = req;
+    res.clearCookie('credentials');
 
-                            res.cookie(
-                                'credentials',
-                                JSON.stringify(creds),
-                                opts
-                            );
-                            res.json(creds);
-                        });
-                });
-            }
+    user.password = undefined;
+    user.salt = undefined;
+    user.verificationCode = undefined;
 
-            User.populate(user, {
-                path: 'country'
-            }).then(function (user) {
-                // Remove sensitive data before login
-                user.password = undefined;
-                user.salt = undefined;
-                user.verificationCode = undefined;
+    const token = createJWT(user);
 
-                req.login(user, function (err) {
-                    if (err) {
-                        res.status(400).send(err);
-                    } else {
-                        const payload = {
-                            _id: user._id,
-                            roles: user.roles,
-                            verified: user.verified
-                        };
-                        const token = jwt.sign(payload, config.jwtSecret, {
-                            expiresIn: config.jwtExpiry
-                        });
-                        const creds = {
-                            user,
-                            token
-                        };
-                        const opts = {
-                            domain: 'newvote.org',
-                            httpOnly: false,
-                            secure: false
-                        };
-
-                        res.cookie('credentials', JSON.stringify(creds), opts);
-                        res.json(creds);
-                    }
-                });
-            });
-        }
-    })(req, res, next);
+    res.cookie('credentials', JSON.stringify({ token }), tokenOptions);
+    res.json(user);
 };
 
 /**
  * Signout
  */
-exports.signout = function (req, res) {
-    req.logout();
-    res.redirect('/');
+exports.signout = function(req, res) {
+    req.session.destroy(function(err) {
+        if (err) throw(err);
+        req.logout();
+        res.status(200).send({ success: true });
+    });
 };
 
 /**
  * OAuth provider call
  */
-exports.oauthCall = function (strategy, scope) {
-    return function (req, res, next) {
+exports.oauthCall = function(strategy, scope) {
+    return function(req, res, next) {
         // Set redirection path on session.
         // Do not redirect to a signin or signup page
         if (noReturnUrls.indexOf(req.query.redirect_to) === -1) {
@@ -348,8 +271,8 @@ exports.oauthCall = function (strategy, scope) {
 /**
  * OAuth callback
  */
-exports.oauthCallback = function (strategy) {
-    return function (req, res, next) {
+exports.oauthCallback = function(strategy) {
+    return function(req, res, next) {
         // ;
         try {
             var sessionRedirectURL = req.session.redirect_to;
@@ -358,7 +281,7 @@ exports.oauthCallback = function (strategy) {
             // quietly now
         }
 
-        passport.authenticate(strategy, function (err, user, redirectURL) {
+        passport.authenticate(strategy, function(err, user, redirectURL) {
             //   https://rapid.test.aaf.edu.au/jwt/authnrequest/research/4txVkEDrvjAH6PxxlCKZGg
             // need to generate url from org in request cookie here
             let orgObject = req.organization;
@@ -373,14 +296,16 @@ exports.oauthCallback = function (strategy) {
             if (err) {
                 return res.redirect(
                     host +
-                    '/auth/login?err=' +
-                    encodeURIComponent(errorHandler.getErrorMessage(err))
+                        '/auth/login?err=' +
+                        encodeURIComponent(errorHandler.getErrorMessage(err))
                 );
             }
             if (!user) {
-                return res.redirect(host + '/auth/login?err="400_JWT_SIGNATURE"');
+                return res.redirect(
+                    host + '/auth/login?err="400_JWT_SIGNATURE"'
+                );
             }
-            req.login(user, function (err) {
+            req.login(user, function(err) {
                 if (err) {
                     return res.redirect(host + '/auth/login');
                 }
@@ -393,18 +318,14 @@ exports.oauthCallback = function (strategy) {
                     expiresIn: config.jwtExpiry
                 });
                 const creds = {
-                    user,
+                    // user,
                     token
                 };
-                const opts = {
-                    domain: 'newvote.org',
-                    httpOnly: false,
-                    secure: false
-                };
-                res.cookie('credentials', JSON.stringify(creds), opts);
-                const redirect = sessionRedirectURL ?
-                    host + sessionRedirectURL :
-                    host + '/';
+
+                res.cookie('credentials', JSON.stringify(creds), tokenOptions);
+                const redirect = sessionRedirectURL
+                    ? host + sessionRedirectURL
+                    : host + '/';
                 return res.redirect(302, redirect);
             });
         })(req, res, next);
@@ -414,14 +335,15 @@ exports.oauthCallback = function (strategy) {
 /**
  * Helper function to create or update a user after AAF Rapid SSO auth
  */
-exports.saveRapidProfile = function (req, profile, done) {
+exports.saveRapidProfile = function(req, profile, done) {
     const organizationPromise = Organization.findOne({
         _id: req.organization._id
     });
-    const userPromise = User.findOne({
-        email: profile.mail
-    },
-    '-salt -password -verificationCode'
+    const userPromise = User.findOne(
+        {
+            email: profile.mail
+        },
+        '-salt -password -verificationCode'
     );
 
     Promise.all([organizationPromise, userPromise])
@@ -438,14 +360,16 @@ exports.saveRapidProfile = function (req, profile, done) {
                 edupersoncid,
                 edupersontargetedid,
                 edupersonscopedaffiliation,
-                edupersonprincipalname: profile.edupersonprincipalname ? profile.edupersonprincipalname : ''
-            }
+                edupersonprincipalname: profile.edupersonprincipalname
+                    ? profile.edupersonprincipalname
+                    : ''
+            };
 
             // extract aaf attributes from profile
             // add organization url to match against current organization for votes
             const providerData = {
                 [organization.url]: aafAttributes
-            }
+            };
 
             if (!user) {
                 console.log('no user, creating new account');
@@ -455,7 +379,7 @@ exports.saveRapidProfile = function (req, profile, done) {
                     profile.givenname + profile.surname ||
                     (profile.mail ? profile.mail.split('@')[0] : '');
 
-                User.findUniqueUsername(possibleUsername, null, function (
+                User.findUniqueUsername(possibleUsername, null, function(
                     availableUsername
                 ) {
                     console.log('generated username: ', availableUsername);
@@ -476,12 +400,12 @@ exports.saveRapidProfile = function (req, profile, done) {
                     return user.save();
                 });
             } else {
-
-                if (!user.providerData) user.providerData = {}
+                if (!user.providerData) user.providerData = {};
                 const userProviders = user.providerData;
                 const providerExists = userProviders[organization.url];
 
-                if (!providerExists) user.providerData[organization.url] = aafAttributes;
+                if (!providerExists)
+                    user.providerData[organization.url] = aafAttributes;
 
                 if (organization) {
                     const orgExists = user.organizations.find(e => {
@@ -509,7 +433,7 @@ exports.saveRapidProfile = function (req, profile, done) {
 /**
  * Helper function to save or update a OAuth user profile
  */
-exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
+exports.saveOAuthUserProfile = function(req, providerUserProfile, done) {
     const organization = req.organization;
     if (!req.user) {
         // Define a search query fields
@@ -541,18 +465,18 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
             $or: [mainProviderSearchQuery, additionalProviderSearchQuery]
         };
 
-        User.findOne(searchQuery, function (err, user) {
+        User.findOne(searchQuery, function(err, user) {
             if (err) {
                 return done(err);
             } else {
                 if (!user) {
                     const possibleUsername =
                         providerUserProfile.username ||
-                        (providerUserProfile.email ?
-                            providerUserProfile.email.split('@')[0] :
-                            '');
+                        (providerUserProfile.email
+                            ? providerUserProfile.email.split('@')[0]
+                            : '');
 
-                    User.findUniqueUsername(possibleUsername, null, function (
+                    User.findUniqueUsername(possibleUsername, null, function(
                         availableUsername
                     ) {
                         user = new User({
@@ -561,14 +485,15 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
                             username: availableUsername,
                             displayName: providerUserProfile.displayName,
                             email: providerUserProfile.email,
-                            profileImageURL: providerUserProfile.profileImageURL,
+                            profileImageURL:
+                                providerUserProfile.profileImageURL,
                             provider: providerUserProfile.provider,
                             providerData: providerUserProfile.providerData,
                             organizations: [organization._id]
                         });
 
                         // And save the user
-                        user.save(function (err) {
+                        user.save(function(err) {
                             return done(err, user);
                         });
                     });
@@ -609,7 +534,7 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
             user.markModified('additionalProvidersData');
 
             // And save the user
-            user.save(function (err) {
+            user.save(function(err) {
                 return done(err, user, '/settings/accounts');
             });
         } else {
@@ -625,7 +550,7 @@ exports.saveOAuthUserProfile = function (req, providerUserProfile, done) {
 /**
  * Remove OAuth provider
  */
-exports.removeOAuthProvider = function (req, res, next) {
+exports.removeOAuthProvider = function(req, res, next) {
     const user = req.user;
     const provider = req.query.provider;
 
@@ -645,13 +570,13 @@ exports.removeOAuthProvider = function (req, res, next) {
         user.markModified('additionalProvidersData');
     }
 
-    user.save(function (err) {
+    user.save(function(err) {
         if (err) {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err)
             });
         } else {
-            req.login(user, function (err) {
+            req.login(user, function(err) {
                 if (err) {
                     return res.status(400).send(err);
                 } else {
@@ -666,7 +591,7 @@ exports.removeOAuthProvider = function (req, res, next) {
  * Makes sure the user has the correct orgs listed
  * any time a user votes they are considered a member of an org
  **/
-exports.updateOrgs = function (loginData) {
+exports.updateOrgs = function(loginData) {
     // get the actual user from the db
     User.findOne({
         _id: loginData._id
@@ -700,7 +625,7 @@ exports.updateOrgs = function (loginData) {
     });
 };
 
-exports.updateAllOrgs = function () {
+exports.updateAllOrgs = function() {
     User.find()
         .exec()
         .then(users => {
@@ -730,9 +655,7 @@ exports.updateAllOrgs = function () {
 };
 
 function handleLeaderVerification(user, verificationCode) {
-    const {
-        email
-    } = user;
+    const { email } = user;
 
     return FutureLeader.findOne({
         email
@@ -746,9 +669,7 @@ function handleLeaderVerification(user, verificationCode) {
             return leader;
         })
         .then(leader => {
-            let {
-                organizations
-            } = leader;
+            let { organizations } = leader;
 
             // leader has no organizations to be assigned to
             if (organizations.length === 0) {
@@ -771,28 +692,33 @@ function handleLeaderVerification(user, verificationCode) {
             return user.save();
         })
         .catch(err => {
-            console.log(err, 'this is err');
             throw 'Error during verification';
         });
 }
 
 function loginUser(req, res, user) {
-    return req.login(user, function (err) {
+    return req.login(user, function(err) {
         if (err) {
             return res.status(400).send(err);
         } else {
-            const payload = {
-                _id: user._id,
-                roles: user.roles,
-                verified: user.verified
-            };
-            const token = jwt.sign(payload, config.jwtSecret, {
-                expiresIn: config.jwtExpiry
-            });
+            const token = createJWT(user);
             return res.json({
-                user: user,
-                token: token
+                // user: user,
+                token
             });
         }
     });
 }
+
+const createJWT = user => {
+    const { _id, roles, verified } = user;
+    const payload = {
+        _id,
+        roles,
+        verified
+    };
+
+    return jwt.sign(payload, config.jwtSecret, {
+        expiresIn: config.jwtExpiry
+    });
+};

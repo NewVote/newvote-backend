@@ -244,7 +244,6 @@ describe('/api/votes/:voteId GET', async function () {
 //                 vote.votevalue = -1;
 //                 return vote.save();
 //             }).then((vote) =>{
-//                 console.log(vote, 'this is vote');
 //             })
 //     })
 
@@ -278,7 +277,6 @@ describe('/api/votes/:voteId GET', async function () {
 
 //         // Second test to make sure DB has not been updated
 //         const newDbVote = await Vote.findOne({ _id: newVote._id })
-//         console.log(newDbVote, 'this is newDbVote');
 //         newDbVote.should.have.property('voteValue');
 //         return newDbVote.voteValue.should.not.equal(parseInt(alteredVote.voteValue));   
 //     });

@@ -101,14 +101,6 @@ module.exports = function(app) {
         .get(solutions.list)
         .post(solutions.create);
 
-    app.route('/api/votes')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed
-        )
-        .get(votes.list)
-        .post(votes.updateOrCreate);
-
     app.route('/api/proposals')
         .all(
             jwt({ secret: config.jwtSecret, credentialsRequired: false }),
@@ -195,15 +187,6 @@ module.exports = function(app) {
         .put(solutions.update)
         .delete(solutions.delete);
 
-    app.route('/api/votes/:voteId')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed
-        )
-        .get(votes.read)
-        .put(votes.update)
-        .delete(votes.delete);
-
     app.route('/api/proposals/:proposalId')
         .all(
             jwt({ secret: config.jwtSecret, credentialsRequired: false }),
@@ -261,7 +244,6 @@ module.exports = function(app) {
     app.param('issueId', issues.issueByID);
     app.param('solutionId', solutions.solutionByID);
     app.param('proposalId', proposals.proposalByID);
-    app.param('voteId', votes.voteByID);
     app.param('suggestionId', suggestions.suggestionByID);
     app.param('endorsementId', endorsement.endorsementByID);
     app.param('mediaId', media.mediaByID);

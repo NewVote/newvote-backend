@@ -55,7 +55,6 @@ let validateEnvironmentVariable = function() {
     let environmentFiles = glob.sync(
         './config/env/' + process.env.NODE_ENV + '.js'
     );
-    console.log();
     if (!environmentFiles.length) {
         if (process.env.NODE_ENV) {
             console.error(
@@ -101,8 +100,7 @@ let validateSecureMode = function(config) {
                 '  To create them, simply run the following from your shell: sh ./scripts/generate-ssl-certs.sh'
             )
         );
-        console.log();
-        config.secure.ssl = false;
+            config.secure.ssl = false;
     }
 };
 
@@ -131,8 +129,7 @@ let validateSessionSecret = function(config, testing) {
                     '  `config/env/production.js` or `config/env/local.js`'
                 )
             );
-            console.log();
-        }
+                }
         return false;
     } else {
         return true;

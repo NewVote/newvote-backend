@@ -20,8 +20,6 @@ module.exports = function() {
         new JWTStrategy(checkOptions, function(jwtPayload, done) {
             User.findOne({ _id: jwtPayload._id }, function(err, user) {
                 if (err) {
-                    console.log('err');
-
                     return done(err, false);
                 }
 

@@ -3,7 +3,6 @@
  * Module dependencies.
  */
 require('newrelic');
-const throng = require('throng');
 const app = require('./config/lib/app');
 
 /**
@@ -31,10 +30,4 @@ if (process.env.NODE_ENV === 'development') {
         }
 
     )
-    // throng({
-    //     workers: WORKERS,
-    //     lifetime: Infinity
-    // },
-    // app.start
-    // );
 }
