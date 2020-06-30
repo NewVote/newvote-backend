@@ -21,7 +21,8 @@ module.exports = function (app, db) {
 
     // Deserialize sessions
     passport.deserializeUser(function (id, done) {
-        User.findOne({ _id: id }, '-salt -password -verificationCode')
+        User.findById(id)
+            .select('-salt -password -verificationCode')
             .populate('country')
             .exec(function (err, user) {
                 done(err, user);
@@ -36,5 +37,5 @@ module.exports = function (app, db) {
 
     // Add passport's middleware
     app.use(passport.initialize());
-    // app.use(passport.session());
+    app.use(passport.session());
 };

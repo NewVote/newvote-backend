@@ -22,7 +22,6 @@ let getUniqueErrorMessage = function (err) {
  */
 exports.getErrorMessage = function (err) {
     let message = '';
-
     if (err.code) {
         switch (err.code) {
             case 11000:

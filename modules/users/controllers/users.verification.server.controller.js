@@ -96,11 +96,9 @@ exports.sendVerificationCodeViaSms = function (req, res, next) {
     //             return res.status(400)
     //                 .send({ message: 'There was a problem sending your verification code, please make sure the phone number you have entered is correct.' });
     //         } else if(responseMessage[0] == 'ERROR') {
-    //             console.log('SMS BROADCAST ERROR: ' + responseMessage[1]);
     //             return res.status(400)
     //                 .send({ message: 'There was a problem sending your verification code. There was an internal server error, please try again later.' });
     //         } else {
-    //             console.log('SMS BROADCAST ERROR: ' + responseMessage[1]);
     //             return res.status(400)
     //                 .send({ message: 'Something went wrong: ' + responseMessage[1] });
     //         }
@@ -155,7 +153,6 @@ function saveVerificationSmsCode(user, code, number, res) {
                     });
                 })
                 .catch(err => {
-                    console.log('error saving user: ', err);
                     return res.status(400)
                         .send({
                             message: err
@@ -238,22 +235,18 @@ exports.verify = function (req, res) {
             });
         })
         .catch((err) => {
-            console.log('error finding user: ', err);
             return res.status(400)
                 .send({
                     message: errorHandler.getErrorMessage(err)
                 });
         });
 };
-
 exports.verifyWithCommunity = function (req, res) {
-    const {
-        user
-    } = req;
-    const org = JSON.parse(req.cookies.organization);
+    const { id } = req.body;    
+    const org = JSON.parse(req.cookies.organization) || req.organization;
 
     const organizationPromise = Organization.findById(org._id);
-    const userPromise = User.findById(user._id)
+    const userPromise = User.findOne({ _id: id })
         .select('-salt -password -verificationCode');
 
     Promise.all([organizationPromise, userPromise])
@@ -262,6 +255,14 @@ exports.verifyWithCommunity = function (req, res) {
             if (!user) throw ('User does not exist');
             if (!organization) throw ('Organization does not exist');
 
+            const { organizations } = user
+            const doesOrganizationIdExistinOrganizationsArray = organizations.some((org) => {
+                return organization._id.equals(org);
+            })
+
+            if (doesOrganizationIdExistinOrganizationsArray) {
+                throw('User is already part of organization')
+            }
             user.organizations.push(organization);
             return user.save();
         })

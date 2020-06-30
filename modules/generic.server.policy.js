@@ -28,7 +28,8 @@ let collectionRoutes = [
     '/api/countries',
     '/api/progress',
     '/api/reps',
-    '/api/notifications'
+    '/api/notifications',
+    '/api/subscriptions'
 ];
 let objectRoutes = [
     '/api/organizations/:organizationId',
@@ -45,7 +46,8 @@ let objectRoutes = [
     '/api/regions/:regionId',
     '/api/progress/:progressId',
     '/api/reps/:repId',
-    '/api/notifications/:notificationId'
+    '/api/notifications/:notificationId',
+    '/api/subscriptions/:subscriptionId'
 ];
 /**
  * Invoke Articles Permissions
@@ -157,7 +159,9 @@ exports.invokeRolesPolicies = function () {
  */
 exports.isAllowed = async function (req, res, next) {
     let roles = req.user ? req.user.roles : ['guest'];
-    let user = req.user;
+    // let user = req.user;
+
+    const { user } = req
 
     // If an article is being processed and the current user created it then allow any manipulation
     let object =

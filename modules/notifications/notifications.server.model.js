@@ -9,6 +9,7 @@ let mongoose = require('mongoose'),
 let NotificationSchema = new Schema({
     parent: {
         type: Schema.ObjectId,
+        refPath: 'parentType'
     },
     parentType: {
         type: String
@@ -30,6 +31,14 @@ let NotificationSchema = new Schema({
     softDeleted: {
         type: Boolean,
         default: false
+    },
+    rep: {
+        type: Schema.ObjectId,
+        ref: 'Rep'
+    },
+    position: {
+        type: String,
+        default: ''
     }
 }, {
     timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }

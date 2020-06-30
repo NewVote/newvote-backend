@@ -342,7 +342,6 @@ describe('/api/organizations/:organizationId DELETE', async function () {
     })
     
     it('unauthenticated user cannot delete Organization', async function () {
-        console.log(originalOrg, 'this is org');
         const res = await chai.request(server)
             .delete(`/api/organizations/${originalOrg._id}`)
 

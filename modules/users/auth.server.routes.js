@@ -19,9 +19,12 @@ module.exports = function (app) {
     app.route('/api/auth/signup/:verificationCode?')
         .post(users.signup);
     app.route('/api/auth/signin')
-        .post(users.signin);
+        .post(passport.authenticate('local'), users.signin);
     app.route('/api/auth/signout')
         .get(users.signout);
+
+    app.route('/api/auth/check-status')
+        .get(users.checkAuthStatus);
 
     app.route('/api/auth/jwt/callback')
         .post(users.oauthCallback('jwt'));
@@ -74,6 +77,4 @@ module.exports = function (app) {
     app.route('/api/auth/paypal/callback')
         .get(users.oauthCallback('paypal'));
 
-    app.route('/api/auth/check-status')
-        .get(users.checkAuthStatus);
 };
