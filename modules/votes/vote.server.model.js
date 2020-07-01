@@ -28,9 +28,9 @@ let VoteSchema = new Schema({
     },
     voteValue: {
         type: Number,
-        enum: ['0', '1', '-1', '0.5', '-0.5'],
-    },
-})
+        enum: [-1, -0.5, 0, 0.5, 1]
+    }
+});
 
 VoteSchema.index({ object: 1, user: 1 }, { unique: true })
 

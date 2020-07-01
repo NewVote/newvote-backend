@@ -169,7 +169,7 @@ const sendPushNotification = (notification, organization, originUrl) => {
     // AND
     // whether they have a subscription to the current issue
     const field = 'subscriptions.' + _id + '.issues'
-
+    const field2 = 'subscriptions.' + _id + '.isSubscribed'
     // convert ObjectId to string as comparing with objectId fails, issues saved on subscriptions object
     // are saved as string
     const parentId = mongoose.Types.ObjectId(parent._id).toString()
@@ -180,8 +180,8 @@ const sendPushNotification = (notification, organization, originUrl) => {
     return User.find(query)
         .and([
             {
-                subscriptionsActive: 'ACCEPTED',
-            },
+                [field2]: true
+            }
         ])
         .then((users) => {
             if (!users.length) throw 'No users to send notification to'

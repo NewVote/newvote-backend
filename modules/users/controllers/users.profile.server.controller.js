@@ -223,11 +223,6 @@ exports.patchSubscription = function (req, res) {
     const { subscriptions: userSubscription } = req.body
     let user = req.user
     const { _id } = req.organization
-    console.log(userSubscription, 'this is userSubscription on patch')
-    console.log(
-        userSubscription[_id],
-        'this is the organization on user subcription on patch',
-    )
     if (!user) {
         return res.status(400).send({
             message: 'User is not signed in',
