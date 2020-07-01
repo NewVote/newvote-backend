@@ -122,25 +122,9 @@ exports.delete = function (req, res) {
  * List of Issues
  */
 exports.list = function (req, res) {
-    let { orgs = '' } = req.query
-    if (orgs.length) {
-        orgs = orgs.split(',')
-
-        orgs = orgs.map((item) => {
-            return mongoose.Types.ObjectId(item)
-        })
-    }
     let topicId = req.query.topicId || null
     let search = req.query.search || null
     let showDeleted = req.query.showDeleted || null
-
-    const orgMatch = orgs.length
-        ? {
-              'organizations._id': {
-                  $in: orgs,
-              },
-          }
-        : {}
 
     let topicMatch = topicId
         ? {
@@ -191,7 +175,9 @@ exports.list = function (req, res) {
             },
         },
         {
-            $match: orgMatch,
+            $match: {
+                organizations: mongoose.Types.ObjectId(req.organization._id),
+            },
         },
         {
             $unwind: '$organizations',

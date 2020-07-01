@@ -180,8 +180,8 @@ const sendPushNotification = (notification, organization, originUrl) => {
     return User.find(query)
         .and([
             {
-                [field2]: true
-            }
+                [field2]: true,
+            },
         ])
         .then((users) => {
             if (!users.length) throw 'No users to send notification to'

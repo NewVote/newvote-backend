@@ -120,11 +120,8 @@ exports.create = function (req, res) {
 }
 
 exports.updateOrCreate = async function (req, res) {
-    let user = req.user;
-    const {
-        object,
-        organizationId
-    } = req.body;
+    let user = req.user
+    const { object, organizationId } = req.body
     try {
         const isVerified = await isUserSignedToOrg(organizationId, user)
         if (!isVerified) throw 'User is not verified'
