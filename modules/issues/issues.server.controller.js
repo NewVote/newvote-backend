@@ -161,6 +161,11 @@ exports.list = function (req, res) {
             $match: searchMatch,
         },
         {
+            $match: {
+                organizations: mongoose.Types.ObjectId(req.organization._id),
+            },
+        },
+        {
             $match: softDeleteMatch,
         },
         {
@@ -172,11 +177,6 @@ exports.list = function (req, res) {
                 localField: 'organizations',
                 foreignField: '_id',
                 as: 'organizations',
-            },
-        },
-        {
-            $match: {
-                organizations: mongoose.Types.ObjectId(req.organization._id),
             },
         },
         {

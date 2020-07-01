@@ -17,7 +17,7 @@ let config = require('../config'),
     helmet = require('helmet'),
     path = require('path'),
     cors = require('cors'),
-    celebrateWrap = require('celebrate');
+    celebrateWrap = require('celebrate')
 
 const { celebrate, errors } = celebrateWrap
 
@@ -31,16 +31,16 @@ module.exports.initLocalVariables = function (app) {
     if (config.secure && config.secure.ssl === true) {
         app.locals.secure = config.secure.ssl
     }
-    app.locals.keywords = config.app.keywords;
-    app.locals.googleAnalyticsTrackingID = config.app.googleAnalyticsTrackingID;
-    app.locals.facebookAppId = config.facebook.clientID;
-    app.locals.jsFiles = config.files.client.js;
-    app.locals.cssFiles = config.files.client.css;
-    app.locals.livereload = config.livereload;
-    app.locals.logo = config.social;
-    app.locals.user = false;
-    app.locals.config = false;
-    app.locals.isPrerender = false;
+    app.locals.keywords = config.app.keywords
+    app.locals.googleAnalyticsTrackingID = config.app.googleAnalyticsTrackingID
+    app.locals.facebookAppId = config.facebook.clientID
+    app.locals.jsFiles = config.files.client.js
+    app.locals.cssFiles = config.files.client.css
+    app.locals.livereload = config.livereload
+    app.locals.logo = config.social
+    app.locals.user = false
+    app.locals.config = false
+    app.locals.isPrerender = false
     app.locals.safeJSON = function (data) {
         if (data) {
             return JSON.stringify(data)
