@@ -41,11 +41,6 @@ exports.create = (req, res) => {
             if (!user) throw 'User does not exist'
             let { subscriptions = {}, subscriptionsActive = 'DEFAULT' } = user
 
-            // User has not been prompted before to accept notifications
-            // if (subscriptionsActive === 'DEFAULT') {
-            //     user.subscriptionsActive = 'ACCEPTED'
-            // }
-
             if (!subscriptions[organizationId]) {
                 subscriptions[organizationId] = {
                     isSubscribed: true,
@@ -59,6 +54,9 @@ exports.create = (req, res) => {
                 subscriptions[organizationId].pushSubscriptions = []
             }
             subscriptions[organizationId].pushSubscriptions.push(subscription)
+            // set isSubscribed to be true, if they already have a subscription object for the current organization
+            // the user may automatically have their subscription removed on UI due to previous settings
+            subscriptions[organizationId].isSubscribed = true
             user.subscriptions = subscriptions
 
             let path = 'subscriptions' + '.' + organizationId
@@ -165,8 +163,6 @@ exports.handleSubscriptionCreation = (req, res) => {
             }
 
             user.subscriptions[organization._id].issues = issues
-            user.subscriptions[organization._id].isSubscribed = true
-            console.log(user.subscriptions, 'before save')
             let path = 'subscriptions' + '.' + organization._id
             let issuePath = path + '.issues'
             // With a schema type mixed, need to mark as modified to update the user object field
@@ -175,10 +171,6 @@ exports.handleSubscriptionCreation = (req, res) => {
             return user.save()
         })
         .then((user) => {
-            console.log(
-                user.subscriptions,
-                'this is user.subscriptions after save',
-            )
             return res.json({ subscriptions: user.subscriptions })
         })
         .catch((err) => {
