@@ -154,6 +154,7 @@ exports.handleSubscriptionCreation = (req, res) => {
                 issues.push(issueIdAsString)
             } else {
                 const index = issues.findIndex((item) => {
+                    if (!item) return false
                     return issueId === item.toString()
                 })
                 issues = [
