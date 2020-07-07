@@ -165,6 +165,8 @@ exports.handleSubscriptionCreation = (req, res) => {
             }
 
             user.subscriptions[organization._id].issues = issues
+            user.subscriptions[organization._id].isSubscribed = true
+
             let path = 'subscriptions' + '.' + organization._id
             let issuePath = path + '.issues'
 
