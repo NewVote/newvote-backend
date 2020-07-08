@@ -1,31 +1,30 @@
-'use strict';
+'use strict'
 
 // Progress Routes
 let path = require('path'),
     config = require(path.resolve('./config/config')),
     policy = require('../generic.server.policy'),
     notificationsController = require('./notifications.server.controller'),
-    jwt = require('express-jwt');
+    jwt = require('express-jwt')
 
-module.exports = function(app) {
-
+module.exports = function (app) {
     app.route('/api/notifications')
         .all(
             jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed
+            policy.isAllowed,
         )
         .get(notificationsController.list)
-        .post(notificationsController.create);
+        .post(notificationsController.create)
 
     app.route('/api/notifications/:notificationId')
         .all(
             jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed
+            policy.isAllowed,
         )
         .get(notificationsController.read)
         .put(notificationsController.update)
-        .delete(notificationsController.delete);
+        .delete(notificationsController.delete)
 
     // Finish by binding the user middleware
-    app.param('notificationId', notificationsController.notificationByID);
+    app.param('notificationId', notificationsController.notificationByID)
 }

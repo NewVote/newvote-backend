@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 /**
  * Module dependencies.
@@ -10,19 +10,18 @@ let _ = require('lodash'),
     User = mongoose.model('User'),
     Issue = mongoose.model('Issue'),
     errorHandler = require(path.resolve(
-        './modules/core/errors.server.controller'
+        './modules/core/errors.server.controller',
     )),
     ObjectId = require('mongoose').Types.ObjectId,
-    webPush = require('web-push');
-
+    webPush = require('web-push')
 
 const options = {
     vapidDetails: {
         subject: 'https://newvote.org',
         publicKey: config.vapid.VAPID_PUB,
-        privateKey: config.vapid.VAPID_PRIV
+        privateKey: config.vapid.VAPID_PRIV,
     },
-    TTL: 60
+    TTL: 60,
 }
 
 exports.create = (req, res) => {
@@ -33,28 +32,31 @@ exports.create = (req, res) => {
     const subscription = {
         endpoint,
         expirationTime,
-        keys
+        keys,
     }
 
     User.findOne({ _id: id })
         .select('_id subscriptions')
         .then((user) => {
-            if (!user) throw('User does not exist')
+            if (!user) throw 'User does not exist'
             let { subscriptions = {}, subscriptionsActive = 'DEFAULT' } = user
-            
-            // User has not been prompted before to accept notifications
-            // if (subscriptionsActive === 'DEFAULT') {
-            //     user.subscriptionsActive = 'ACCEPTED'
-            // }
 
             if (!subscriptions[organizationId]) {
-                subscriptions[organizationId] = { isSubscribed: true, issues: [], communityUpdates: false, pushSubscriptions: [] }
+                subscriptions[organizationId] = {
+                    isSubscribed: true,
+                    issues: [],
+                    communityUpdates: false,
+                    pushSubscriptions: [],
+                }
             }
 
             if (!subscriptions[organizationId].pushSubscriptions) {
                 subscriptions[organizationId].pushSubscriptions = []
             }
             subscriptions[organizationId].pushSubscriptions.push(subscription)
+            // set isSubscribed to be true, if they already have a subscription object for the current organization
+            // the user may automatically have their subscription removed on UI due to previous settings
+            subscriptions[organizationId].isSubscribed = true
             user.subscriptions = subscriptions
 
             let path = 'subscriptions' + '.' + organizationId
@@ -63,12 +65,12 @@ exports.create = (req, res) => {
             return user.save()
         })
         .then((user) => {
-            return res.json(user.subscriptions);
+            return res.json(user.subscriptions)
         })
         .catch((err) => {
             return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
+                message: errorHandler.getErrorMessage(err),
+            })
         })
 }
 
@@ -76,7 +78,7 @@ exports.update = (req, res) => {
     const { subscriptionId: id } = req.params
     User.findOne({ _id: id })
         .then((user) => {
-            if (!user) throw('User does not exist')
+            if (!user) throw 'User does not exist'
             // user.pushSubscription = {}
             // user.markModified('pushSubscription')
             return user.save()
@@ -86,8 +88,8 @@ exports.update = (req, res) => {
         })
         .catch((err) => {
             return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
+                message: errorHandler.getErrorMessage(err),
+            })
         })
 }
 
@@ -97,26 +99,26 @@ exports.delete = (req, res) => {
 
     User.findOne({ _id: id })
         .then((user) => {
-            if (!user) throw('User does not exist')
+            if (!user) throw 'User does not exist'
         })
         .catch((err) => {
             return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
+                message: errorHandler.getErrorMessage(err),
+            })
         })
 }
 
 exports.handleSubscriptionCreation = (req, res) => {
-    const issueId = req.body.issueId;
-    const { subscriptionId: userId } = req.params; 
-    const organization = req.organization;
+    const issueId = req.body.issueId
+    const { subscriptionId: userId } = req.params
+    const organization = req.organization
     const userPromise = User.findOne({ _id: userId })
     const issuePromise = Issue.findOne({ _id: issueId })
     Promise.all([userPromise, issuePromise])
         .then(([user, issue]) => {
             const { subscriptions = {} } = user
             // if subscriptions object does not exist initialize it
-            // communityUpdates to true, as existence of a subscription shows 
+            // communityUpdates to true, as existence of a subscription shows
             // users giving permission
             if (!subscriptions[organization._id]) {
                 subscriptions[organization._id] = {
@@ -124,14 +126,14 @@ exports.handleSubscriptionCreation = (req, res) => {
                     autoUpdates: false,
                     communityUpdates: false,
                     isSubscribed: true,
-                    pushSubscriptions: []
+                    pushSubscriptions: [],
                 }
             }
             // if issue._id is not saved as a string then it will fail in search
             // when creating a notification
             const issueIdAsString = issue._id.toString()
             let { issues = [] } = subscriptions[organization._id]
-            if (!issue) throw('Issue does not exist')
+            if (!issue) throw 'Issue does not exist'
             // No issues currently so can short circuit objectId checks and return
             // subscription object to client
             if (!issues.length) {
@@ -144,23 +146,26 @@ exports.handleSubscriptionCreation = (req, res) => {
             }
             // Use the original issueId since we converted it to string
             const doesIssueIdExistInIssuesArray = issues.some((item) => {
-                const itemString = new ObjectId(item).toString();
-                return itemString === issueId;
+                const itemString = new ObjectId(item).toString()
+                return itemString === issueId
             })
             // add or remove issue id from subscriptions object
             if (!doesIssueIdExistInIssuesArray) {
                 issues.push(issueIdAsString)
             } else {
                 const index = issues.findIndex((item) => {
+                    if (!item) return false
                     return issueId === item.toString()
                 })
-                issues = [...issues.splice(0, index), ...issues.splice(index+1, issues.length)] 
+                issues = [
+                    ...issues.splice(0, index),
+                    ...issues.splice(index + 1, issues.length),
+                ]
             }
 
-            user.subscriptions[organization._id].issues = issues;
+            user.subscriptions[organization._id].issues = issues
             let path = 'subscriptions' + '.' + organization._id
             let issuePath = path + '.issues'
-
             // With a schema type mixed, need to mark as modified to update the user object field
             user.markModified(path)
             user.markModified(issuePath)
@@ -171,7 +176,7 @@ exports.handleSubscriptionCreation = (req, res) => {
         })
         .catch((err) => {
             return res.status(500).send({
-                message: errorHandler.getErrorMessage(err)
-            });
+                message: errorHandler.getErrorMessage(err),
+            })
         })
 }

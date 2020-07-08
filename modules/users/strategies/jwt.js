@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 /**
  * Module dependencies.
@@ -9,9 +9,8 @@ let path = require('path'),
     passportJWT = require('passport-jwt'),
     JWTStrategy = passportJWT.Strategy,
     ExtractJWT = passportJWT.ExtractJwt,
-    User = require('mongoose')
-        .model('User'),
-    users = require('../users.server.controller');
+    User = require('mongoose').model('User'),
+    users = require('../users.server.controller')
 
 module.exports = function () {
     let options = {
@@ -19,16 +18,16 @@ module.exports = function () {
         secretOrKey: config.jwtSecret,
         issuer: config.jwtIssuer,
         audience: config.jwtAudience,
-        passReqToCallback: true
+        passReqToCallback: true,
     }
-    console.debug('JWT options: ', options);
-    passport.use(new JWTStrategy(options,
-        function (req, jwtPayload, done) {
+    console.debug('JWT options: ', options)
+    passport.use(
+        new JWTStrategy(options, function (req, jwtPayload, done) {
             let profile = jwtPayload['https://aaf.edu.au/attributes']
             profile.jwt = req.body.assertion
             profile.jti = jwtPayload.jti
 
-            users.saveRapidProfile(req, profile, done);
-        }
-    ));
-};
+            users.saveRapidProfile(req, profile, done)
+        }),
+    )
+}

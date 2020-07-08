@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 /**
  * Module dependencies.
@@ -9,7 +9,9 @@ let path = require('path'),
     TopicsController = require('./topics.server.controller'),
     votes = require('../votes/votes.server.controller'),
     Solution = mongoose.model('Solution'),
-    errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
+    errorHandler = require(path.resolve(
+        './modules/core/errors.server.controller',
+    )),
     _ = require('lodash'),
     seed = require('./seed/seed'),
     createSlug = require('../helpers/slug')
@@ -18,38 +20,36 @@ let path = require('path'),
  * Create a topic
  */
 exports.create = function (req, res) {
-
     Topic.generateUniqueSlug(req.body.name, null, function (slug) {
-        let topic = new Topic(req.body);
-        topic.user = req.user;
-        topic.slug = slug;
+        let topic = new Topic(req.body)
+        topic.user = req.user
+        topic.slug = slug
 
         topic.save(function (err) {
             if (err) {
                 return res.status(400).send({
-                    message: errorHandler.getErrorMessage(err)
-                });
+                    message: errorHandler.getErrorMessage(err),
+                })
             } else {
-                res.json(topic);
+                res.json(topic)
             }
-        });
+        })
     })
-
-};
+}
 
 /**
  * Show the current topic
  */
 exports.read = function (req, res) {
-    res.json(req.topic);
-};
+    res.json(req.topic)
+}
 
 /**
  * Update a topic
  */
 exports.update = function (req, res) {
-    let topic = req.topic;
-    _.extend(topic, req.body);
+    let topic = req.topic
+    _.extend(topic, req.body)
     // topic.title = req.body.title;
     // topic.content = req.body.content;
 
@@ -60,111 +60,119 @@ exports.update = function (req, res) {
             topic.save(function (err) {
                 if (err) {
                     return res.status(400).send({
-                        message: errorHandler.getErrorMessage(err)
-                    });
+                        message: errorHandler.getErrorMessage(err),
+                    })
                 } else {
-                    res.json(topic);
+                    res.json(topic)
                 }
-            });
+            })
         })
     }
 
     topic.save(function (err) {
         if (err) {
             return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
+                message: errorHandler.getErrorMessage(err),
+            })
         } else {
-            res.json(topic);
+            res.json(topic)
         }
-    });
-};
+    })
+}
 
 /**
  * Delete an topic
  */
 exports.delete = function (req, res) {
-    let topic = req.topic;
+    let topic = req.topic
 
     topic.remove(function (err) {
         if (err) {
             return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
+                message: errorHandler.getErrorMessage(err),
+            })
         } else {
-            res.json(topic);
+            res.json(topic)
         }
-    });
-};
+    })
+}
 
 /**
  * List of Topics
  */
 exports.list = function (req, res) {
-    let query = {};
-    let org = req.organization;
-    let orgUrl = org ? org.url : null;
-    let search = req.query.search || null;
-    let showDeleted = req.query.showDeleted || null;
+    let query = {}
+    let org = req.organization
+    let orgUrl = org ? org.url : null
+    let search = req.query.search || null
+    let showDeleted = req.query.showDeleted || null
 
-    let orgMatch = orgUrl ? {
-        'organizations.url': orgUrl
-    } : {};
-    let searchMatch = search ? {
-        $text: {
-            $search: search
-        }
-    } : {};
+    let orgMatch = orgUrl
+        ? {
+              'organizations.url': orgUrl,
+          }
+        : {}
+    let searchMatch = search
+        ? {
+              $text: {
+                  $search: search,
+              },
+          }
+        : {}
 
     let showNonDeletedItemsMatch = {
-        $or: [{
-            softDeleted: false
-        }, {
-            softDeleted: {
-                $exists: false
-            }
-        }]
-    };
-    let showAllItemsMatch = {};
-    let softDeleteMatch = showDeleted ?
-        showAllItemsMatch :
-        showNonDeletedItemsMatch;
-
-    Topic.aggregate([{
-        $match: searchMatch
-    },
-    {
-        $match: softDeleteMatch
-    },
-    {
-        $lookup: {
-            from: 'organizations',
-            localField: 'organizations',
-            foreignField: '_id',
-            as: 'organizations'
-        }
-    },
-    {
-        $unwind: '$organizations'
-    },
-    {
-        $match: orgMatch
-    },
-    {
-        $sort: {
-            name: 1
-        }
+        $or: [
+            {
+                softDeleted: false,
+            },
+            {
+                softDeleted: {
+                    $exists: false,
+                },
+            },
+        ],
     }
+    let showAllItemsMatch = {}
+    let softDeleteMatch = showDeleted
+        ? showAllItemsMatch
+        : showNonDeletedItemsMatch
+
+    Topic.aggregate([
+        {
+            $match: searchMatch,
+        },
+        {
+            $match: softDeleteMatch,
+        },
+        {
+            $lookup: {
+                from: 'organizations',
+                localField: 'organizations',
+                foreignField: '_id',
+                as: 'organizations',
+            },
+        },
+        {
+            $unwind: '$organizations',
+        },
+        {
+            $match: orgMatch,
+        },
+        {
+            $sort: {
+                name: 1,
+            },
+        },
     ]).exec(function (err, topics) {
         if (err) {
             return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
+                message: errorHandler.getErrorMessage(err),
+            })
         } else {
-            res.json(topics);
+            res.json(topics)
         }
-    });
-};
+    })
+}
 
 /**
  * Topic middleware
@@ -172,20 +180,20 @@ exports.list = function (req, res) {
 exports.topicByID = function (req, res, next, id) {
     if (!id.match(/^[0-9a-fA-F]{24}$/)) {
         return Topic.findOne({
-            slug: id
+            slug: id,
         })
             .populate('user', 'displayName')
             .populate('organizations')
             .then((topic) => {
-                if (!topic) throw ('Topic does not exist');
+                if (!topic) throw 'Topic does not exist'
 
-                req.topic = topic;
-                next();
+                req.topic = topic
+                next()
             })
             .catch((err) => {
                 return res.status(400).send({
-                    message: err
-                });
+                    message: err,
+                })
             })
     }
 
@@ -194,23 +202,21 @@ exports.topicByID = function (req, res, next, id) {
         .populate('organizations')
         .exec(function (err, topic) {
             if (err) {
-                return next(err);
+                return next(err)
             } else if (!topic) {
                 return res.status(404).send({
-                    message: 'No topic with that identifier has been found'
-                });
+                    message: 'No topic with that identifier has been found',
+                })
             }
-            req.topic = topic;
-            next();
-        });
-};
+            req.topic = topic
+            next()
+        })
+}
 
 exports.seedTopic = function (organizationId) {
-    const {
-        seedData
-    } = seed;
-    const newTopic = new Topic(seedData);
-    newTopic.organizations = organizationId;
-    newTopic.save();
-    return newTopic;
+    const { seedData } = seed
+    const newTopic = new Topic(seedData)
+    newTopic.organizations = organizationId
+    newTopic.save()
+    return newTopic
 }

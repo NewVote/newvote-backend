@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 /**
  * Module dependencies.
@@ -10,15 +10,15 @@ let mongoose = require('mongoose'),
     crypto = require('crypto'),
     generatePassword = require('generate-password'),
     owasp = require('owasp-password-strength-test'),
-    arrayUniquePlugin = require('mongoose-unique-array');
+    arrayUniquePlugin = require('mongoose-unique-array')
 
 owasp.config({
     allowPassphrases: true,
     maxLength: 128,
     minLength: 6,
     minPhraseLength: 20,
-    minOptionalTestsToPass: 3
-});
+    minOptionalTestsToPass: 3,
+})
 /**
  * Article Schema
  */
@@ -28,27 +28,27 @@ let FutureLeaderSchema = new Schema({
         type: String,
         trim: true,
         unique: true,
-        required: 'Email must be provided.'
+        required: 'Email must be provided.',
     },
     verificationCode: {
         type: String,
-        default: ''
+        default: '',
     },
     organizations: [
         {
             type: Schema.ObjectId,
             ref: 'Organization',
-            sparse: true
-        }
+            sparse: true,
+        },
     ],
     salt: {
-        type: String
+        type: String,
     },
     emailDelivered: {
         type: Boolean,
-        default: false
-    }
-});
+        default: false,
+    },
+})
 
 /**
  * Hook a pre save method to hash the password
@@ -56,48 +56,48 @@ let FutureLeaderSchema = new Schema({
 
 // With Future leaders the user does not sign up so have to pre generate the salt for hashing
 
-FutureLeaderSchema.pre('save', function(next) {
+FutureLeaderSchema.pre('save', function (next) {
     if (!this.salt) {
-        this.salt = crypto.randomBytes(16).toString('base64');
+        this.salt = crypto.randomBytes(16).toString('base64')
     }
 
-    next();
-});
+    next()
+})
 
 /**
  * Create instance method for hashing a verification code (sent by SMS)
  */
-FutureLeaderSchema.methods.hashVerificationCode = function(code) {
+FutureLeaderSchema.methods.hashVerificationCode = function (code) {
     if (this.salt && code) {
-        console.log('hashing code: ', code);
+        console.log('hashing code: ', code)
         return crypto
             .pbkdf2Sync(
                 code.toString(),
                 Buffer.from(this.salt, 'base64'),
                 100000,
                 64,
-                'SHA512'
+                'SHA512',
             )
-            .toString('base64');
+            .toString('base64')
     } else {
-        console.log('salt was not present');
-        return code;
+        console.log('salt was not present')
+        return code
     }
-};
+}
 
-FutureLeaderSchema.methods.verify = function(code) {
-    return this.verificationCode === this.hashVerificationCode(code);
-};
+FutureLeaderSchema.methods.verify = function (code) {
+    return this.verificationCode === this.hashVerificationCode(code)
+}
 
 /**
  * Generates a random passphrase that passes the owasp test.
  * Returns a promise that resolves with the generated passphrase, or rejects with an error if something goes wrong.
  * NOTE: Passphrases are only tested against the required owasp strength tests, and not the optional tests.
  */
-FutureLeaderSchema.statics.generateRandomPassphrase = function() {
-    return new Promise(function(resolve, reject) {
-        let password = '';
-        let repeatingCharacters = new RegExp('(.)\\1{2,}', 'g');
+FutureLeaderSchema.statics.generateRandomPassphrase = function () {
+    return new Promise(function (resolve, reject) {
+        let password = ''
+        let repeatingCharacters = new RegExp('(.)\\1{2,}', 'g')
 
         // iterate until the we have a valid passphrase.
         // NOTE: Should rarely iterate more than once, but we need this to ensure no repeating characters are present.
@@ -108,26 +108,26 @@ FutureLeaderSchema.statics.generateRandomPassphrase = function() {
                 numbers: true,
                 symbols: false,
                 uppercase: true,
-                excludeSimilarCharacters: true
-            });
+                excludeSimilarCharacters: true,
+            })
 
             // check if we need to remove any repeating characters.
-            password = password.replace(repeatingCharacters, '');
+            password = password.replace(repeatingCharacters, '')
         }
 
         // Send the rejection back if the passphrase fails to pass the strength test
         if (owasp.test(password).requiredTestErrors.length) {
             reject(
                 new Error(
-                    'An unexpected problem occured while generating the random passphrase'
-                )
-            );
+                    'An unexpected problem occured while generating the random passphrase',
+                ),
+            )
         } else {
             // resolve with the validated passphrase
-            resolve(password);
+            resolve(password)
         }
-    });
-};
+    })
+}
 
-FutureLeaderSchema.plugin(arrayUniquePlugin);
-mongoose.model('FutureLeader', FutureLeaderSchema);
+FutureLeaderSchema.plugin(arrayUniquePlugin)
+mongoose.model('FutureLeader', FutureLeaderSchema)

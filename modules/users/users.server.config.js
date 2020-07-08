@@ -1,14 +1,13 @@
-'use strict';
+'use strict'
 
 /**
  * Module dependencies.
  */
 let passport = require('passport'),
-    User = require('mongoose')
-        .model('User'),
+    User = require('mongoose').model('User'),
     path = require('path'),
     config = require(path.resolve('./config/config')),
-    jwt = require('express-jwt');
+    jwt = require('express-jwt')
 
 /**
  * Module init function.
@@ -16,8 +15,8 @@ let passport = require('passport'),
 module.exports = function (app, db) {
     // Serialize sessions
     passport.serializeUser(function (user, done) {
-        done(null, user.id);
-    });
+        done(null, user.id)
+    })
 
     // Deserialize sessions
     passport.deserializeUser(function (id, done) {
@@ -25,17 +24,18 @@ module.exports = function (app, db) {
             .select('-salt -password -verificationCode')
             .populate('country')
             .exec(function (err, user) {
-                done(err, user);
-            });
-    });
+                done(err, user)
+            })
+    })
 
     // Initialize strategies
-    config.utils.getGlobbedPaths(path.join(__dirname, './strategies/**/*.js'))
+    config.utils
+        .getGlobbedPaths(path.join(__dirname, './strategies/**/*.js'))
         .forEach(function (strategy) {
-            require(path.resolve(strategy))(config);
-        });
+            require(path.resolve(strategy))(config)
+        })
 
     // Add passport's middleware
-    app.use(passport.initialize());
-    app.use(passport.session());
-};
+    app.use(passport.initialize())
+    app.use(passport.session())
+}

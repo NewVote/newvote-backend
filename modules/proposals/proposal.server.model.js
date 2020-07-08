@@ -1,11 +1,11 @@
-'use strict';
+'use strict'
 
 /**
  * Module dependencies.
  */
 let mongoose = require('mongoose'),
     Schema = mongoose.Schema,
-    createSlug = require('../helpers/slug');
+    createSlug = require('../helpers/slug')
 
 /**
  * Article Schema
@@ -13,94 +13,98 @@ let mongoose = require('mongoose'),
 let ProposalSchema = new Schema({
     created: {
         type: Date,
-        default: Date.now
+        default: Date.now,
     },
     title: {
         type: String,
         trim: true,
-        required: 'Title cannot be blank'
+        required: 'Title cannot be blank',
     },
     description: {
         type: String,
         default: '',
-        trim: true
+        trim: true,
     },
     imageUrl: {
         type: String,
         default: 'assets/action-default.png',
-        trim: true
+        trim: true,
     },
     user: {
         type: Schema.ObjectId,
-        ref: 'User'
+        ref: 'User',
     },
-    solutions: [{
-        type: Schema.ObjectId,
-        ref: 'Solution',
-        required: true
-    }],
-    goals: [{
-        type: Schema.ObjectId,
-        ref: 'Solution'
-    }],
+    solutions: [
+        {
+            type: Schema.ObjectId,
+            ref: 'Solution',
+            required: true,
+        },
+    ],
+    goals: [
+        {
+            type: Schema.ObjectId,
+            ref: 'Solution',
+        },
+    ],
     votes: {
         up: Number,
         down: Number,
         total: Number,
         currentUser: {
             type: Schema.ObjectId,
-            ref: 'Vote'
-        }
+            ref: 'Vote',
+        },
     },
     likert: {
         type: Boolean,
-        default: false
+        default: false,
     },
     organizations: {
         type: Schema.ObjectId,
-        ref: 'Organization'
+        ref: 'Organization',
     },
     softDeleted: {
         type: Boolean,
-        default: false
+        default: false,
     },
     suggestionTemplate: {
         type: Schema.ObjectId,
-        ref: 'Suggestion'
+        ref: 'Suggestion',
     },
     slug: {
-        type: String
-    }
-});
+        type: String,
+    },
+})
 
 ProposalSchema.statics.generateUniqueSlug = function (title, suffix, callback) {
-    let _this = this;
-    let possibleSlug = createSlug(title) + (suffix || '');
+    let _this = this
+    let possibleSlug = createSlug(title) + (suffix || '')
 
-    _this.findOne({
-        slug: possibleSlug
-    },
-    function (err, slug) {
-        if (!err) {
-            if (!slug) {
-                callback(possibleSlug);
+    _this.findOne(
+        {
+            slug: possibleSlug,
+        },
+        function (err, slug) {
+            if (!err) {
+                if (!slug) {
+                    callback(possibleSlug)
+                } else {
+                    return _this.generateUniqueSlug(
+                        title,
+                        (suffix || 0) + 1,
+                        callback,
+                    )
+                }
             } else {
-                return _this.generateUniqueSlug(
-                    title,
-                    (suffix || 0) + 1,
-                    callback
-                );
+                callback(null)
             }
-        } else {
-            callback(null);
-        }
-    }
-    );
-};
-
+        },
+    )
+}
 
 ProposalSchema.index({
     title: 'text',
-    description: 'text'
-});
-mongoose.model('Proposal', ProposalSchema);
+    description: 'text',
+})
+mongoose.model('Proposal', ProposalSchema)

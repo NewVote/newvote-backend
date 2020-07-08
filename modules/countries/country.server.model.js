@@ -1,10 +1,10 @@
-'use strict';
+'use strict'
 
 /**
  * Module dependencies.
  */
 let mongoose = require('mongoose'),
-    Schema = mongoose.Schema;
+    Schema = mongoose.Schema
 
 /**
  * Country Schema
@@ -12,12 +12,12 @@ let mongoose = require('mongoose'),
 let CountrySchema = new Schema({
     name: {
         type: String,
-        required: true
+        required: true,
     },
     code: {
         type: String,
-        required: true
-    }
-});
+        required: true,
+    },
+})
 
-mongoose.model('Country', CountrySchema);
+mongoose.model('Country', CountrySchema)

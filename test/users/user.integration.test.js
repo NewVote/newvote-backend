@@ -1,16 +1,16 @@
-process.env.NODE_ENV = 'test';
+process.env.NODE_ENV = 'test'
 
-let chai = require('chai');
-let chaiHttp = require('chai-http');
-let server = require('../test.js');
+let chai = require('chai')
+let chaiHttp = require('chai-http')
+let server = require('../test.js')
 
-let mongoose = require('mongoose');
-let User = mongoose.model('User');
+let mongoose = require('mongoose')
+let User = mongoose.model('User')
 
 // https://developers.google.com/recaptcha/docs/faq - need for automated tests to pass
-let recaptchaKey = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI';
+let recaptchaKey = '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'
 
-chai.use(chaiHttp);
+chai.use(chaiHttp)
 
 // describe('User Authentication Flow', async function () {
 

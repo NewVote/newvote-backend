@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 /**
  * Module dependencies.
@@ -10,31 +10,31 @@ let mongoose = require('mongoose'),
     crypto = require('crypto'),
     validator = require('validator'),
     generatePassword = require('generate-password'),
-    owasp = require('owasp-password-strength-test');
+    owasp = require('owasp-password-strength-test')
 
 owasp.config({
     allowPassphrases: true,
     maxLength: 128,
     minLength: 6,
     minPhraseLength: 20,
-    minOptionalTestsToPass: 3
-});
+    minOptionalTestsToPass: 3,
+})
 
 /**
  * A Validation function for local strategy properties
  */
 let validateLocalStrategyProperty = function (property) {
-    return (this.provider !== 'local' && !this.updated) || property.length;
-};
+    return (this.provider !== 'local' && !this.updated) || property.length
+}
 
 /**
  * A Validation function for checking UQ emails
  */
 let validateUQEmail = function (email) {
-    let regex = /^[a-zA-Z0-9_.+-]+@(?:(?:[a-zA-Z0-9-]+\.)?[a-zA-Z]+\.)?(uqconnect|uq)\.(edu|net)\.au$/;
-    let pass = email.match(regex) != null;
-    return pass;
-};
+    let regex = /^[a-zA-Z0-9_.+-]+@(?:(?:[a-zA-Z0-9-]+\.)?[a-zA-Z]+\.)?(uqconnect|uq)\.(edu|net)\.au$/
+    let pass = email.match(regex) != null
+    return pass
+}
 /**
  * A Validation function for local strategy email
  */
@@ -43,8 +43,8 @@ let validateLocalStrategyEmail = function (email) {
         (this.provider !== 'local' && !this.updated) ||
         (validator.isEmail(email) && validateUQEmail(email)) ||
         email == 'rohan.m.richards@gmail.com'
-    );
-};
+    )
+}
 
 /**
  * User Schema
@@ -53,16 +53,16 @@ let UserSchema = new Schema({
     firstName: {
         type: String,
         trim: true,
-        default: ''
+        default: '',
     },
     lastName: {
         type: String,
         trim: true,
-        default: ''
+        default: '',
     },
     displayName: {
         type: String,
-        trim: true
+        trim: true,
     },
     email: {
         type: String,
@@ -71,140 +71,144 @@ let UserSchema = new Schema({
         trim: true,
         default: '',
         index: true,
-        required: true
+        required: true,
     },
     postalCode: {
         type: String,
-        trim: true
+        trim: true,
     },
     international: {
-        type: Boolean
+        type: Boolean,
     },
     country: {
         type: Schema.ObjectId,
-        ref: 'Country'
+        ref: 'Country',
     },
     username: {
         type: String,
-        required: true
+        required: true,
     },
     mobileNumber: {
         type: String,
-        unique: true
+        unique: true,
     },
     verified: {
         type: Boolean,
-        default: false
+        default: false,
     },
     gender: {
-        type: String
+        type: String,
     },
     birthYear: {
-        type: String
+        type: String,
     },
     income: {
-        type: String
+        type: String,
     },
     housing: {
-        type: String
+        type: String,
     },
     party: {
-        type: String
+        type: String,
     },
     woodfordian: {
-        type: String
+        type: String,
     },
     terms: {
-        type: Boolean
+        type: Boolean,
     },
     password: {
         type: String,
         default: '',
         required: function () {
             if (this.provider === 'local') {
-                return true;
+                return true
             } else {
-                return false;
+                return false
             }
-        }
+        },
     },
     verificationCode: {
         type: String,
         default: '',
         required: function () {
             if (this.isNew) {
-                return false;
+                return false
             }
-        }
+        },
     },
     salt: {
-        type: String
+        type: String,
     },
     jti: {
-        type: String
+        type: String,
     },
     profileImageURL: {
         type: String,
-        default: 'modules/users/client/img/profile/default.png'
+        default: 'modules/users/client/img/profile/default.png',
     },
     provider: {
-        type: String
+        type: String,
     },
     subscriptions: {
-        type: Schema.Types.Mixed
+        type: Schema.Types.Mixed,
     },
     providerData: {},
     additionalProvidersData: {},
     roles: {
-        type: [{
-            type: String,
-            enum: ['guest', 'user', 'admin', 'endorser', 'rep']
-        }],
+        type: [
+            {
+                type: String,
+                enum: ['guest', 'user', 'admin', 'endorser', 'rep'],
+            },
+        ],
         default: ['guest'],
-        required: 'Please provide at least one role'
+        required: 'Please provide at least one role',
     },
     updated: {
-        type: Date
+        type: Date,
     },
     created: {
         type: Date,
-        default: Date.now
+        default: Date.now,
     },
     /* For reset password */
     resetPasswordToken: {
-        type: String
+        type: String,
     },
     resetPasswordExpires: {
-        type: Date
+        type: Date,
     },
     // for tracking org memberships
-    organizations: [{
-        type: Schema.ObjectId,
-        ref: 'Organization',
-        unique: true
-    }],
+    organizations: [
+        {
+            type: Schema.ObjectId,
+            ref: 'Organization',
+            unique: true,
+        },
+    ],
     completedTour: {
         type: Boolean,
-        default: false
+        default: false,
     },
     subscriptionsActive: {
         type: String,
         enum: ['DEFAULT', 'DENIED', 'ACCEPTED'],
-        default: 'DEFAULT'
+        default: 'DEFAULT',
     },
-});
+})
 
 /**
  * Hook a pre save method to hash the password
  */
 UserSchema.pre('save', function (next) {
     if (this.password && this.isModified('password')) {
-        this.salt = crypto.randomBytes(16).toString('base64');
-        this.password = this.hashPassword(this.password);
+        this.salt = crypto.randomBytes(16).toString('base64')
+        this.password = this.hashPassword(this.password)
     }
 
-    next();
-});
+    next()
+})
 
 /**
  * Hook a pre validate method to test the local password
@@ -215,15 +219,15 @@ UserSchema.pre('validate', function (next) {
         this.password &&
         this.isModified('password')
     ) {
-        let result = owasp.test(this.password);
+        let result = owasp.test(this.password)
         if (result.requiredTestErrors.length) {
-            let error = result.requiredTestErrors.join(' ');
-            this.invalidate('password', error);
+            let error = result.requiredTestErrors.join(' ')
+            this.invalidate('password', error)
         }
     }
 
-    next();
-});
+    next()
+})
 
 /**
  * Create instance method for hashing a password
@@ -236,80 +240,81 @@ UserSchema.methods.hashPassword = function (password) {
                 Buffer.from(this.salt, 'base64'),
                 100000,
                 64,
-                'SHA512'
+                'SHA512',
             )
-            .toString('base64');
+            .toString('base64')
     } else {
-        return password;
+        return password
     }
-};
+}
 
 /**
  * Create instance method for authenticating user
  */
 UserSchema.methods.authenticate = function (password) {
-    return this.password === this.hashPassword(password);
-};
+    return this.password === this.hashPassword(password)
+}
 
 /**
  * Create instance method for hashing a verification code (sent by SMS)
  */
 UserSchema.methods.hashVerificationCode = function (code) {
     if (this.salt && code) {
-        console.log('hashing code: ', code);
+        console.log('hashing code: ', code)
         return crypto
             .pbkdf2Sync(
                 code.toString(),
                 Buffer.from(this.salt, 'base64'),
                 100000,
                 64,
-                'SHA512'
+                'SHA512',
             )
-            .toString('base64');
+            .toString('base64')
     } else {
-        console.log('salt was not present');
-        return code;
+        console.log('salt was not present')
+        return code
     }
-};
+}
 
 /**
  * Create instance method for confirming the sms verification code
  */
 UserSchema.methods.verify = function (code) {
-    return this.verificationCode === this.hashVerificationCode(code);
-};
+    return this.verificationCode === this.hashVerificationCode(code)
+}
 
 UserSchema.statics.generateVerificationCode = function () {
-    return Math.floor(100000 + Math.random() * 900000);
-};
+    return Math.floor(100000 + Math.random() * 900000)
+}
 
 /**
  * Find possible not used username
  */
 UserSchema.statics.findUniqueUsername = function (username, suffix, callback) {
-    let _this = this;
-    let possibleUsername = username.toLowerCase() + (suffix || '');
+    let _this = this
+    let possibleUsername = username.toLowerCase() + (suffix || '')
 
-    _this.findOne({
-        username: possibleUsername
-    },
-    function (err, user) {
-        if (!err) {
-            if (!user) {
-                callback(possibleUsername);
+    _this.findOne(
+        {
+            username: possibleUsername,
+        },
+        function (err, user) {
+            if (!err) {
+                if (!user) {
+                    callback(possibleUsername)
+                } else {
+                    return _this.findUniqueUsername(
+                        username,
+                        (suffix || 0) + 1,
+                        callback,
+                    )
+                }
             } else {
-                return _this.findUniqueUsername(
-                    username,
-                    (suffix || 0) + 1,
-                    callback
-                );
+                callback(null)
             }
-        } else {
-            callback(null);
-        }
-    }
-    );
-};
+        },
+    )
+}
 
 /**
  * Generates a random passphrase that passes the owasp test.
@@ -318,8 +323,8 @@ UserSchema.statics.findUniqueUsername = function (username, suffix, callback) {
  */
 UserSchema.statics.generateRandomPassphrase = function () {
     return new Promise(function (resolve, reject) {
-        let password = '';
-        let repeatingCharacters = new RegExp('(.)\\1{2,}', 'g');
+        let password = ''
+        let repeatingCharacters = new RegExp('(.)\\1{2,}', 'g')
 
         // iterate until the we have a valid passphrase.
         // NOTE: Should rarely iterate more than once, but we need this to ensure no repeating characters are present.
@@ -330,26 +335,26 @@ UserSchema.statics.generateRandomPassphrase = function () {
                 numbers: true,
                 symbols: false,
                 uppercase: true,
-                excludeSimilarCharacters: true
-            });
+                excludeSimilarCharacters: true,
+            })
 
             // check if we need to remove any repeating characters.
-            password = password.replace(repeatingCharacters, '');
+            password = password.replace(repeatingCharacters, '')
         }
 
         // Send the rejection back if the passphrase fails to pass the strength test
         if (owasp.test(password).requiredTestErrors.length) {
             reject(
                 new Error(
-                    'An unexpected problem occured while generating the random passphrase'
-                )
-            );
+                    'An unexpected problem occured while generating the random passphrase',
+                ),
+            )
         } else {
             // resolve with the validated passphrase
-            resolve(password);
+            resolve(password)
         }
-    });
-};
+    })
+}
 
-UserSchema.plugin(arrayUniquePlugin);
-mongoose.model('User', UserSchema);
+UserSchema.plugin(arrayUniquePlugin)
+mongoose.model('User', UserSchema)

@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 /**
  * Module dependencies.
@@ -6,118 +6,120 @@
 let path = require('path'),
     mongoose = require('mongoose'),
     Country = mongoose.model('Country'),
-    errorHandler = require(path.resolve('./modules/core/errors.server.controller')),
-    _ = require('lodash');
+    errorHandler = require(path.resolve(
+        './modules/core/errors.server.controller',
+    )),
+    _ = require('lodash')
 
 /**
  * Create a country
  */
 exports.create = function (req, res) {
-    let country = new Country(req.body);
+    let country = new Country(req.body)
     country.save(function (err) {
         if (err) {
             return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
+                message: errorHandler.getErrorMessage(err),
+            })
         } else {
-            res.json(country);
+            res.json(country)
         }
-    });
-};
+    })
+}
 
 /**
  * Show the current country
  */
 exports.read = function (req, res) {
-    res.json(req.country);
-};
+    res.json(req.country)
+}
 
 /**
  * Update a country
  */
 exports.update = function (req, res) {
-    let country = req.country;
-    country.name = req.body.name;
-    country.postcodes = req.body.postcodes;
+    let country = req.country
+    country.name = req.body.name
+    country.postcodes = req.body.postcodes
 
     country.save(function (err) {
         if (err) {
             return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
+                message: errorHandler.getErrorMessage(err),
+            })
         } else {
-            res.json(country);
+            res.json(country)
         }
-    });
-};
+    })
+}
 
 /**
  * Delete an country
  */
 exports.delete = function (req, res) {
-    let country = req.country;
+    let country = req.country
 
     country.remove(function (err) {
         if (err) {
             return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
+                message: errorHandler.getErrorMessage(err),
+            })
         } else {
-            res.json(country);
+            res.json(country)
         }
-    });
-};
+    })
+}
 
 /**
  * List of Countries
  */
 exports.list = function (req, res) {
-    let searchParams = req.query.search;
-    let query;
+    let searchParams = req.query.search
+    let query
     if (searchParams) {
         query = {
-            $or: [{
-                name: {
-                    $regex: req.query.search,
-                    $options: 'i'
-                }
-            }
-            ]
-        };
+            $or: [
+                {
+                    name: {
+                        $regex: req.query.search,
+                        $options: 'i',
+                    },
+                },
+            ],
+        }
     } else {
-        query = null;
+        query = null
     }
     Country.find(query).exec(function (err, countries) {
         if (err) {
             return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
+                message: errorHandler.getErrorMessage(err),
+            })
         } else {
-            res.json(countries);
+            res.json(countries)
         }
-    });
-};
+    })
+}
 
 /**
  * Country middleware
  */
 exports.countryByID = function (req, res, next, id) {
-
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).send({
-            message: 'Country is invalid'
-        });
+            message: 'Country is invalid',
+        })
     }
 
     Country.findById(id).exec(function (err, country) {
         if (err) {
-            return next(err);
+            return next(err)
         } else if (!country) {
             return res.status(404).send({
-                message: 'No country with that identifier has been found'
-            });
+                message: 'No country with that identifier has been found',
+            })
         }
-        req.country = country;
-        next();
-    });
-};
+        req.country = country
+        next()
+    })
+}
