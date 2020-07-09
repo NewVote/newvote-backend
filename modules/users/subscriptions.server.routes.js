@@ -4,10 +4,9 @@ let subscriptionController = require('./controllers/users.subscriptions.server.c
     policy = require('../generic.server.policy'),
     path = require('path'),
     config = require(path.resolve('./config/config')),
-    jwt = require('express-jwt');
+    jwt = require('express-jwt')
 
 module.exports = function (app) {
-
     // Single Rep
     app.route('/api/subscriptions/:subscriptionId')
         // .all(
@@ -16,8 +15,9 @@ module.exports = function (app) {
         // )
         .post(subscriptionController.create)
         .put(subscriptionController.update)
-        .delete(subscriptionController.delete);
+        .delete(subscriptionController.delete)
 
-    app.route('/api/subscriptions/issue/:subscriptionId')
-        .put(subscriptionController.handleSubscriptionCreation)
+    app.route('/api/subscriptions/issue/:subscriptionId').put(
+        subscriptionController.handleSubscriptionCreation,
+    )
 }

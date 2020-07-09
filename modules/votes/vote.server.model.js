@@ -1,10 +1,10 @@
-'use strict';
+'use strict'
 
 /**
  * Module dependencies.
  */
 let mongoose = require('mongoose'),
-    Schema = mongoose.Schema;
+    Schema = mongoose.Schema
 
 /**
  * Article Schema
@@ -12,26 +12,26 @@ let mongoose = require('mongoose'),
 let VoteSchema = new Schema({
     created: {
         type: Date,
-        default: Date.now
+        default: Date.now,
     },
     user: {
         type: Schema.ObjectId,
-        ref: 'User'
+        ref: 'User',
     },
     objectType: {
         type: String,
-        required: true
+        required: true,
     },
     object: {
         type: Schema.ObjectId,
-        refPath: 'objectType'
+        refPath: 'objectType',
     },
     voteValue: {
         type: Number,
-        enum: [-1, -0.5, 0, 0.5, 1]
-    }
-});
+        enum: [-1, -0.5, 0, 0.5, 1],
+    },
+})
 
-VoteSchema.index({ object: 1, user: 1 }, { unique: true });
+VoteSchema.index({ object: 1, user: 1 }, { unique: true })
 
-mongoose.model('Vote', VoteSchema);
+mongoose.model('Vote', VoteSchema)

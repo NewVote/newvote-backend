@@ -1,41 +1,42 @@
-process.env.NODE_ENV = 'test';
+process.env.NODE_ENV = 'test'
 
-require('./test.spec_helper.js');
+require('./test.spec_helper.js')
 
-let mongooseWrap = require('../config/lib/mongoose.js');
-mongooseWrap.loadModels();
-mongooseWrap.connect();
+let mongooseWrap = require('../config/lib/mongoose.js')
+mongooseWrap.loadModels()
+mongooseWrap.connect()
 
-let path = require('path');
-let config = require(path.resolve('./config/config'));
-let server = require('../config/lib/express').init();
+let path = require('path')
+let config = require(path.resolve('./config/config'))
+let server = require('../config/lib/express').init()
 
 // Seed data
-const { Seeder } = require('mongo-seeding');
+const { Seeder } = require('mongo-seeding')
 
 const seedConfig = {
-	database: config.db.uri,
-	dropDatabase: true
+    database: config.db.uri,
+    dropDatabase: true,
 }
 
-const seeder = new Seeder(seedConfig);
+const seeder = new Seeder(seedConfig)
 const collectionReadingOptions = {
-	extensions: ['js']
-};
+    extensions: ['js'],
+}
 
 const collections = seeder.readCollectionsFromPath(
-	path.resolve('./seed'),
-	collectionReadingOptions
-);
+    path.resolve('./seed'),
+    collectionReadingOptions,
+)
 
-seeder.import(collections)
-	.then(() => {
-		console.log('Success')
-	})
-	.catch((err) => {
-		console.log(err, 'Import Failed');
-	})
+seeder
+    .import(collections)
+    .then(() => {
+        console.log('Success')
+    })
+    .catch((err) => {
+        console.log(err, 'Import Failed')
+    })
 
-server.listen(3000);
+server.listen(3000)
 
-module.exports = server;
+module.exports = server

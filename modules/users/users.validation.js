@@ -1,5 +1,5 @@
-const { Joi } = require('celebrate');
-Joi.objectId = require('joi-objectid')(Joi);
+const { Joi } = require('celebrate')
+Joi.objectId = require('joi-objectid')(Joi)
 
 const schema = {
     body: Joi.object().keys({
@@ -32,9 +32,9 @@ const schema = {
         resetPasswordToken: Joi.string(),
         resetPasswordExpires: Joi.date(),
         completedTour: Joi.Boolean(),
-    })
+    }),
 }
 
 module.exports = {
-    schema
+    schema,
 }

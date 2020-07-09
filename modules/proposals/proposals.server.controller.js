@@ -1,4 +1,4 @@
-'use strict';
+'use strict'
 
 /**
  * Module dependencies.
@@ -11,12 +11,11 @@ let path = require('path'),
     Solution = mongoose.model('Solution'),
     voteController = require('../votes/votes.server.controller'),
     errorHandler = require(path.resolve(
-        './modules/core/errors.server.controller'
+        './modules/core/errors.server.controller',
     )),
     _ = require('lodash'),
     seed = require('./seed/seed'),
-    createSlug = require('../helpers/slug');
-
+    createSlug = require('../helpers/slug')
 
 /**
  * Create a proposal
@@ -24,20 +23,18 @@ let path = require('path'),
 exports.create = function (req, res) {
     // if the string is empty revert to default on model
     if (!req.body.imageUrl) {
-        delete req.body.imageUrl;
+        delete req.body.imageUrl
     }
 
-
-
     const proposalPromise = new Promise((resolve, reject) => {
-        let proposal = new Proposal(req.body);
-        proposal.user = req.user;
+        let proposal = new Proposal(req.body)
+        proposal.user = req.user
 
         Proposal.generateUniqueSlug(req.body.title, null, function (slug) {
             proposal.slug = slug
-            resolve(proposal);
+            resolve(proposal)
         })
-    });
+    })
 
     // Return votes without an _id - as it cannot be deleted
     // _id being preset prevents copying and saving of vote data between collections
@@ -46,50 +43,48 @@ exports.create = function (req, res) {
             return resolve(
                 Vote.find({
                     object: req.body.suggestionTemplate._id || false,
-                    objectType: 'Suggestion'
-                }).select('-_id -created')
+                    objectType: 'Suggestion',
+                }).select('-_id -created'),
             )
         }
 
-        return resolve(false);
+        return resolve(false)
     })
 
     Promise.all([proposalPromise, votePromise])
-        .then(promises => {
-            const [proposal, votes] = promises;
+        .then((promises) => {
+            const [proposal, votes] = promises
 
-            if (!proposal) throw 'Proposal failed to save';
+            if (!proposal) throw 'Proposal failed to save'
 
             if (votes.length > 0) {
-                const convertSuggestionVotesToProposal =
+                const convertSuggestionVotesToProposal = votes
+                    .slice()
+                    .map((vote) => {
+                        let newVote = new Vote(vote)
+                        newVote.objectType = 'Proposal'
+                        newVote.object = proposal._id
+                        return newVote
+                    })
 
-                    votes
-                        .slice()
-                        .map(vote => {
-                            let newVote = new Vote(vote);
-                            newVote.objectType = 'Proposal';
-                            newVote.object = proposal._id;
-                            return newVote;
-                        });
-
-                Vote.insertMany(convertSuggestionVotesToProposal);
+                Vote.insertMany(convertSuggestionVotesToProposal)
             }
 
-            return proposal.save();
+            return proposal.save()
         })
         .then((proposal) => {
             // Attach empty vote object
             return votes.attachVotes([proposal], req.user, req.query.regions)
         })
-        .then(proposal => {
-            return res.json(proposal[0]);
+        .then((proposal) => {
+            return res.json(proposal[0])
         })
-        .catch(err => {
+        .catch((err) => {
             return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
-        });
-};
+                message: errorHandler.getErrorMessage(err),
+            })
+        })
+}
 
 /**
  * Show the current proposal
@@ -98,46 +93,52 @@ exports.read = function (req, res) {
     votes
         .attachVotes([req.proposal], req.user, req.query.regions)
         .then(function (proposalArr) {
-            const updatedProposal = proposalArr[0];
-            res.json(updatedProposal);
+            const updatedProposal = proposalArr[0]
+            res.json(updatedProposal)
         })
-        .catch(err => {
+        .catch((err) => {
             return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
-        });
-};
+                message: errorHandler.getErrorMessage(err),
+            })
+        })
+}
 
 /**
  * Update a proposal
  */
 exports.update = function (req, res) {
-    delete req.body.__v;
+    delete req.body.__v
 
     if (req.body.votes) {
-        delete req.body.votes;
+        delete req.body.votes
     }
 
-    let proposal = req.proposal;
-    _.extend(proposal, req.body);
-    proposal.user = req.user;
+    let proposal = req.proposal
+    _.extend(proposal, req.body)
+    proposal.user = req.user
 
     if (!proposal.slug || createSlug(proposal.title) !== proposal.slug) {
-        return Proposal.generateUniqueSlug(proposal.title, null, function (slug) {
+        return Proposal.generateUniqueSlug(proposal.title, null, function (
+            slug,
+        ) {
             proposal.slug = slug
 
-            proposal.save()
+            proposal
+                .save()
                 .then((res) => {
-                    return voteController
-                        .attachVotes([res], req.user, req.query.regions)
+                    return voteController.attachVotes(
+                        [res],
+                        req.user,
+                        req.query.regions,
+                    )
                 })
                 .then((data) => {
-                    res.json(data[0]);
+                    res.json(data[0])
                 })
                 .catch((err) => {
                     return res.status(400).send({
-                        message: errorHandler.getErrorMessage(err)
-                    });
+                        message: errorHandler.getErrorMessage(err),
+                    })
                 })
         })
     }
@@ -145,131 +146,144 @@ exports.update = function (req, res) {
     proposal
         .save()
         .then((res) => {
-            return voteController
-                .attachVotes([res], req.user, req.query.regions)
+            return voteController.attachVotes(
+                [res],
+                req.user,
+                req.query.regions,
+            )
         })
-        .then(proposal => res.json(proposal[0]))
-        .catch(err => {
+        .then((proposal) => res.json(proposal[0]))
+        .catch((err) => {
             return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
-        });
-};
+                message: errorHandler.getErrorMessage(err),
+            })
+        })
+}
 
 /**
  * Delete an proposal
  */
 exports.delete = function (req, res) {
-    let proposal = req.proposal;
+    let proposal = req.proposal
 
     Vote.deleteMany({
         object: req.proposal._id,
-        objectType: 'Proposal'
+        objectType: 'Proposal',
     })
-        .then(votes => {
-            return proposal.remove();
+        .then((votes) => {
+            return proposal.remove()
         })
-        .then(proposal => {
-            return res.json(proposal);
+        .then((proposal) => {
+            return res.json(proposal)
         })
-        .catch(err => {
+        .catch((err) => {
             return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
-        });
-};
+                message: errorHandler.getErrorMessage(err),
+            })
+        })
+}
 
 /**
  * List of Proposals
  */
 exports.list = function (req, res) {
-    let solutionId = req.query.solutionId || null;
-    let search = req.query.search || null;
-    let org = req.organization;
-    let orgUrl = org ? org.url : null;
-    let showDeleted = req.query.showDeleted || null;
+    let solutionId = req.query.solutionId || null
+    let search = req.query.search || null
+    let org = req.organization
+    let orgUrl = org ? org.url : null
+    let showDeleted = req.query.showDeleted || null
 
-    let orgMatch = orgUrl ? {
-        'organizations.url': orgUrl
-    } : {};
-    let solutionMatch = solutionId ? {
-        solutions: mongoose.Types.ObjectId(solutionId)
-    } : {};
-    let searchMatch = search ? {
-        $text: {
-            $search: search
-        }
-    } : {};
+    let orgMatch = orgUrl
+        ? {
+              'organizations.url': orgUrl,
+          }
+        : {}
+    let solutionMatch = solutionId
+        ? {
+              solutions: mongoose.Types.ObjectId(solutionId),
+          }
+        : {}
+    let searchMatch = search
+        ? {
+              $text: {
+                  $search: search,
+              },
+          }
+        : {}
 
     let showNonDeletedItemsMatch = {
-        $or: [{
-            softDeleted: false
-        }, {
-            softDeleted: {
-                $exists: false
-            }
-        }]
-    };
-    let showAllItemsMatch = {};
-    let softDeleteMatch = showDeleted ?
-        showAllItemsMatch :
-        showNonDeletedItemsMatch;
-
-    Proposal.aggregate([{
-        $match: searchMatch
-    },
-    {
-        $match: softDeleteMatch
-    },
-    {
-        $match: solutionMatch
-    },
-    {
-        $lookup: {
-            from: 'organizations',
-            localField: 'organizations',
-            foreignField: '_id',
-            as: 'organizations'
-        }
-    },
-    {
-        $lookup: {
-            from: 'solutions',
-            localField: 'solutions',
-            foreignField: '_id',
-            as: 'solutions'
-        }
-    },
-    {
-        $match: orgMatch
-    },
-    {
-        $unwind: '$organizations'
-    },
-    {
-        $sort: {
-            created: -1
-        }
+        $or: [
+            {
+                softDeleted: false,
+            },
+            {
+                softDeleted: {
+                    $exists: false,
+                },
+            },
+        ],
     }
+    let showAllItemsMatch = {}
+    let softDeleteMatch = showDeleted
+        ? showAllItemsMatch
+        : showNonDeletedItemsMatch
+
+    Proposal.aggregate([
+        {
+            $match: searchMatch,
+        },
+        {
+            $match: softDeleteMatch,
+        },
+        {
+            $match: solutionMatch,
+        },
+        {
+            $lookup: {
+                from: 'organizations',
+                localField: 'organizations',
+                foreignField: '_id',
+                as: 'organizations',
+            },
+        },
+        {
+            $lookup: {
+                from: 'solutions',
+                localField: 'solutions',
+                foreignField: '_id',
+                as: 'solutions',
+            },
+        },
+        {
+            $match: orgMatch,
+        },
+        {
+            $unwind: '$organizations',
+        },
+        {
+            $sort: {
+                created: -1,
+            },
+        },
     ]).exec(function (err, proposals) {
         if (err) {
             return res.status(400).send({
-                message: errorHandler.getErrorMessage(err)
-            });
+                message: errorHandler.getErrorMessage(err),
+            })
         } else {
             votes
                 .attachVotes(proposals, req.user, req.query.regions)
                 .then(function (proposals) {
-                    res.json(proposals);
+                    res.json(proposals)
                 })
                 .catch(function (err) {
                     res.status(500).send({
-                        message: errorHandler.getErrorMessage(err)
-                    });
-                });
+                        message: errorHandler.getErrorMessage(err),
+                    })
+                })
         }
-    });
-};
+    })
+}
 
 /**
  * Proposal middleware
@@ -277,22 +291,22 @@ exports.list = function (req, res) {
 exports.proposalByID = function (req, res, next, id) {
     if (!id.match(/^[0-9a-fA-F]{24}$/)) {
         return Proposal.findOne({
-            slug: id
+            slug: id,
         })
             .populate('user', 'displayName')
             .populate('solutions')
             .populate('solution')
             .populate('organizations')
             .then((proposal) => {
-                if (!proposal) throw ('Proposal does not exist');
+                if (!proposal) throw 'Proposal does not exist'
 
-                req.proposal = proposal;
-                next();
+                req.proposal = proposal
+                next()
             })
             .catch((err) => {
                 return res.status(400).send({
-                    message: err
-                });
+                    message: err,
+                })
             })
     }
 
@@ -303,58 +317,56 @@ exports.proposalByID = function (req, res, next, id) {
         .populate('organizations')
         .exec(function (err, proposal) {
             if (err) {
-                return next(err);
+                return next(err)
             } else if (!proposal) {
                 return res.status(404).send({
-                    message: 'No proposal with that identifier has been found'
-                });
+                    message: 'No proposal with that identifier has been found',
+                })
             }
-            req.proposal = proposal;
-            next();
-        });
-};
+            req.proposal = proposal
+            next()
+        })
+}
 
 exports.attachProposals = function (objects, user, regions) {
     // ;
-    const promises = objects.map(obj => {
+    const promises = objects.map((obj) => {
         return Proposal.find({
-            solutions: obj._id
+            solutions: obj._id,
         })
             .populate('solutions')
-            .then(props => {
-                return votes.attachVotes(props, user, regions).then(props => {
-                    obj.proposals = props;
-                    return obj;
-                });
-            });
-    });
-    return Promise.all(promises);
-};
+            .then((props) => {
+                return votes.attachVotes(props, user, regions).then((props) => {
+                    obj.proposals = props
+                    return obj
+                })
+            })
+    })
+    return Promise.all(promises)
+}
 
 function updateSchema(proposals) {
-    console.log('schema update called');
+    console.log('schema update called')
     for (let i = 0; i < proposals.length; i++) {
-        let proposal = proposals[i];
-        console.log('testing: ', proposal.title);
+        let proposal = proposals[i]
+        console.log('testing: ', proposal.title)
         if (proposal.goals && proposal.goals.length > 0) {
-            proposal.solutions = proposal.goals;
+            proposal.solutions = proposal.goals
             // proposal.goal = undefined;
-            proposal.goals = undefined;
-            delete proposal.goals;
+            proposal.goals = undefined
+            delete proposal.goals
 
-            console.log('updated: ', proposal.title);
-            proposal.save().then(() => console.log('saved proposal'));
+            console.log('updated: ', proposal.title)
+            proposal.save().then(() => console.log('saved proposal'))
         }
     }
 }
 
 exports.seedData = function (organizationId, solutionId) {
-    const {
-        seedData
-    } = seed;
-    const newProposal = new Proposal(seedData);
-    newProposal.organizations = organizationId;
-    newProposal.solutions = [solutionId];
-    newProposal.save();
-    return newProposal;
-};
+    const { seedData } = seed
+    const newProposal = new Proposal(seedData)
+    newProposal.organizations = organizationId
+    newProposal.solutions = [solutionId]
+    newProposal.save()
+    return newProposal
+}

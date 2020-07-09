@@ -1,11 +1,14 @@
-'use strict';
+'use strict'
 
 module.exports = {
     app: {
         title: 'NewVote',
-        description: 'We’re building the bridge between an informed people and their leaders.',
+        description:
+            'We’re building the bridge between an informed people and their leaders.',
         keywords: 'newvote',
-        googleAnalyticsTrackingID: process.env.GOOGLE_ANALYTICS_TRACKING_ID || 'GOOGLE_ANALYTICS_TRACKING_ID'
+        googleAnalyticsTrackingID:
+            process.env.GOOGLE_ANALYTICS_TRACKING_ID ||
+            'GOOGLE_ANALYTICS_TRACKING_ID',
     },
     port: process.env.PORT || 3000,
     node_env: process.env.NODE_ENVIRONMENT || 'development',
@@ -20,7 +23,7 @@ module.exports = {
         // secure cookie should be turned to true to provide additional
         // layer of security so that the cookie is set only when working
         // in HTTPS mode.
-        secure: true
+        secure: true,
     },
     // sessionSecret should be changed for security measures and concerns
     sessionSecret: process.env.SESSION_SECRET || 'MEAN',
@@ -32,22 +35,22 @@ module.exports = {
     // for obsecurity reasons
     sessionKey: 'sessionId',
     sessionCollection: 'sessions',
-    logo: 'public/img/brand/logo.png',
-    social: 'public/img/brand/social.png',
-    favicon: 'public/img/brand/favicon.png',
+    // logo: 'public/img/brand/logo.png',
+    // social: 'public/img/brand/social.png',
+    // favicon: 'public/img/brand/favicon.png',
     reCaptcha: {
-        secret: process.env.RECAPTCHA_SECRET || ''
+        secret: process.env.RECAPTCHA_SECRET || '',
     },
     uploads: {
         profileUpload: {
             dest: './public/img/profile/uploads/', // Profile upload destination path
             limits: {
-                fileSize: 1 * 1024 * 1024 // Max file size in bytes (1 MB)
-            }
-        }
+                fileSize: 1 * 1024 * 1024, // Max file size in bytes (1 MB)
+            },
+        },
     },
     vapid: {
         VAPID_PUB: process.env.VAPID_PUB,
-        VAPID_PRIV: process.env.VAPID_PRIV
-    }
-};
+        VAPID_PRIV: process.env.VAPID_PRIV,
+    },
+}

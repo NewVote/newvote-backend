@@ -1,30 +1,33 @@
-'use strict';
+'use strict'
 
 /**
  * Module dependencies.
  */
 let mongoose = require('mongoose'),
-    Schema = mongoose.Schema;
+    Schema = mongoose.Schema
 
-let ProgressSchema = new Schema({
-    states: [
-        { 
-            name: String,
-            active: Boolean,
-        }
-    ],
-    parent: {
-        type: Schema.ObjectId,
+let ProgressSchema = new Schema(
+    {
+        states: [
+            {
+                name: String,
+                active: Boolean,
+            },
+        ],
+        parent: {
+            type: Schema.ObjectId,
+        },
+        parentType: {
+            type: String,
+        },
+        organization: {
+            type: Schema.ObjectId,
+            ref: 'Organization',
+        },
     },
-    parentType: {
-        type: String
+    {
+        timestamps: true,
     },
-    organization: {
-        type: Schema.ObjectId,
-        ref: 'Organization'
-    },
-}, {
-    timestamps: true
-});
+)
 
-mongoose.model('Progress', ProgressSchema);
+mongoose.model('Progress', ProgressSchema)

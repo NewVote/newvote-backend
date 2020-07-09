@@ -1,10 +1,10 @@
-'use strict';
+'use strict'
 
 /**
  * Module dependencies.
  */
 let mongoose = require('mongoose'),
-    Schema = mongoose.Schema;
+    Schema = mongoose.Schema
 
 /**
  * Article Schema
@@ -12,58 +12,64 @@ let mongoose = require('mongoose'),
 let MediaSchema = new Schema({
     created: {
         type: Date,
-        default: Date.now
+        default: Date.now,
     },
     user: {
         type: Schema.ObjectId,
-        ref: 'User'
+        ref: 'User',
     },
     title: {
-        type: String
+        type: String,
     },
     description: {
-        type: String
+        type: String,
     },
     image: {
-        type: String
+        type: String,
     },
     imageOnly: {
         type: Boolean,
-        default: false
+        default: false,
     },
     url: {
         type: String,
-        required: true
+        required: true,
     },
-    issues: [{
-        type: Schema.ObjectId,
-        ref: 'Issue'
-    }],
-    solutions: [{
-        type: Schema.ObjectId,
-        ref: 'Solution'
-    }],
-    proposals: [{
-        type: Schema.ObjectId,
-        ref: 'Proposal'
-    }],
+    issues: [
+        {
+            type: Schema.ObjectId,
+            ref: 'Issue',
+        },
+    ],
+    solutions: [
+        {
+            type: Schema.ObjectId,
+            ref: 'Solution',
+        },
+    ],
+    proposals: [
+        {
+            type: Schema.ObjectId,
+            ref: 'Proposal',
+        },
+    ],
     votes: {
         up: Number,
         down: Number,
         total: Number,
         currentUser: {
             type: Schema.ObjectId,
-            ref: 'Vote'
-        }
+            ref: 'Vote',
+        },
     },
     organizations: {
         type: Schema.ObjectId,
-        ref: 'Organization'
+        ref: 'Organization',
     },
     softDeleted: {
         type: Boolean,
-        default: false
+        default: false,
     },
-});
+})
 
-mongoose.model('Media', MediaSchema);
+mongoose.model('Media', MediaSchema)

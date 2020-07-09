@@ -1,24 +1,23 @@
-'use strict';
+'use strict'
 
-const Api = require('twilio/lib/rest/Api');
+const Api = require('twilio/lib/rest/Api')
 
 // Progress Routes
 let path = require('path'),
     config = require(path.resolve('./config/config')),
     policy = require('../generic.server.policy'),
     votesController = require('./votes.server.controller'),
-    jwt = require('express-jwt');
+    jwt = require('express-jwt')
 
-module.exports = function(app) {
-
+module.exports = function (app) {
     app.route('/api/votes')
         .all(
             jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed
+            policy.isAllowed,
         )
         .get(votesController.list)
-        .post(votesController.updateOrCreate);
-    
+        .post(votesController.updateOrCreate)
+
     app.route('/api/votes/total')
         // .all(
         //     jwt({ secret: config.jwtSecret, credentialsRequired: false })
@@ -28,11 +27,11 @@ module.exports = function(app) {
     app.route('/api/votes/:voteId')
         .all(
             jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed
+            policy.isAllowed,
         )
         .get(votesController.read)
         .put(votesController.update)
-        .delete(votesController.delete);
+        .delete(votesController.delete)
 
-    app.param('voteId', votesController.voteByID);
+    app.param('voteId', votesController.voteByID)
 }
