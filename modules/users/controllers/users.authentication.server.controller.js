@@ -415,6 +415,9 @@ exports.oauthCallback = function (strategy) {
  * Helper function to create or update a user after AAF Rapid SSO auth
  */
 exports.saveRapidProfile = function (req, profile, done) {
+    console.log(req.cookies, 'this is req.cookies')
+    console.log(profile, 'this is profile')
+    
     const organizationPromise = Organization.findOne({
         _id: req.organization._id
     });
