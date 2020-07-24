@@ -179,53 +179,8 @@ const sendEmail = function (user, pass, req) {
  * Signin after passport authentication
  */
 exports.signin = function (req, res, next) {
-    // passport.authenticate('local', function(err, user, info) {
-    //     console.log(user, 'this is user')
-    //     if (err || !user) {
-    //         return res.status(400).send(info);
-    //     }
-
-    // if (req.cookies.credentials) {
-    //     let { credentials } = req.cookies;
-    //     credentials = JSON.parse(credentials);
-
-    //     return jwt.verify(credentials.token, config.jwtSecret, function(
-    //         jwtErr,
-    //         verifiedUser
-    //     ) {
-    //         if (jwtErr) {
-    //             console.log(jwtErr, 'this is an error with the web token')
-    //             res.clearCookie('credentials', {
-    //                 path: '/',
-    //                 domain: 'newvote.org'
-    //             });
-    //             throw 'Invalid token';
-    //         }
-
-    //         User.findOne({
-    //             _id: verifiedUser._id
-    //         })
-    //             .select('-password -salt -verificationCode')
-    //             .then(savedUser => {
-    //                 // updated user so create new token
-    //                 const token = createJWT(savedUser);
-
-    //                 const opts = {
-    //                     domain: 'newvote.org',
-    //                     secure: false,
-    //                     overwrite: true
-    //                 };
-
-    //                 res.cookie(
-    //                     'credentials',
-    //                     JSON.stringify({ token }),
-    //                     opts
-    //                 );
-    //                 return res.json(savedUser);
-    //             });
-    //     });
-    // }
-
+    // Passport authenticate local happens as middleware on the route
+    // Can take user information from req object
     const { user } = req
     res.clearCookie('credentials')
 
@@ -236,7 +191,7 @@ exports.signin = function (req, res, next) {
     const token = createJWT(user)
 
     res.cookie('credentials', JSON.stringify({ token }), tokenOptions)
-    res.json(user)
+    return res.json(user)
 }
 
 /**
@@ -694,14 +649,18 @@ function handleLeaderVerification(user, verificationCode) {
 }
 
 function loginUser(req, res, user) {
+    user.password = undefined
+    user.salt = undefined
+    user.verificationCode = undefined
+
     return req.login(user, function (err) {
         if (err) {
             return res.status(400).send(err)
         } else {
             const token = createJWT(user)
+            res.cookie('credentials', JSON.stringify({ token }), tokenOptions)
             return res.json({
-                // user: user,
-                token,
+                user,
             })
         }
     })

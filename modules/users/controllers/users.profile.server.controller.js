@@ -99,7 +99,7 @@ exports.updateProfile = function (req, res) {
             }
 
             // Limit profile subscription setting updates to the current organization
-            if (newSubscriptions[_id]) {
+            if (newSubscriptions && newSubscriptions[_id]) {
                 if (!subscriptions[_id]) {
                     subscriptions[_id] = {
                         autoUpdates: autoUpdates,
