@@ -29,6 +29,7 @@ module.exports = function () {
             profile.jti = jwtPayload.jti
             console.log('got profile in JWT: ', profile);
 
+            console.log(profile, 'this is profile')
             users.saveRapidProfile(req, profile, done);
         }
     ));
