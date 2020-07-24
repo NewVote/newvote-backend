@@ -19,9 +19,7 @@ module.exports = function (app) {
         .post(votesController.updateOrCreate)
 
     app.route('/api/votes/total')
-        // .all(
-        //     jwt({ secret: config.jwtSecret, credentialsRequired: false })
-        // )
+        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }))
         .get(votesController.getTotalVotes)
 
     app.route('/api/votes/:voteId')
