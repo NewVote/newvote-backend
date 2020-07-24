@@ -245,8 +245,6 @@ exports.oauthCallback = function (strategy) {
             let host = ''
             if (config.node_env === 'development') {
                 host = `http://${org}.localhost.newvote.org:4200`
-            } else if (config.node_env === 'staging') {
-                host = `https://${org}.staging.newvote.org`
             } else {
                 host = `https://${org}.newvote.org`
             }
@@ -295,6 +293,7 @@ exports.oauthCallback = function (strategy) {
  * Helper function to create or update a user after AAF Rapid SSO auth
  */
 exports.saveRapidProfile = function (req, profile, done) {
+    console.log(req.cookies, 'this is cookies')
     const organizationPromise = Organization.findOne({
         _id: req.organization._id,
     })
