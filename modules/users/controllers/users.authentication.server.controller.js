@@ -236,6 +236,10 @@ exports.oauthCallback = function (strategy) {
         passport.authenticate(strategy, function (err, user, redirectURL) {
             //   https://rapid.test.aaf.edu.au/jwt/authnrequest/research/4txVkEDrvjAH6PxxlCKZGg
             // need to generate url from org in request cookie here
+            console.log(user, 'user')
+            console.log(redirectURL, 'redirectUrl')
+            console.log(req.organization, 'organization')
+
             let orgObject = req.organization
             let org = orgObject ? orgObject.url : 'home'
             let host = ''
@@ -246,6 +250,7 @@ exports.oauthCallback = function (strategy) {
             }
 
             if (err) {
+                console.log(err, 'this is err')
                 return res.redirect(
                     host +
                         '/auth/login?err=' +
