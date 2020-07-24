@@ -294,6 +294,7 @@ exports.oauthCallback = function (strategy) {
  */
 exports.saveRapidProfile = function (req, profile, done) {
     console.log(req.cookies, 'this is cookies')
+    console.log(req.cookies.orgUrl, 'this is orgUrl')
     const organizationPromise = Organization.findOne({
         _id: req.organization._id,
     })

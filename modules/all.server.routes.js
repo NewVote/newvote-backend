@@ -41,6 +41,7 @@ module.exports = function (app) {
         }
         // var { org:orgUrl } = req.cookies // prefer the redirect cookie url over header
         let orgUrl = req.cookies.org ? req.cookies.org : req.cookies.orgUrl // try "orgUrl" cookie instead of org if its undefined
+        console.log(orgUrl, 'does orgUrl exist')
         if (!orgUrl) {
             // still no orgUrl so try getting org from the referer in the request
             try {
