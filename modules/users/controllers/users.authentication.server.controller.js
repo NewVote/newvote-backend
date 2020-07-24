@@ -361,6 +361,8 @@ exports.oauthCallback = function (strategy) {
         passport.authenticate(strategy, function (err, user, redirectURL) {
             //   https://rapid.test.aaf.edu.au/jwt/authnrequest/research/4txVkEDrvjAH6PxxlCKZGg
             // need to generate url from org in request cookie here
+            console.log(user, 'this is user')
+            console.log('inside auth', req.organization)
             let orgObject = req.organization;
             let org = orgObject ? orgObject.url : 'home';
             let host = '';
@@ -417,7 +419,7 @@ exports.oauthCallback = function (strategy) {
 exports.saveRapidProfile = function (req, profile, done) {
     console.log(req.cookies, 'this is cookies')
     console.log(profile, 'this is profile')
-    
+
     const organizationPromise = Organization.findOne({
         _id: req.organization._id
     });
