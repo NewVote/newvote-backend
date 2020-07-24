@@ -7,9 +7,15 @@ let repController = require('./reps.server.controller'),
     jwt = require('express-jwt')
 
 module.exports = function (app) {
+    const jwtConfig = {
+        secret: config.jwtSecret,
+        credentialsRequired: false,
+        algorithms: ['RS256'],
+    }
+
     // Get all Reps
     app.route('/api/reps')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }))
+        .all(jwt(jwtConfig))
         .get(repController.list)
         .post(repController.create)
         .put(repController.updateMany)
@@ -19,10 +25,7 @@ module.exports = function (app) {
     // Single Rep
 
     app.route('/api/reps/:repId')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(repController.read)
         .put(repController.update)
         .delete(repController.delete)

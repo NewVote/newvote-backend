@@ -76,167 +76,114 @@ module.exports = function (app) {
             })
         }
     })
-
+    const jwtConfig = {
+        secret: config.jwtSecret,
+        credentialsRequired: false,
+        algorithms: ['RS256'],
+    }
     app.route('/api/topics')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(topics.list)
         .post(topics.create)
 
     app.route('/api/issues')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(issues.list)
         .post(issues.create)
 
     app.route('/api/solutions')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(solutions.list)
         .post(solutions.create)
 
     app.route('/api/proposals')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(proposals.list)
         .post(proposals.create)
 
     app.route('/api/suggestions')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(suggestions.list)
         .post(suggestions.create)
 
     app.route('/api/endorsement')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(endorsement.list)
         .post(endorsement.create)
 
     app.route('/api/media')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(media.list)
         .post(media.create)
 
     app.route('/api/regions')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(regions.list)
         .post(regions.create)
 
     app.route('/api/countries')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(countries.list)
 
     app.route('/api/meta/:uri')
-        // .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }), policy.isAllowed)
+        // .all(jwt(jwtConfig), policy.isAllowed)
         .get(media.getMeta)
 
     // Single article routes
     app.route('/api/topics/:topicId')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(topics.read)
         .put(topics.update)
         .delete(topics.delete)
 
     app.route('/api/organizations/owner/:organizationId')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .put(futureLeaders.update)
 
     app.route('/api/issues/:issueId')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(issues.read)
         .put(issues.update)
         .delete(issues.delete)
 
     app.route('/api/solutions/:solutionId')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(solutions.read)
         .put(solutions.update)
         .delete(solutions.delete)
 
     app.route('/api/proposals/:proposalId')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(proposals.read)
         .put(proposals.update)
         .delete(proposals.delete)
 
     app.route('/api/suggestions/:suggestionId')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(suggestions.read)
         .put(suggestions.update)
         .delete(suggestions.delete)
 
     app.route('/api/endorsement/:endorsementId')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(endorsement.read)
         .put(endorsement.update)
         .delete(endorsement.delete)
 
     app.route('/api/media/:mediaId')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(media.read)
         .put(media.update)
         .delete(media.delete)
 
     app.route('/api/regions/:regionId')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(regions.read)
         .put(regions.update)
         .delete(regions.delete)
 
     app.route('/api/countries/:countryId')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(countries.read)
 
     // Finish by binding the article middleware

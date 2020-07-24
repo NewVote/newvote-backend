@@ -16,9 +16,10 @@ module.exports = function () {
     let options = {
         jwtFromRequest: ExtractJWT.fromBodyField('assertion'),
         secretOrKey: config.jwtSecret,
-        issuer: config.jwtIssuer,
-        audience: config.jwtAudience,
+        iss: config.jwtIssuer,
+        aud: config.jwtAudience,
         passReqToCallback: true,
+        alg: 'HS256',
     }
     console.debug('JWT options: ', options)
     passport.use(

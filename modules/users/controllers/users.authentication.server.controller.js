@@ -245,6 +245,8 @@ exports.oauthCallback = function (strategy) {
             let host = ''
             if (config.node_env === 'development') {
                 host = `http://${org}.localhost.newvote.org:4200`
+            } else if (config.node_env === 'staging') {
+                host = `https://${org}.staging.newvote.org`
             } else {
                 host = `https://${org}.newvote.org`
             }
