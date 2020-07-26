@@ -24,6 +24,8 @@ module.exports = function () {
     console.debug('JWT options: ', options)
     passport.use(
         new JWTStrategy(options, function (req, jwtPayload, done) {
+            console.log(req, 'this is body')
+            console.log(jwtPayload, 'this is payload')
             const { assertion: token } = req.body
             let profile = jwtPayload['https://aaf.edu.au/attributes']
             profile.jwt = token
