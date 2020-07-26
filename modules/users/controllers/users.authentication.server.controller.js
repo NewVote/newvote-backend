@@ -227,6 +227,7 @@ exports.oauthCallback = function (strategy) {
     return function (req, res, next) {
         // ;
         try {
+            console.log(req.session, 'this is session')
             var sessionRedirectURL = req.session.redirect_to
             delete req.session.redirect_to
         } catch (e) {
@@ -246,7 +247,7 @@ exports.oauthCallback = function (strategy) {
             if (config.node_env === 'development') {
                 host = `http://${org}.localhost.newvote.org:4200`
             } else if (config.node_env === 'staging') {
-                host = `http://${org}.staging.newvote.org:4200`
+                host = `http://${org}.staging.newvote.org`
             } else {
                 host = `https://${org}.newvote.org`
             }
@@ -282,10 +283,11 @@ exports.oauthCallback = function (strategy) {
                 }
 
                 res.cookie('credentials', JSON.stringify(creds), tokenOptions)
-                const redirect = sessionRedirectURL
-                    ? host + sessionRedirectURL
-                    : host + '/'
-                return res.redirect(302, redirect)
+                // const redirect = sessionRedirectURL
+                //     ? host + sessionRedirectURL
+                //     : host + '/'
+                // return res.redirect(302, redirect)
+                return res.json({ succcess: true })
             })
         })(req, res, next)
     }

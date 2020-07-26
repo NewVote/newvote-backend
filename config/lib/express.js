@@ -116,26 +116,26 @@ module.exports.initMiddleware = function (app) {
     app.use(cookieParser())
 
     // set up csurf
-    app.use(
-        csrf({
-            cookie: {
-                path: '/',
-                domain: '.newvote.org',
-                sameSite: 'Lax',
-                httpOnly: false,
-                expires: new Date(Date.now() + 60 * 60),
-            },
-        }),
-    )
+    // app.use(
+    //     csrf({
+    //         cookie: {
+    //             path: '/',
+    //             domain: '.newvote.org',
+    //             sameSite: 'Lax',
+    //             httpOnly: false,
+    //             expires: new Date(Date.now() + 60 * 60),
+    //         },
+    //     }),
+    // )
 
-    app.use(function (req, res, next) {
-        res.cookie('XSRF-TOKEN', req.csrfToken(), {
-            domain: '.newvote.org',
-            sameSite: 'Lax',
-            httpOnly: false,
-        })
-        next()
-    })
+    // app.use(function (req, res, next) {
+    //     res.cookie('XSRF-TOKEN', req.csrfToken(), {
+    //         domain: '.newvote.org',
+    //         sameSite: 'Lax',
+    //         httpOnly: false,
+    //     })
+    //     next()
+    // })
 
     // https redirect
     if (process.env.NODE_ENV === 'production') {
