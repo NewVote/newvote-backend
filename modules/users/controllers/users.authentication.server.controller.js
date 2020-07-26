@@ -243,54 +243,54 @@ exports.oauthCallback = function (strategy) {
             console.log(req.organization, 'organization')
 
             return res.json(user)
-            
-            let orgObject = req.organization
-            let org = orgObject ? orgObject.url : 'home'
-            let host = ''
-            if (config.node_env === 'development') {
-                host = `http://${org}.localhost.newvote.org:4200`
-            } else if (config.node_env === 'staging') {
-                host = `http://${org}.staging.newvote.org`
-            } else {
-                host = `https://${org}.newvote.org`
-            }
 
-            if (err) {
-                console.log(err, 'this is err')
-                return res.redirect(
-                    host +
-                        '/auth/login?err=' +
-                        encodeURIComponent(errorHandler.getErrorMessage(err)),
-                )
-            }
-            if (!user) {
-                return res.redirect(
-                    host + '/auth/login?err="400_JWT_SIGNATURE"',
-                )
-            }
-            req.login(user, function (err) {
-                if (err) {
-                    return res.redirect(host + '/auth/login')
-                }
-                const payload = {
-                    _id: user._id,
-                    roles: user.roles,
-                    verified: user.verified,
-                }
-                const token = jwt.sign(payload, config.jwtSecret, {
-                    expiresIn: config.jwtExpiry,
-                })
-                const creds = {
-                    // user,
-                    token,
-                }
+            // let orgObject = req.organization
+            // let org = orgObject ? orgObject.url : 'home'
+            // let host = ''
+            // if (config.node_env === 'development') {
+            //     host = `http://${org}.localhost.newvote.org:4200`
+            // } else if (config.node_env === 'staging') {
+            //     host = `http://${org}.staging.newvote.org`
+            // } else {
+            //     host = `https://${org}.newvote.org`
+            // }
 
-                res.cookie('credentials', JSON.stringify(creds), tokenOptions)
-                // const redirect = sessionRedirectURL
-                //     ? host + sessionRedirectURL
-                //     : host + '/'
-                // return res.redirect(302, redirect)
-                return res.json({ succcess: true })
+            // if (err) {
+            //     console.log(err, 'this is err')
+            //     return res.redirect(
+            //         host +
+            //             '/auth/login?err=' +
+            //             encodeURIComponent(errorHandler.getErrorMessage(err)),
+            //     )
+            // }
+            // if (!user) {
+            //     return res.redirect(
+            //         host + '/auth/login?err="400_JWT_SIGNATURE"',
+            //     )
+            // }
+            // req.login(user, function (err) {
+            //     if (err) {
+            //         return res.redirect(host + '/auth/login')
+            //     }
+            //     const payload = {
+            //         _id: user._id,
+            //         roles: user.roles,
+            //         verified: user.verified,
+            //     }
+            //     const token = jwt.sign(payload, config.jwtSecret, {
+            //         expiresIn: config.jwtExpiry,
+            //     })
+            //     const creds = {
+            //         // user,
+            //         token,
+            //     }
+
+            //     res.cookie('credentials', JSON.stringify(creds), tokenOptions)
+            //     // const redirect = sessionRedirectURL
+            //     //     ? host + sessionRedirectURL
+            //     //     : host + '/'
+            //     // return res.redirect(302, redirect)
+            //     return res.json({ succcess: true })
             })
         })(req, res, next)
     }
