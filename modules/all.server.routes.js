@@ -57,8 +57,8 @@ module.exports = function (app) {
         }
 
         // clear the cookies as we dont need them anymore
-        res.clearCookie('orgUrl', { path: '/', domain: 'newvote.org' })
-        res.clearCookie('org', { path: '/', domain: 'newvote.org' })
+        // res.clearCookie('orgUrl', { path: '/', domain: 'newvote.org' })
+        // res.clearCookie('org', { path: '/', domain: 'newvote.org' })
 
         // try to use the full org object from the cookie first
         // make sure the url of the saved org matches the url of the page
@@ -73,7 +73,7 @@ module.exports = function (app) {
                     domain: 'newvote.org',
                     secure: true,
                     overwrite: true,
-                    sameSite: 'none',
+                    sameSite: 'Strict',
                 })
                 return next()
             })

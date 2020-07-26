@@ -31,9 +31,9 @@ const recaptcha = new Recaptcha({
 
 const tokenOptions = {
     domain: 'newvote.org',
-    httpOnly: false,
+    // httpOnly: true,
     secure: true,
-    sameSite: 'none',
+    sameSite: 'Strict',
 }
 
 const addToMailingList = function (user) {
