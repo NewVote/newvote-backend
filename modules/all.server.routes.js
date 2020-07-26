@@ -71,8 +71,9 @@ module.exports = function (app) {
                 req.organization = organization
                 res.cookie('organization', JSON.stringify(organization), {
                     domain: 'newvote.org',
-                    secure: false,
+                    secure: true,
                     overwrite: true,
+                    sameSite: 'none',
                 })
                 return next()
             })
