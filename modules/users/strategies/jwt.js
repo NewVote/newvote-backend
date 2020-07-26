@@ -13,6 +13,7 @@ let path = require('path'),
     users = require('../users.server.controller')
 
 module.exports = function () {
+    console.log(config, 'his i conif');
     let options = {
         jwtFromRequest: ExtractJWT.fromBodyField('assertion'),
         secretOrKey: config.jwtSecret,

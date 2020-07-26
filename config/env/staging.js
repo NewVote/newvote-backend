@@ -17,7 +17,6 @@ module.exports = {
         debug: process.env.MONGODB_DEBUG || false,
     },
     jwtIssuer: 'https://rapid.test.aaf.edu.au',
-    jwtAudience: 'https://newvote.org',
     log: {
         // logging with Morgan - https://github.com/expressjs/morgan
         // Can specify one of 'combined', 'common', 'dev', 'short', 'tiny'
