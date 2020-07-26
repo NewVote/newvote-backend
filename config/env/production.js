@@ -16,6 +16,7 @@ module.exports = {
         // Enable mongoose debug mode
         debug: process.env.MONGODB_DEBUG || false,
     },
+    jwtIssuer: 'https://rapid.aaf.edu.au',
     log: {
         // logging with Morgan - https://github.com/expressjs/morgan
         // Can specify one of 'combined', 'common', 'dev', 'short', 'tiny'
