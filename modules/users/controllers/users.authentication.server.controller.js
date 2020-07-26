@@ -291,7 +291,7 @@ exports.oauthCallback = function (strategy) {
             //     //     : host + '/'
             //     // return res.redirect(302, redirect)
             //     return res.json({ succcess: true })
-            })
+            // })
         })(req, res, next)
     }
 }
