@@ -30,10 +30,11 @@ const recaptcha = new Recaptcha({
 })
 
 const tokenOptions = {
-    domain: 'newvote.org',
+    domain: '.newvote.org',
+    path: '/',
+    secure: process.env.NODE_ENV === 'development' ? false : true,
     // httpOnly: true,
-    secure: true,
-    sameSite: 'Strict',
+    sameSite: 'None',
 }
 
 const addToMailingList = function (user) {
@@ -226,9 +227,7 @@ exports.oauthCall = function (strategy, scope) {
  */
 exports.oauthCallback = function (strategy) {
     return function (req, res, next) {
-        // ;
         try {
-            console.log(req.session, 'this is session')
             var sessionRedirectURL = req.session.redirect_to
             delete req.session.redirect_to
         } catch (e) {
@@ -238,60 +237,53 @@ exports.oauthCallback = function (strategy) {
         passport.authenticate(strategy, function (err, user, redirectURL) {
             //   https://rapid.test.aaf.edu.au/jwt/authnrequest/research/4txVkEDrvjAH6PxxlCKZGg
             // need to generate url from org in request cookie here
-            console.log(user, 'user')
-            console.log(redirectURL, 'redirectUrl')
-            console.log(req.organization, 'organization')
 
-            return res.json(user)
+            const { organization } = req.cookies
+            const { url } = JSON.parse(organization)
+            let host = ''
+            if (config.node_env === 'development') {
+                host = `http://${url}.localhost.newvote.org:4200`
+            } else if (config.node_env === 'staging') {
+                host = `http://${url}.staging.newvote.org`
+            } else {
+                host = `https://${url}.newvote.org`
+            }
 
-            // let orgObject = req.organization
-            // let org = orgObject ? orgObject.url : 'home'
-            // let host = ''
-            // if (config.node_env === 'development') {
-            //     host = `http://${org}.localhost.newvote.org:4200`
-            // } else if (config.node_env === 'staging') {
-            //     host = `http://${org}.staging.newvote.org`
-            // } else {
-            //     host = `https://${org}.newvote.org`
-            // }
+            if (err) {
+                return res.redirect(
+                    host +
+                        '/auth/login?err=' +
+                        encodeURIComponent(errorHandler.getErrorMessage(err)),
+                )
+            }
+            if (!user) {
+                return res.redirect(
+                    host + '/auth/login?err="400_JWT_SIGNATURE"',
+                )
+            }
+            req.login(user, function (err) {
+                if (err) {
+                    return res.redirect(host + '/auth/login')
+                }
+                const payload = {
+                    _id: user._id,
+                    roles: user.roles,
+                    verified: user.verified,
+                }
+                const token = jwt.sign(payload, config.jwtSecret, {
+                    expiresIn: config.jwtExpiry,
+                })
+                const creds = {
+                    // user,
+                    token,
+                }
 
-            // if (err) {
-            //     console.log(err, 'this is err')
-            //     return res.redirect(
-            //         host +
-            //             '/auth/login?err=' +
-            //             encodeURIComponent(errorHandler.getErrorMessage(err)),
-            //     )
-            // }
-            // if (!user) {
-            //     return res.redirect(
-            //         host + '/auth/login?err="400_JWT_SIGNATURE"',
-            //     )
-            // }
-            // req.login(user, function (err) {
-            //     if (err) {
-            //         return res.redirect(host + '/auth/login')
-            //     }
-            //     const payload = {
-            //         _id: user._id,
-            //         roles: user.roles,
-            //         verified: user.verified,
-            //     }
-            //     const token = jwt.sign(payload, config.jwtSecret, {
-            //         expiresIn: config.jwtExpiry,
-            //     })
-            //     const creds = {
-            //         // user,
-            //         token,
-            //     }
-
-            //     res.cookie('credentials', JSON.stringify(creds), tokenOptions)
-            //     // const redirect = sessionRedirectURL
-            //     //     ? host + sessionRedirectURL
-            //     //     : host + '/'
-            //     // return res.redirect(302, redirect)
-            //     return res.json({ succcess: true })
-            // })
+                res.cookie('credentials', JSON.stringify(creds), tokenOptions)
+                const redirect = sessionRedirectURL
+                    ? host + sessionRedirectURL
+                    : host + '/'
+                return res.redirect(302, redirect)
+            })
         })(req, res, next)
     }
 }
@@ -300,106 +292,101 @@ exports.oauthCallback = function (strategy) {
  * Helper function to create or update a user after AAF Rapid SSO auth
  */
 exports.saveRapidProfile = function (req, profile, done) {
-    console.log(profile, 'this is profile')
+    let { organization } = req.cookies
+    organization = JSON.parse(organization)
+    const { _id: id } = organization
+    const organizationPromise = Organization.findOne({
+        _id: id,
+    })
+    const userPromise = User.findOne(
+        {
+            email: profile.mail,
+        },
+        '-salt -password -verificationCode',
+    )
 
-    console.log(req.signedCookies, 'this is signed cookies')
-    console.log(req.cookies, 'this is cookies')
-    console.log(req.cookies.orgUrl, 'this is orgUrl')
+    Promise.all([organizationPromise, userPromise])
+        .then((promises) => {
+            let [organization, user] = promises
 
-    return done(null, profile)
+            const {
+                edupersoncid,
+                edupersontargetedid,
+                edupersonscopedaffiliation,
+            } = profile
 
-    // const organizationPromise = Organization.findOne({
-    //     _id: req.organization._id,
-    // })
-    // const userPromise = User.findOne(
-    //     {
-    //         email: profile.mail,
-    //     },
-    //     '-salt -password -verificationCode',
-    // )
+            const aafAttributes = {
+                edupersoncid,
+                edupersontargetedid,
+                edupersonscopedaffiliation,
+                edupersonprincipalname: profile.edupersonprincipalname
+                    ? profile.edupersonprincipalname
+                    : '',
+            }
 
-    // Promise.all([organizationPromise, userPromise])
-    //     .then((promises) => {
-    //         let [organization, user] = promises
+            // extract aaf attributes from profile
+            // add organization url to match against current organization for votes
+            const providerData = {
+                [organization.url]: aafAttributes,
+            }
 
-    //         const {
-    //             edupersoncid,
-    //             edupersontargetedid,
-    //             edupersonscopedaffiliation,
-    //         } = profile
+            if (!user) {
+                console.log('no user, creating new account')
+                const possibleUsername =
+                    profile.cn ||
+                    profile.displayname ||
+                    profile.givenname + profile.surname ||
+                    (profile.mail ? profile.mail.split('@')[0] : '')
 
-    //         const aafAttributes = {
-    //             edupersoncid,
-    //             edupersontargetedid,
-    //             edupersonscopedaffiliation,
-    //             edupersonprincipalname: profile.edupersonprincipalname
-    //                 ? profile.edupersonprincipalname
-    //                 : '',
-    //         }
+                User.findUniqueUsername(possibleUsername, null, function (
+                    availableUsername,
+                ) {
+                    console.log('generated username: ', availableUsername)
+                    user = new User({
+                        firstName: profile.givenname,
+                        lastName: profile.surname,
+                        username: profile.mail,
+                        displayName: profile.displayname,
+                        email: profile.mail,
+                        provider: 'aaf',
+                        providerData: providerData,
+                        ita: profile.ita,
+                        roles: ['user'],
+                        verified: true,
+                        organizations: [organization._id],
+                    })
+                    // And save the user
+                    return user.save()
+                })
+            } else {
+                if (!user.providerData) user.providerData = {}
+                const userProviders = user.providerData
+                const providerExists = userProviders[organization.url]
 
-    //         // extract aaf attributes from profile
-    //         // add organization url to match against current organization for votes
-    //         const providerData = {
-    //             [organization.url]: aafAttributes,
-    //         }
+                if (!providerExists)
+                    user.providerData[organization.url] = aafAttributes
 
-    //         if (!user) {
-    //             console.log('no user, creating new account')
-    //             const possibleUsername =
-    //                 profile.cn ||
-    //                 profile.displayname ||
-    //                 profile.givenname + profile.surname ||
-    //                 (profile.mail ? profile.mail.split('@')[0] : '')
-
-    //             User.findUniqueUsername(possibleUsername, null, function (
-    //                 availableUsername,
-    //             ) {
-    //                 console.log('generated username: ', availableUsername)
-    //                 user = new User({
-    //                     firstName: profile.givenname,
-    //                     lastName: profile.surname,
-    //                     username: profile.mail,
-    //                     displayName: profile.displayname,
-    //                     email: profile.mail,
-    //                     provider: 'aaf',
-    //                     providerData: providerData,
-    //                     ita: profile.ita,
-    //                     roles: ['user'],
-    //                     verified: true,
-    //                     organizations: [organization._id],
-    //                 })
-    //                 // And save the user
-    //                 return user.save()
-    //             })
-    //         } else {
-    //             if (!user.providerData) user.providerData = {}
-    //             const userProviders = user.providerData
-    //             const providerExists = userProviders[organization.url]
-
-    //             if (!providerExists)
-    //                 user.providerData[organization.url] = aafAttributes
-
-    //             if (organization) {
-    //                 const orgExists = user.organizations.find((e) => {
-    //                     if (e) {
-    //                         return e._id.equals(organization._id)
-    //                     }
-    //                 })
-    //                 if (!orgExists) user.organizations.push(organization._id)
-    //             }
-    //             console.log('found existing user')
-    //             // user exists update ITA and return user
-    //             if (user.jti && user.jti === profile.jti) {
-    //                 return done(new Error('ITA Match please login again'))
-    //             }
-    //             user.jti = profile.jti
-    //             return user.save()
-    //         }
-    //     })
-    //     .then((user) => {
-    //         return done(null, user)
-    //     })
-    //     .catch((err) => done(err))
+                if (organization) {
+                    const orgExists = user.organizations.find((e) => {
+                        if (e) {
+                            return e._id.equals(organization._id)
+                        }
+                    })
+                    if (!orgExists) user.organizations.push(organization._id)
+                }
+                console.log('found existing user')
+                // user exists update ITA and return user
+                if (user.jti && user.jti === profile.jti) {
+                    return done(new Error('ITA Match please login again'))
+                }
+                user.jti = profile.jti
+                return user.save()
+            }
+        })
+        .then((user) => {
+            return done(null, user)
+        })
+        .catch((err) => done(err))
 }
 
 /**

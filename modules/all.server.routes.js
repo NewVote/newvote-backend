@@ -26,6 +26,14 @@ let path = require('path'),
 const { schema } = validators
 const { errors, celebrate } = celebrateWrap
 
+const cookieOptions = {
+    domain: '.newvote.org',
+    path: '/',
+    secure: process.env.NODE_ENV === 'development' ? false : true,
+    overwrite: true,
+    sameSite: 'None',
+}
+
 // jwt module simply puts the user object into req.user if the token is valid
 // otherwise it just does nothing and the policy module handles the rest
 module.exports = function (app) {
@@ -34,7 +42,7 @@ module.exports = function (app) {
         // start wit the organization stored in the cookie and attempt to parse
         let organization = null
         const { organization: cookieOrg } = req.cookies
-        // console.log(req.cookies, 'this is req.cookies on all routes')
+
         try {
             organization = JSON.parse(cookieOrg)
         } catch (e) {
@@ -42,7 +50,7 @@ module.exports = function (app) {
         }
         // var { org:orgUrl } = req.cookies // prefer the redirect cookie url over header
         let orgUrl = req.cookies.org ? req.cookies.org : req.cookies.orgUrl // try "orgUrl" cookie instead of org if its undefined
-        console.log(orgUrl, 'does orgUrl exist')
+
         if (!orgUrl) {
             // still no orgUrl so try getting org from the referer in the request
             try {
@@ -57,8 +65,8 @@ module.exports = function (app) {
         }
 
         // clear the cookies as we dont need them anymore
-        // res.clearCookie('orgUrl', { path: '/', domain: 'newvote.org' })
-        // res.clearCookie('org', { path: '/', domain: 'newvote.org' })
+        res.clearCookie('orgUrl', { path: '/', domain: 'newvote.org' })
+        res.clearCookie('org', { path: '/', domain: 'newvote.org' })
 
         // try to use the full org object from the cookie first
         // make sure the url of the saved org matches the url of the page
@@ -67,14 +75,9 @@ module.exports = function (app) {
             return next()
         } else {
             // either no cookie org or urls dont match so its outdated and we need to fetch org again
-            organizations.organizationByUrl(orgUrl).then((organization) => {
-                req.organization = organization
-                res.cookie('organization', JSON.stringify(organization), {
-                    domain: 'newvote.org',
-                    secure: true,
-                    overwrite: true,
-                    sameSite: 'Strict',
-                })
+            organizations.organizationByUrl(orgUrl).then((data) => {
+                req.organization = data
+                res.cookie('organization', JSON.stringify(data), cookieOptions)
                 return next()
             })
         }
