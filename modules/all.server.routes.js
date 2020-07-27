@@ -29,7 +29,7 @@ const { errors, celebrate } = celebrateWrap
 const cookieOptions = {
     domain: '.newvote.org',
     path: '/',
-    secure: false,
+    secure: true,
     overwrite: true,
     sameSite: 'None',
 }
@@ -65,8 +65,8 @@ module.exports = function (app) {
         }
 
         // clear the cookies as we dont need them anymore
-        res.clearCookie('orgUrl', { path: '/', domain: 'newvote.org' })
-        res.clearCookie('org', { path: '/', domain: 'newvote.org' })
+        // res.clearCookie('orgUrl', { path: '/', domain: 'newvote.org' })
+        // res.clearCookie('org', { path: '/', domain: 'newvote.org' })
 
         // try to use the full org object from the cookie first
         // make sure the url of the saved org matches the url of the page
@@ -76,6 +76,9 @@ module.exports = function (app) {
         } else {
             // either no cookie org or urls dont match so its outdated and we need to fetch org again
             organizations.organizationByUrl(orgUrl).then((data) => {
+                if (!organization) {
+                    return next
+                }
                 req.organization = data
                 res.cookie('organization', JSON.stringify(data), cookieOptions)
                 return next()

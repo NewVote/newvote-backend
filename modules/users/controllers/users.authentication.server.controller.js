@@ -32,7 +32,7 @@ const recaptcha = new Recaptcha({
 const tokenOptions = {
     domain: '.newvote.org',
     path: '/',
-    secure: false,
+    secure: true,
     // httpOnly: true,
     sameSite: 'None',
 }
