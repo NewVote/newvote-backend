@@ -8,8 +8,7 @@ const app = require('./config/lib/app')
 /**
  * Module variables.
  */
-// const WORKERS = process.env.WEB_CONCURRENCY || 1
-const WORKERS = 1
+const WORKERS = process.env.WEB_CONCURRENCY || 1
 
 /**
  * Start the app
