@@ -593,7 +593,7 @@ function checkPermissions(userRole, organizationRoles) {
 exports.getTotalVotes = async function (req, res) {
     const { organization } = req
 
-    if (!req.user) throw 'User is not signed in'
+    // if (!req.user) throw 'User is not signed in'
 
     const solutions = await Solution.find({
         organizations: { $in: [organization._id] },
