@@ -19,11 +19,11 @@ module.exports = {
         maxAge: 24 * (60 * 60 * 1000),
         // httpOnly flag makes sure the cookie is only accessed
         // through the HTTP protocol and not JS/browser
-        httpOnly: false,
+        httpOnly: true,
         // secure cookie should be turned to true to provide additional
         // layer of security so that the cookie is set only when working
         // in HTTPS mode.
-        secure: false,
+        secure: true,
     },
     // sessionSecret should be changed for security measures and concerns
     sessionSecret: process.env.SESSION_SECRET || 'MEAN',

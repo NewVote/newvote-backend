@@ -65,7 +65,6 @@ const { celebrate, errors } = celebrateWrap
 module.exports.initMiddleware = function (app) {
     // Showing stack errors
     app.set('showStackError', true)
-    app.set('trust proxy', 1)
 
     // Enable jsonp
     app.enable('jsonp callback')
@@ -162,15 +161,16 @@ module.exports.initSession = function (app, db) {
     // Express MongoDB session storage
     app.use(
         session({
+            proxy: true,
             saveUninitialized: true,
             resave: true,
             secret: config.sessionSecret,
             unset: 'destroy',
-            cookie: {
-                maxAge: config.sessionCookie.maxAge,
-                httpOnly: config.sessionCookie.httpOnly,
-                secure: config.sessionCookie.secure && config.secure.ssl,
-            },
+            // cookie: {
+            //     maxAge: config.sessionCookie.maxAge,
+            //     httpOnly: config.sessionCookie.httpOnly,
+            //     secure: config.sessionCookie.secure && config.secure.ssl,
+            // },
             key: config.sessionKey,
             store: new MongoStore({
                 mongooseConnection: db.connection,
