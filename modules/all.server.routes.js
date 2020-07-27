@@ -29,9 +29,10 @@ const { errors, celebrate } = celebrateWrap
 const cookieOptions = {
     domain: '.newvote.org',
     path: '/',
-    secure: true,
+    secure: false,
     overwrite: true,
     sameSite: 'None',
+    httpOnly: false,
 }
 
 // jwt module simply puts the user object into req.user if the token is valid
