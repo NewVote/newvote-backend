@@ -34,6 +34,7 @@ const tokenOptions = {
     path: '/',
     secure: process.env.NODE_ENV === 'development' ? false : true,
     sameSite: 'none',
+    httpOnly: true,
 }
 
 const addToMailingList = function (user) {

@@ -114,7 +114,7 @@ module.exports.initMiddleware = function (app) {
 
     // Add the cookie parser and flash middleware
     app.use(cookieParser())
-    app.set('trust proxy', 1)
+    // app.set('trust proxy', 1)
 
     // set up csurf
     // app.use(
@@ -162,7 +162,7 @@ module.exports.initSession = function (app, db) {
     // Express MongoDB session storage
     app.use(
         session({
-            proxy: true,
+            // proxy: true,
             saveUninitialized: true,
             resave: true,
             secret: config.sessionSecret,
