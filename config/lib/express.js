@@ -95,13 +95,13 @@ module.exports.initMiddleware = function (app) {
     // Enable logger (morgan)
     app.use(morgan(logger.getFormat(), logger.getOptions()))
 
-    // Environment dependent middleware
-    if (process.env.NODE_ENV === 'development') {
-        // Disable views cache
-        app.set('view cache', false)
-    } else if (process.env.NODE_ENV === 'production') {
-        app.locals.cache = 'memory'
-    }
+    // // Environment dependent middleware
+    // if (process.env.NODE_ENV === 'development') {
+    //     // Disable views cache
+    //     app.set('view cache', false)
+    // } else if (process.env.NODE_ENV === 'production') {
+    //     app.locals.cache = 'memory'
+    // }
 
     // Request body parsing middleware should be above methodOverride
     app.use(
@@ -114,6 +114,7 @@ module.exports.initMiddleware = function (app) {
 
     // Add the cookie parser and flash middleware
     app.use(cookieParser())
+    app.set('trust proxy', 1)
 
     // set up csurf
     // app.use(
