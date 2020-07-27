@@ -30,7 +30,7 @@ const cookieOptions = {
     domain: '.newvote.org',
     path: '/',
     secure: process.env.NODE_ENV === 'development' ? false : true,
-    sameSite: 'None',
+    sameSite: 'none',
 }
 
 // jwt module simply puts the user object into req.user if the token is valid
