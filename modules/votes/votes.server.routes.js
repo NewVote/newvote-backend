@@ -10,23 +10,23 @@ let path = require('path'),
     jwt = require('express-jwt')
 
 module.exports = function (app) {
+    const jwtConfig = {
+        secret: config.jwtSecret,
+        credentialsRequired: false,
+        algorithms: ['RS256'],
+    }
+
     app.route('/api/votes')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(votesController.list)
         .post(votesController.updateOrCreate)
 
     app.route('/api/votes/total')
-        .all(jwt({ secret: config.jwtSecret, credentialsRequired: false }))
+        .all(jwt(jwtConfig))
         .get(votesController.getTotalVotes)
 
     app.route('/api/votes/:voteId')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(votesController.read)
         .put(votesController.update)
         .delete(votesController.delete)

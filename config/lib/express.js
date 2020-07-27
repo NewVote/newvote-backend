@@ -17,46 +17,47 @@ let config = require('../config'),
     helmet = require('helmet'),
     path = require('path'),
     cors = require('cors'),
-    celebrateWrap = require('celebrate')
+    celebrateWrap = require('celebrate'),
+    csrf = require('csrf')
 
 const { celebrate, errors } = celebrateWrap
 
 /**
  * Initialize local variables
  */
-module.exports.initLocalVariables = function (app) {
-    // Setting application local variables
-    app.locals.title = config.app.title
-    app.locals.description = config.app.description
-    if (config.secure && config.secure.ssl === true) {
-        app.locals.secure = config.secure.ssl
-    }
-    app.locals.keywords = config.app.keywords
-    app.locals.googleAnalyticsTrackingID = config.app.googleAnalyticsTrackingID
-    app.locals.facebookAppId = config.facebook.clientID
-    app.locals.jsFiles = config.files.client.js
-    app.locals.cssFiles = config.files.client.css
-    app.locals.livereload = config.livereload
-    app.locals.logo = config.social
-    app.locals.user = false
-    app.locals.config = false
-    app.locals.isPrerender = false
-    app.locals.safeJSON = function (data) {
-        if (data) {
-            return JSON.stringify(data)
-        } else {
-            return 'false'
-        }
-    }
+// module.exports.initLocalVariables = function (app) {
+//     // Setting application local variables
+//     app.locals.title = config.app.title
+//     app.locals.description = config.app.description
+//     if (config.secure && config.secure.ssl === true) {
+//         app.locals.secure = config.secure.ssl
+//     }
+//     app.locals.keywords = config.app.keywords
+//     app.locals.googleAnalyticsTrackingID = config.app.googleAnalyticsTrackingID
+//     app.locals.facebookAppId = config.facebook.clientID
+//     app.locals.jsFiles = config.files.client.js
+//     app.locals.cssFiles = config.files.client.css
+//     app.locals.livereload = config.livereload
+//     app.locals.logo = config.social
+//     app.locals.user = false
+//     app.locals.config = false
+//     app.locals.isPrerender = false
+//     app.locals.safeJSON = function (data) {
+//         if (data) {
+//             return JSON.stringify(data)
+//         } else {
+//             return 'false'
+//         }
+//     }
 
-    // Passing the request url to environment locals
-    app.use(function (req, res, next) {
-        res.locals.host = req.protocol + '://' + req.hostname
-        res.locals.url =
-            req.protocol + '://' + req.headers.host + req.originalUrl
-        next()
-    })
-}
+//     // Passing the request url to environment locals
+//     app.use(function (req, res, next) {
+//         res.locals.host = req.protocol + '://' + req.hostname
+//         res.locals.url =
+//             req.protocol + '://' + req.headers.host + req.originalUrl
+//         next()
+//     })
+// }
 
 /**
  * Initialize application middleware
@@ -94,13 +95,13 @@ module.exports.initMiddleware = function (app) {
     // Enable logger (morgan)
     app.use(morgan(logger.getFormat(), logger.getOptions()))
 
-    // Environment dependent middleware
-    if (process.env.NODE_ENV === 'development') {
-        // Disable views cache
-        app.set('view cache', false)
-    } else if (process.env.NODE_ENV === 'production') {
-        app.locals.cache = 'memory'
-    }
+    // // Environment dependent middleware
+    // if (process.env.NODE_ENV === 'development') {
+    //     // Disable views cache
+    //     app.set('view cache', false)
+    // } else if (process.env.NODE_ENV === 'production') {
+    //     app.locals.cache = 'memory'
+    // }
 
     // Request body parsing middleware should be above methodOverride
     app.use(
@@ -113,22 +114,29 @@ module.exports.initMiddleware = function (app) {
 
     // Add the cookie parser and flash middleware
     app.use(cookieParser())
+    // app.set('trust proxy', 1)
 
     // set up csurf
-    // app.use(csrf({
-    // 	cookie: {
-    // 		path: '/',
-    // 		domain: '.newvote.org',
-    // 		sameSite: 'Lax',
-    // 		httpOnly: false,
-    // 		expires: new Date(Date.now() + 60 * 60)
-    // 	},
-    // }));
-    //
+    // app.use(
+    //     csrf({
+    //         cookie: {
+    //             path: '/',
+    //             domain: '.newvote.org',
+    //             sameSite: 'Lax',
+    //             httpOnly: false,
+    //             expires: new Date(Date.now() + 60 * 60),
+    //         },
+    //     }),
+    // )
+
     // app.use(function (req, res, next) {
-    // 	res.cookie('XSRF-TOKEN', req.csrfToken(), { domain: '.newvote.org', sameSite: 'Lax', httpOnly: false });
-    // 	next();
-    // });
+    //     res.cookie('XSRF-TOKEN', req.csrfToken(), {
+    //         domain: '.newvote.org',
+    //         sameSite: 'Lax',
+    //         httpOnly: false,
+    //     })
+    //     next()
+    // })
 
     // https redirect
     if (process.env.NODE_ENV === 'production') {
@@ -154,6 +162,7 @@ module.exports.initSession = function (app, db) {
     // Express MongoDB session storage
     app.use(
         session({
+            // proxy: true,
             saveUninitialized: true,
             resave: true,
             secret: config.sessionSecret,
@@ -241,6 +250,7 @@ module.exports.initModulesServerRoutes = function (app) {
 module.exports.initErrorRoutes = function (app) {
     // populate with general error handler or pass joi errors to next
     app.use(function (err, req, res, next) {
+        console.log(err, 'this is err')
         if (err.joi) {
             return next(err)
         }
@@ -284,7 +294,7 @@ module.exports.init = function (db) {
     let app = express()
 
     // Initialize local variables
-    this.initLocalVariables(app)
+    // this.initLocalVariables(app)
 
     // Initialize Express middleware
     this.initMiddleware(app)

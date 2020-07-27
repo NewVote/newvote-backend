@@ -7,20 +7,19 @@ let path = require('path'),
     notificationsController = require('./notifications.server.controller'),
     jwt = require('express-jwt')
 
+const jwtConfig = {
+    secret: config.jwtSecret,
+    credentialsRequired: false,
+    algorithms: ['RS256'],
+}
 module.exports = function (app) {
     app.route('/api/notifications')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(notificationsController.list)
         .post(notificationsController.create)
 
     app.route('/api/notifications/:notificationId')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(notificationsController.read)
         .put(notificationsController.update)
         .delete(notificationsController.delete)

@@ -8,19 +8,19 @@ let path = require('path'),
     jwt = require('express-jwt')
 
 module.exports = function (app) {
+    const jwtConfig = {
+        secret: config.jwtSecret,
+        credentialsRequired: false,
+        algorithms: ['RS256'],
+    }
+
     app.route('/api/progress')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(progressController.list)
         .post(progressController.create)
 
     app.route('/api/progress/:progressId')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(progressController.read)
         .put(progressController.update)
         .delete(progressController.delete)

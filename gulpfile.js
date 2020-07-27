@@ -104,6 +104,8 @@ gulp.task('watch', function (done) {
 
     if (process.env.NODE_ENV === 'production') {
         gulp.watch(defaultAssets.server.gulpConfig, gulp.series('lint'))
+    } else if (process.env.NODE_ENV === 'staging') {
+        gulp.watch(defaultAssets.server.gulpConfig, gulp.series('lint'))
     } else {
         gulp.watch(defaultAssets.server.gulpConfig, gulp.series('lint'))
         if (debug) {

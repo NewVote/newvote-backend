@@ -7,20 +7,20 @@ let orgController = require('./organizations.server.controller'),
     jwt = require('express-jwt')
 
 module.exports = function (app) {
+    const jwtConfig = {
+        secret: config.jwtSecret,
+        credentialsRequired: false,
+        algorithms: ['RS256'],
+    }
+
     app.route('/api/organizations')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(orgController.list)
         // .post(celebrate(schema))
         .post(orgController.create)
 
     app.route('/api/organizations/:organizationId')
-        .all(
-            jwt({ secret: config.jwtSecret, credentialsRequired: false }),
-            policy.isAllowed,
-        )
+        .all(jwt(jwtConfig), policy.isAllowed)
         .get(orgController.read)
         .put(orgController.update)
         .patch(orgController.patch)
