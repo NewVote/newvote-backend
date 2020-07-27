@@ -32,8 +32,8 @@ const recaptcha = new Recaptcha({
 const tokenOptions = {
     domain: '.newvote.org',
     path: '/',
-    secure: false,
-    sameSite: 'None',
+    secure: process.env.NODE_ENV === 'development' ? false : true,
+    sameSite: 'Lax',
 }
 
 const addToMailingList = function (user) {

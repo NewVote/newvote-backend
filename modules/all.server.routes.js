@@ -29,8 +29,7 @@ const { errors, celebrate } = celebrateWrap
 const cookieOptions = {
     domain: '.newvote.org',
     path: '/',
-    secure: false,
-    overwrite: true,
+    secure: process.env.NODE_ENV === 'development' ? false : true,
     sameSite: 'None',
 }
 
@@ -79,8 +78,17 @@ module.exports = function (app) {
                 if (!data) {
                     return next()
                 }
-                req.organization = data
-                res.cookie('organization', JSON.stringify(data), cookieOptions)
+                const { _id, url } = data
+                const orgData = {
+                    _id,
+                    url,
+                }
+                req.organization = orgData
+                res.cookie(
+                    'organization',
+                    JSON.stringify(orgData),
+                    cookieOptions,
+                )
                 return next()
             })
         }
