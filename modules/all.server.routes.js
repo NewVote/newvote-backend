@@ -29,7 +29,7 @@ const { errors, celebrate } = celebrateWrap
 const cookieOptions = {
     domain: '.newvote.org',
     path: '/',
-    secure: process.env.NODE_ENV === 'development' ? false : true,
+    secure: false,
     overwrite: true,
     sameSite: 'None',
 }
