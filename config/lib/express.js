@@ -65,6 +65,7 @@ const { celebrate, errors } = celebrateWrap
 module.exports.initMiddleware = function (app) {
     // Showing stack errors
     app.set('showStackError', true)
+    app.set('trust proxy', 1)
 
     // Enable jsonp
     app.enable('jsonp callback')
