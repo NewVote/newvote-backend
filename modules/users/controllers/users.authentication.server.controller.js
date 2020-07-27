@@ -33,7 +33,7 @@ const tokenOptions = {
     domain: '.newvote.org',
     path: '/',
     secure: process.env.NODE_ENV === 'development' ? false : true,
-    sameSite: 'Lax',
+    sameSite: 'none',
 }
 
 const addToMailingList = function (user) {
