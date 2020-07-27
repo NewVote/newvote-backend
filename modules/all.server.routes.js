@@ -32,7 +32,6 @@ const cookieOptions = {
     secure: false,
     overwrite: true,
     sameSite: 'None',
-    httpOnly: false,
 }
 
 // jwt module simply puts the user object into req.user if the token is valid
@@ -77,8 +76,8 @@ module.exports = function (app) {
         } else {
             // either no cookie org or urls dont match so its outdated and we need to fetch org again
             organizations.organizationByUrl(orgUrl).then((data) => {
-                if (!organization) {
-                    return next
+                if (!data) {
+                    return next()
                 }
                 req.organization = data
                 res.cookie('organization', JSON.stringify(data), cookieOptions)

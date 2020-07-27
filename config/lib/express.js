@@ -25,39 +25,39 @@ const { celebrate, errors } = celebrateWrap
 /**
  * Initialize local variables
  */
-module.exports.initLocalVariables = function (app) {
-    // Setting application local variables
-    app.locals.title = config.app.title
-    app.locals.description = config.app.description
-    if (config.secure && config.secure.ssl === true) {
-        app.locals.secure = config.secure.ssl
-    }
-    app.locals.keywords = config.app.keywords
-    app.locals.googleAnalyticsTrackingID = config.app.googleAnalyticsTrackingID
-    app.locals.facebookAppId = config.facebook.clientID
-    app.locals.jsFiles = config.files.client.js
-    app.locals.cssFiles = config.files.client.css
-    app.locals.livereload = config.livereload
-    app.locals.logo = config.social
-    app.locals.user = false
-    app.locals.config = false
-    app.locals.isPrerender = false
-    app.locals.safeJSON = function (data) {
-        if (data) {
-            return JSON.stringify(data)
-        } else {
-            return 'false'
-        }
-    }
+// module.exports.initLocalVariables = function (app) {
+//     // Setting application local variables
+//     app.locals.title = config.app.title
+//     app.locals.description = config.app.description
+//     if (config.secure && config.secure.ssl === true) {
+//         app.locals.secure = config.secure.ssl
+//     }
+//     app.locals.keywords = config.app.keywords
+//     app.locals.googleAnalyticsTrackingID = config.app.googleAnalyticsTrackingID
+//     app.locals.facebookAppId = config.facebook.clientID
+//     app.locals.jsFiles = config.files.client.js
+//     app.locals.cssFiles = config.files.client.css
+//     app.locals.livereload = config.livereload
+//     app.locals.logo = config.social
+//     app.locals.user = false
+//     app.locals.config = false
+//     app.locals.isPrerender = false
+//     app.locals.safeJSON = function (data) {
+//         if (data) {
+//             return JSON.stringify(data)
+//         } else {
+//             return 'false'
+//         }
+//     }
 
-    // Passing the request url to environment locals
-    app.use(function (req, res, next) {
-        res.locals.host = req.protocol + '://' + req.hostname
-        res.locals.url =
-            req.protocol + '://' + req.headers.host + req.originalUrl
-        next()
-    })
-}
+//     // Passing the request url to environment locals
+//     app.use(function (req, res, next) {
+//         res.locals.host = req.protocol + '://' + req.hostname
+//         res.locals.url =
+//             req.protocol + '://' + req.headers.host + req.originalUrl
+//         next()
+//     })
+// }
 
 /**
  * Initialize application middleware
@@ -248,6 +248,7 @@ module.exports.initModulesServerRoutes = function (app) {
 module.exports.initErrorRoutes = function (app) {
     // populate with general error handler or pass joi errors to next
     app.use(function (err, req, res, next) {
+        console.log(err, 'this is err')
         if (err.joi) {
             return next(err)
         }
@@ -291,7 +292,7 @@ module.exports.init = function (db) {
     let app = express()
 
     // Initialize local variables
-    this.initLocalVariables(app)
+    // this.initLocalVariables(app)
 
     // Initialize Express middleware
     this.initMiddleware(app)
