@@ -16,17 +16,18 @@ module.exports = function () {
     let options = {
         jwtFromRequest: ExtractJWT.fromBodyField('assertion'),
         secretOrKey: config.jwtSecret,
-        issuer: config.jwtIssuer,
-        audience: config.jwtAudience,
+        iss: config.jwtIssuer,
+        aud: config.jwtAudience,
         passReqToCallback: true,
+        alg: ['HS256'],
     }
     console.debug('JWT options: ', options)
     passport.use(
         new JWTStrategy(options, function (req, jwtPayload, done) {
+            const { assertion: token } = req.body
             let profile = jwtPayload['https://aaf.edu.au/attributes']
-            profile.jwt = req.body.assertion
+            profile.jwt = token
             profile.jti = jwtPayload.jti
-
             users.saveRapidProfile(req, profile, done)
         }),
     )

@@ -30,9 +30,11 @@ const recaptcha = new Recaptcha({
 })
 
 const tokenOptions = {
-    domain: 'newvote.org',
-    httpOnly: false,
-    secure: false,
+    domain: '.newvote.org',
+    path: '/',
+    secure: process.env.NODE_ENV === 'development' ? false : true,
+    sameSite: 'none',
+    httpOnly: true,
 }
 
 const addToMailingList = function (user) {
@@ -200,6 +202,7 @@ exports.signin = function (req, res, next) {
 exports.signout = function (req, res) {
     req.session.destroy(function (err) {
         if (err) throw err
+        res.clearCookie('credentials', { path: '/', domain: 'newvote.org' })
         req.logout()
         res.status(200).send({ success: true })
     })
@@ -225,7 +228,6 @@ exports.oauthCall = function (strategy, scope) {
  */
 exports.oauthCallback = function (strategy) {
     return function (req, res, next) {
-        // ;
         try {
             var sessionRedirectURL = req.session.redirect_to
             delete req.session.redirect_to
@@ -236,13 +238,16 @@ exports.oauthCallback = function (strategy) {
         passport.authenticate(strategy, function (err, user, redirectURL) {
             //   https://rapid.test.aaf.edu.au/jwt/authnrequest/research/4txVkEDrvjAH6PxxlCKZGg
             // need to generate url from org in request cookie here
-            let orgObject = req.organization
-            let org = orgObject ? orgObject.url : 'home'
+
+            const { organization } = req.cookies
+            const { url } = JSON.parse(organization)
             let host = ''
             if (config.node_env === 'development') {
-                host = `http://${org}.localhost.newvote.org:4200`
+                host = `http://${url}.localhost.newvote.org:4200`
+            } else if (config.node_env === 'staging') {
+                host = `http://${url}.staging.newvote.org`
             } else {
-                host = `https://${org}.newvote.org`
+                host = `https://${url}.newvote.org`
             }
 
             if (err) {
@@ -288,8 +293,11 @@ exports.oauthCallback = function (strategy) {
  * Helper function to create or update a user after AAF Rapid SSO auth
  */
 exports.saveRapidProfile = function (req, profile, done) {
+    let { organization } = req.cookies
+    organization = JSON.parse(organization)
+    const { _id: id } = organization
     const organizationPromise = Organization.findOne({
-        _id: req.organization._id,
+        _id: id,
     })
     const userPromise = User.findOne(
         {
