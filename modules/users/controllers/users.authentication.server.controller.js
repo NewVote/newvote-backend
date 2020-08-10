@@ -19,7 +19,9 @@ const path = require('path'),
     nodemailer = require('nodemailer'),
     transporter = nodemailer.createTransport(config.mailer.options),
     Mailchimp = require('mailchimp-api-v3'),
-    Recaptcha = require('recaptcha-verify')
+    Recaptcha = require('recaptcha-verify'),
+    voteController = require('../../votes/votes.server.controller'),
+    socket = require('../../helpers/socket')
 
 // URLs for which user can't be redirected on signin
 const noReturnUrls = ['/authentication/signin', '/authentication/signup']
@@ -49,6 +51,9 @@ const addToMailingList = function (user) {
 
 exports.checkAuthStatus = function (req, res, next) {
     passport.authenticate('check-status', function (err, loggedInUser, info) {
+        console.log(err, 'this is err on checkStatus')
+        console.log(loggedInUser, 'this is loggediNUser on checkStatus')
+        console.log(req.user, 'this is user')
         if (err || !loggedInUser) {
             return res.status(403).send(err)
         }
@@ -192,8 +197,44 @@ exports.signin = function (req, res, next) {
 
     const token = createJWT(user)
 
+    const responseData = {
+        voted: false,
+        user,
+    }
+
+    if (req.cookies.vote) {
+        console.log(req.cookies, 'this is cookies at start of vote login')
+        console.log(req.organization, 'this is organization, does it exist?')
+        const cookieVote = JSON.parse(req.cookies.vote)
+        console.log('after cookie parse')
+        const org = req.organization.url
+
+        voteController
+            .loginVote(user, cookieVote)
+            .then(([vote, voteMetaData]) => {
+                console.log(vote, 'this is vote')
+                console.log(voteMetaData, 'this is voteMetaData')
+                socket.send(req, voteMetaData, 'vote', org)
+
+                responseData.voted = vote
+
+                return res.json(responseData)
+            })
+            .catch((err) => {
+                console.log(err, 'this is err')
+                // Vote could not be processed
+                responseData.voted = false
+                return res.json(responseData)
+            })
+
+        return res.clearCookie('vote', {
+            path: '/',
+            domain: 'newvote.org',
+        })
+    }
+
     res.cookie('credentials', JSON.stringify({ token }), tokenOptions)
-    return res.json(user)
+    return res.json(responseData)
 }
 
 /**
@@ -280,9 +321,48 @@ exports.oauthCallback = function (strategy) {
                 }
 
                 res.cookie('credentials', JSON.stringify(creds), tokenOptions)
-                const redirect = sessionRedirectURL
-                    ? host + sessionRedirectURL
-                    : host + '/'
+
+                let redirect
+
+                if (req.cookies.redirect) {
+                    redirect = host + req.cookies.redirect
+                    res.clearCookie('redirect', {
+                        path: '/',
+                        domain: 'newvote.org',
+                    })
+                } else {
+                    redirect = sessionRedirectURL
+                        ? host + sessionRedirectURL
+                        : host + '/'
+                }
+
+                if (req.cookies.vote) {
+                    const cookieVote = JSON.parse(req.cookies.vote)
+                    const voteParams = req.cookies.redirect
+                        ? '&voted='
+                        : '?voted='
+                    voteController
+                        .loginVote(user, cookieVote)
+                        .then(([vote, voteMetaData]) => {
+                            return res.redirect(
+                                302,
+                                redirect + voteParams + 'true',
+                            )
+                        })
+                        .catch((err) => {
+                            // Vote could not be processed
+                            return res.redirect(
+                                302,
+                                redirect + voteParams + 'false',
+                            )
+                        })
+
+                    res.clearCookie('vote', {
+                        path: '/',
+                        domain: 'newvote.org',
+                    })
+                }
+
                 return res.redirect(302, redirect)
             })
         })(req, res, next)

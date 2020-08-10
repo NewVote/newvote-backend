@@ -156,6 +156,7 @@ exports.updateOrCreate = async function (req, res) {
             return exports.update(req, res)
         })
         .catch((err) => {
+            console.log(err, 'this is err')
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err),
             })
@@ -173,7 +174,10 @@ exports.read = function (req, res) {
  * Update a vote
  */
 exports.update = function (req, res) {
-    const org = JSON.parse(req.cookies.organization).url
+    console.log(req.organization, 'this is req.organization')
+    console.log(req.cookies, 'cookies 178')
+    const org = req.organization.url
+    console.log(org, 'this is org on update 178')
     let vote = req.vote
     _.extend(vote, req.body)
 
@@ -185,51 +189,59 @@ exports.update = function (req, res) {
     const userPromise = User.findOne({ _id: req.user._id })
     const votePromise = Vote.populate(vote, { path: 'object' })
 
-    Promise.all([userPromise, votePromise]).then(([userData, voteData]) => {
-        const { subscriptions } = userData
-        const { objectType } = voteData
+    Promise.all([userPromise, votePromise])
+        .then(([userData, voteData]) => {
+            const { subscriptions } = userData
+            const { objectType } = voteData
 
-        // do notsubscribe to suggestion parents
-        if (voteData.objectType === 'Suggestion') {
-            return false
-        }
+            // do notsubscribe to suggestion parents
+            if (voteData.objectType === 'Suggestion') {
+                return false
+            }
 
-        // User has not setup profile
-        if (!subscriptions[req.organization._id]) {
-            return false
-        }
+            if (!subscriptions) {
+                return false
+            }
 
-        // user has not signed up to auto updates so do nothing
-        if (!subscriptions[req.organization._id].autoUpdates) {
-            return false
-        }
-        // user has signed up to auto issue subscriptions on current organization
-        // take the current vote and check whether it is for a solution / action
-        // and find it's parent
+            // User has not setup profile
+            if (!subscriptions[req.organization._id]) {
+                return false
+            }
 
-        if (objectType === 'Proposal') {
-            return getIssueIdsFromProposalObject(
-                voteData.object.solutions,
-            ).then((issueIds) => {
+            // user has not signed up to auto updates so do nothing
+            if (!subscriptions[req.organization._id].autoUpdates) {
+                return false
+            }
+            // user has signed up to auto issue subscriptions on current organization
+            // take the current vote and check whether it is for a solution / action
+            // and find it's parent
+
+            if (objectType === 'Proposal') {
+                return getIssueIdsFromProposalObject(
+                    voteData.object.solutions,
+                ).then((issueIds) => {
+                    return updateUserSubscriptionsWithSolutionsIssueIds(
+                        issueIds,
+                        req.user,
+                        req.organization,
+                    )
+                })
+            }
+
+            if (objectType === 'Solution') {
+                const {
+                    object: { issues },
+                } = voteData
                 return updateUserSubscriptionsWithSolutionsIssueIds(
-                    issueIds,
+                    issues,
                     req.user,
                     req.organization,
                 )
-            })
-        }
-
-        if (objectType === 'Solution') {
-            const {
-                object: { issues },
-            } = voteData
-            return updateUserSubscriptionsWithSolutionsIssueIds(
-                issues,
-                req.user,
-                req.organization,
-            )
-        }
-    })
+            }
+        })
+        .catch((err) => {
+            console.log(err, 'this is err')
+        })
 
     vote.save()
         .then((vote) => {
@@ -424,6 +436,82 @@ exports.attachVotes = function (objects, user, regions) {
     })
 }
 
+exports.loginVote = async function (user, userVote) {
+    const { object, organizationId } = userVote
+
+    try {
+        await isUserPermittedToVote(user, organizationId)
+    } catch (err) {
+        console.log(err)
+        throw err
+    }
+
+    const findVotePromise = await Vote.findOne({
+        user: user,
+        object: object,
+    })
+
+    const createOrUpdateVote = findVotePromise
+        ? exports.update(findVotePromise, userVote)
+        : exports.create(userVote, user)
+    const getVoteMetaData = createOrUpdateVote.then(createVoteMetaData)
+
+    return Promise.all([createOrUpdateVote, getVoteMetaData])
+}
+
+async function isUserPermittedToVote(user, organizationId) {
+    try {
+        const isVerified = await isUserSignedToOrg(organizationId, user)
+        if (!isVerified) throw 'User is not verified'
+    } catch (error) {
+        throw {
+            message:
+                'You must verify with Community before being able to vote.',
+            notCommunityVerified: true,
+        }
+    }
+
+    try {
+        const hasVotePermission = await checkOrgVotePermissions(
+            organizationId,
+            user,
+        )
+
+        if (!hasVotePermission) throw 'User does not have permission'
+    } catch (err) {
+        throw {
+            message: 'You do not have permission to vote on this organization',
+        }
+    }
+
+    return true
+}
+
+async function createVoteMetaData(vote) {
+    const voteMetaData = {
+        up: 0,
+        down: 0,
+        total: 0,
+    }
+
+    // Get all related votes
+    const votes = await Vote.find({
+        object: vote.object,
+    })
+
+    votes.forEach((item) => {
+        if (!voteMetaData._id && item.object) {
+            voteMetaData._id = item.object
+        }
+        if (item.voteValue > 0) voteMetaData.up++
+        if (item.voteValue < 0) voteMetaData.down++
+    })
+
+    voteMetaData.total = voteMetaData.up + voteMetaData.down
+
+    return voteMetaData
+}
+
 // Local functions
 function fixVoteTypes(vote) {
     // fixing a bug where vote object types were being incorrectly set
@@ -592,8 +680,8 @@ function checkPermissions(userRole, organizationRoles) {
 
 exports.getTotalVotes = async function (req, res) {
     const { organization } = req
-
-    // if (!req.user) throw 'User is not signed in'
+    console.log(req.user, 'this is req.user')
+    if (!req.user) throw 'User is not signed in'
 
     const solutions = await Solution.find({
         organizations: { $in: [organization._id] },
