@@ -293,6 +293,7 @@ exports.oauthCallback = function (strategy) {
  * Helper function to create or update a user after AAF Rapid SSO auth
  */
 exports.saveRapidProfile = function (req, profile, done) {
+    console.log(req.cookies, 'this is cookies')
     let { organization } = req.cookies
     organization = JSON.parse(organization)
     const { _id: id } = organization
@@ -339,50 +340,57 @@ exports.saveRapidProfile = function (req, profile, done) {
                     profile.givenname + profile.surname ||
                     (profile.mail ? profile.mail.split('@')[0] : '')
 
-                User.findUniqueUsername(possibleUsername, null, function (
-                    availableUsername,
-                ) {
-                    console.log('generated username: ', availableUsername)
-                    user = new User({
-                        firstName: profile.givenname,
-                        lastName: profile.surname,
-                        username: profile.mail,
-                        displayName: profile.displayname,
-                        email: profile.mail,
-                        provider: 'aaf',
-                        providerData: providerData,
-                        ita: profile.ita,
-                        roles: ['user'],
-                        verified: true,
-                        organizations: [organization._id],
-                    })
-                    // And save the user
-                    return user.save()
-                })
-            } else {
-                if (!user.providerData) user.providerData = {}
-                const userProviders = user.providerData
-                const providerExists = userProviders[organization.url]
-
-                if (!providerExists)
-                    user.providerData[organization.url] = aafAttributes
-
-                if (organization) {
-                    const orgExists = user.organizations.find((e) => {
-                        if (e) {
-                            return e._id.equals(organization._id)
-                        }
-                    })
-                    if (!orgExists) user.organizations.push(organization._id)
-                }
-                console.log('found existing user')
-                // user exists update ITA and return user
-                if (user.jti && user.jti === profile.jti) {
-                    return done(new Error('ITA Match please login again'))
-                }
-                user.jti = profile.jti
-                return user.save()
+                return User.findUniqueUsername(
+                    possibleUsername,
+                    null,
+                    function (availableUsername) {
+                        console.log('generated username: ', availableUsername)
+                        user = new User({
+                            firstName: profile.givenname,
+                            lastName: profile.surname,
+                            username: profile.mail,
+                            displayName: profile.displayname,
+                            email: profile.mail,
+                            provider: 'aaf',
+                            providerData: providerData,
+                            ita: profile.ita,
+                            roles: ['user'],
+                            verified: true,
+                            organizations: [organization._id],
+                        })
+                        // And save the user
+                        return user.save()
+                    },
+                )
             }
+
+            if (!user.providerData) user.providerData = {}
+            const userProviders = user.providerData
+            const providerExists = Object.prototype.hasOwnProperty.call(
+                userProviders,
+                organization.url,
+            )
+
+            if (!providerExists) {
+                userProviders[organization.url] = aafAttributes
+            }
+
+            if (organization) {
+                const orgExists = user.organizations.find((e) => {
+                    if (e) {
+                        return e._id.equals(organization._id)
+                    }
+                })
+                if (!orgExists) user.organizations.push(organization._id)
+            }
+            console.log('found existing user')
+            // user exists update ITA and return user
+            if (user.jti && user.jti === profile.jti) {
+                return done(new Error('ITA Match please login again'))
+            }
+            user.jti = profile.jti
+            user.markModified('providerData')
+            return user.save()
         })
         .then((user) => {
             return done(null, user)
