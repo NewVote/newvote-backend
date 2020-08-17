@@ -203,10 +203,11 @@ exports.isAllowed = async function (req, res, next) {
             if (isAllowed) return next()
 
             // no user object no use testing for other errors
-            if (!user)
+            if (!user) {
                 return res.status(401).json({
                     message: 'User is not authenticated',
                 })
+            }
 
             if (!user.roles.includes('user') || !user.verified) {
                 // user is logged in but they are missing the user role

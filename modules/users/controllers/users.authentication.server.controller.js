@@ -51,9 +51,6 @@ const addToMailingList = function (user) {
 
 exports.checkAuthStatus = function (req, res, next) {
     passport.authenticate('check-status', function (err, loggedInUser, info) {
-        console.log(err, 'this is err on checkStatus')
-        console.log(loggedInUser, 'this is loggediNUser on checkStatus')
-        console.log(req.user, 'this is user')
         if (err || !loggedInUser) {
             return res.status(403).send(err)
         }
@@ -203,17 +200,17 @@ exports.signin = function (req, res, next) {
     }
 
     if (req.cookies.vote) {
-        console.log(req.cookies, 'this is cookies at start of vote login')
-        console.log(req.organization, 'this is organization, does it exist?')
         const cookieVote = JSON.parse(req.cookies.vote)
-        console.log('after cookie parse')
         const org = req.organization.url
 
-        voteController
+        res.clearCookie('vote', {
+            path: '/',
+            domain: 'newvote.org',
+        })
+
+        return voteController
             .loginVote(user, cookieVote)
             .then(([vote, voteMetaData]) => {
-                console.log(vote, 'this is vote')
-                console.log(voteMetaData, 'this is voteMetaData')
                 socket.send(req, voteMetaData, 'vote', org)
 
                 responseData.voted = vote
@@ -221,16 +218,10 @@ exports.signin = function (req, res, next) {
                 return res.json(responseData)
             })
             .catch((err) => {
-                console.log(err, 'this is err')
                 // Vote could not be processed
                 responseData.voted = false
                 return res.json(responseData)
             })
-
-        return res.clearCookie('vote', {
-            path: '/',
-            domain: 'newvote.org',
-        })
     }
 
     res.cookie('credentials', JSON.stringify({ token }), tokenOptions)
@@ -341,7 +332,12 @@ exports.oauthCallback = function (strategy) {
                     const voteParams = req.cookies.redirect
                         ? '&voted='
                         : '?voted='
-                    voteController
+
+                    res.clearCookie('vote', {
+                        path: '/',
+                        domain: 'newvote.org',
+                    })
+                    return voteController
                         .loginVote(user, cookieVote)
                         .then(([vote, voteMetaData]) => {
                             return res.redirect(
@@ -356,11 +352,6 @@ exports.oauthCallback = function (strategy) {
                                 redirect + voteParams + 'false',
                             )
                         })
-
-                    res.clearCookie('vote', {
-                        path: '/',
-                        domain: 'newvote.org',
-                    })
                 }
 
                 return res.redirect(302, redirect)
@@ -373,7 +364,6 @@ exports.oauthCallback = function (strategy) {
  * Helper function to create or update a user after AAF Rapid SSO auth
  */
 exports.saveRapidProfile = function (req, profile, done) {
-    console.log(req.cookies, 'this is cookies')
     let { organization } = req.cookies
     organization = JSON.parse(organization)
     const { _id: id } = organization

@@ -156,7 +156,6 @@ exports.updateOrCreate = async function (req, res) {
             return exports.update(req, res)
         })
         .catch((err) => {
-            console.log(err, 'this is err')
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err),
             })
@@ -174,10 +173,7 @@ exports.read = function (req, res) {
  * Update a vote
  */
 exports.update = function (req, res) {
-    console.log(req.organization, 'this is req.organization')
-    console.log(req.cookies, 'cookies 178')
     const org = req.organization.url
-    console.log(org, 'this is org on update 178')
     let vote = req.vote
     _.extend(vote, req.body)
 
@@ -240,7 +236,7 @@ exports.update = function (req, res) {
             }
         })
         .catch((err) => {
-            console.log(err, 'this is err')
+            return err
         })
 
     vote.save()
@@ -452,8 +448,9 @@ exports.loginVote = async function (user, userVote) {
     })
 
     const createOrUpdateVote = findVotePromise
-        ? exports.update(findVotePromise, userVote)
-        : exports.create(userVote, user)
+        ? updateVote(findVotePromise, userVote)
+        : createVote(userVote, user)
+
     const getVoteMetaData = createOrUpdateVote.then(createVoteMetaData)
 
     return Promise.all([createOrUpdateVote, getVoteMetaData])
@@ -680,7 +677,6 @@ function checkPermissions(userRole, organizationRoles) {
 
 exports.getTotalVotes = async function (req, res) {
     const { organization } = req
-    console.log(req.user, 'this is req.user')
     if (!req.user) throw 'User is not signed in'
 
     const solutions = await Solution.find({
@@ -777,4 +773,16 @@ const updateUserSubscriptionsWithSolutionsIssueIds = (
         user.markModified('subscriptions')
         return user.save()
     })
+}
+
+const createVote = (userVote, user) => {
+    let vote = new Vote(userVote)
+    vote.user = user
+
+    return vote.save()
+}
+
+const updateVote = (vote, userVote) => {
+    _.extend(vote, userVote)
+    return vote.save()
 }
