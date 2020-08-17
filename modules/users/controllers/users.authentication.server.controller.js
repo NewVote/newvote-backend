@@ -314,7 +314,7 @@ exports.oauthCallback = function (strategy) {
                 res.cookie('credentials', JSON.stringify(creds), tokenOptions)
 
                 let redirect
-
+                console.log(req.cookies, 'this is req.cookies')
                 if (req.cookies.redirect) {
                     redirect = host + req.cookies.redirect
                     res.clearCookie('redirect', {
