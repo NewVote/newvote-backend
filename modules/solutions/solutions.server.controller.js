@@ -89,20 +89,30 @@ exports.create = function (req, res) {
  * Show the current solution
  */
 exports.read = function (req, res) {
-    let showDeleted = req.query.showDeleted || null
-    votes
-        .attachVotes([req.solution], req.user, req.query.regions)
-        .then(function (solutionArr) {
-            proposals
-                .attachProposals(solutionArr, req.user, req.query.regions)
-                .then((solutions) => {
-                    solutions = filterSoftDeleteProposals(
-                        solutions,
-                        showDeleted,
-                    )
-                    const updatedSolution = solutions[0]
-                    res.json(updatedSolution)
-                })
+    const solutions = [req.solution]
+    const getVoteMetaData = voteController.getVoteMetaData(solutions)
+
+    if (!req.user) {
+        return getVoteMetaData.then((data) => {
+            const response = {
+                solutions,
+                voteMetaData: data,
+            }
+
+            return res.json(response)
+        })
+    }
+
+    const getUserVoteData = voteController.getUserVotes(solutions, req.user)
+
+    return Promise.all([getVoteMetaData, getUserVoteData])
+        .then((voteMetaData, userVoteData) => {
+            const response = {
+                solutions,
+                voteMetaData,
+                userVoteData,
+            }
+            return res.json(response)
         })
         .catch((err) => {
             return res.status(400).send({
@@ -199,6 +209,17 @@ exports.delete = function (req, res) {
  */
 exports.list = function (req, res) {
     let issueId = req.query.issueId || null
+    let issueMatch = {}
+    if (issueId) {
+        issueMatch = isSlug(issueId)
+            ? {
+                  'issues.slug': issueId,
+              }
+            : {
+                  issues: mongoose.Types.ObjectId(issueId),
+              }
+    }
+
     let search = req.query.search || null
     let org = req.organization
     let orgUrl = org ? org.url : null
@@ -209,11 +230,7 @@ exports.list = function (req, res) {
               'organizations.url': orgUrl,
           }
         : {}
-    let issueMatch = issueId
-        ? {
-              issues: mongoose.Types.ObjectId(issueId),
-          }
-        : {}
+
     let searchMatch = search
         ? {
               $text: {
@@ -247,7 +264,12 @@ exports.list = function (req, res) {
             $match: softDeleteMatch,
         },
         {
-            $match: issueMatch,
+            $lookup: {
+                from: 'issues',
+                localField: 'issues',
+                foreignField: '_id',
+                as: 'issues',
+            },
         },
         {
             $lookup: {
@@ -261,15 +283,10 @@ exports.list = function (req, res) {
             $match: orgMatch,
         },
         {
-            $unwind: '$organizations',
+            $match: issueMatch,
         },
         {
-            $lookup: {
-                from: 'issues',
-                localField: 'issues',
-                foreignField: '_id',
-                as: 'issues',
-            },
+            $unwind: '$organizations',
         },
         {
             $sort: {
@@ -283,10 +300,44 @@ exports.list = function (req, res) {
             })
         }
 
-        votes
-            .attachVotes(solutions, req.user, req.query.regions)
-            .then(function (solutions) {
-                return res.json(solutions)
+        // If there is no user return entities + vote totals for those entities
+        // once logged in, return user votes
+        const populateSolutions = Solution.populate(solutions, {
+            path: 'proposals',
+        })
+        const getVoteMetaData = votes.getVoteMetaData(solutions)
+        if (!req.user) {
+            return Promise.all([populateSolutions, getVoteMetaData]).then(
+                ([solutions, voteMetaData]) => {
+                    const response = {
+                        solutions,
+                        voteMetaData,
+                    }
+
+                    return res.json(response)
+                },
+            )
+        }
+
+        const getUserVoteData = votes.getUserVotes(solutions, req.user)
+
+        return Promise.all([
+            populateSolutions,
+            getVoteMetaData,
+            getUserVoteData,
+        ])
+            .then(([solutions, voteMetaData, userVoteData]) => {
+                const response = {
+                    solutions,
+                    voteMetaData: voteMetaData,
+                    userVoteData,
+                }
+                return res.json(response)
+            })
+            .catch(function (err) {
+                res.status(500).send({
+                    message: errorHandler.getErrorMessage(err),
+                })
             })
     })
 }
@@ -295,7 +346,7 @@ exports.list = function (req, res) {
  * Solution middleware
  */
 exports.solutionByID = function (req, res, next, id) {
-    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+    if (isSlug(id)) {
         return Solution.findOne({
             slug: id,
         })
@@ -353,4 +404,12 @@ exports.seedData = function (organizationId, issueId) {
     newSolution.issues = [issueId]
     newSolution.save()
     return newSolution
+}
+
+const isSlug = (objectId) => {
+    if (objectId.match(/^[0-9a-fA-F]{24}$/)) {
+        return false
+    }
+
+    return true
 }

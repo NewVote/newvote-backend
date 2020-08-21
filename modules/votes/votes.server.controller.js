@@ -364,11 +364,41 @@ exports.voteByID = function (req, res, next, id) {
         })
 }
 
+const getObjectIds = (entities) => {
+    if (!entities.length) {
+        return []
+    }
+
+    return entities.map(function (entity) {
+        return entity._id
+    })
+}
+
+exports.getVoteMetaData = (entities) => {
+    const objectIds = getObjectIds(entities)
+    return Vote.find({
+        object: {
+            $in: objectIds,
+        },
+    }).then((votes) => {
+        return createVoteMetaDataArray(votes)
+    })
+}
+
+exports.getUserVotes = (entities, user) => {
+    const objectIds = getObjectIds(entities)
+
+    return Vote.find({
+        object: {
+            $in: objectIds,
+        },
+        user: user.id,
+    })
+}
+
 exports.attachVotes = function (objects, user, regions) {
     if (!objects) return Promise.resolve(objects)
-    let objectIds = objects.map(function (object) {
-        return object._id
-    })
+    let objectIds = getObjectIds(objects)
 
     return Promise.resolve(regions).then(function (regionString) {
         if (regionString) {
@@ -430,30 +460,6 @@ exports.attachVotes = function (objects, user, regions) {
             })
         }
     })
-}
-
-exports.loginVote = async function (user, userVote) {
-    const { object, organizationId } = userVote
-
-    try {
-        await isUserPermittedToVote(user, organizationId)
-    } catch (err) {
-        console.log(err)
-        throw err
-    }
-
-    const findVotePromise = await Vote.findOne({
-        user: user,
-        object: object,
-    })
-
-    const createOrUpdateVote = findVotePromise
-        ? updateVote(findVotePromise, userVote)
-        : createVote(userVote, user)
-
-    const getVoteMetaData = createOrUpdateVote.then(createVoteMetaData)
-
-    return Promise.all([createOrUpdateVote, getVoteMetaData])
 }
 
 async function isUserPermittedToVote(user, organizationId) {
@@ -574,11 +580,42 @@ function getPostcodes(regionIds) {
         })
 }
 
-function mapObjectWithVotes(objects, user, votes) {
+function createVoteMetaDataArray(votes) {
+    const newVotes = votes.slice().reduce((prev, curr) => {
+        if (!prev[curr.object]) {
+            prev[curr.object] = {
+                up: 0,
+                down: 0,
+                total: 0,
+            }
+        }
+        if (curr.voteValue > 0) {
+            prev[curr.object].up++
+        } else if (curr.voteValue < 1) {
+            prev[curr.object].down++
+        }
+        const { down, up } = prev[curr.object]
+
+        prev[curr.object].total = down + up
+
+        return prev
+    }, {})
+
+    return Object.keys(newVotes).map((key) => {
+        const { up, down, total } = newVotes[key]
+        return {
+            _id: key,
+            down,
+            up,
+            total,
+        }
+    })
+}
+
+function mapObjectWithVotes(objects, votes) {
     objects = objects.map(function (object) {
         // object = object.toObject(); //to be able to set props on the mongoose object
         let objVotes = []
-        let userVote = null
         let up = 0
         let down = 0
         let total = 0
@@ -589,9 +626,6 @@ function mapObjectWithVotes(objects, user, votes) {
         votes.forEach(function (vote) {
             if (vote.object.toString() === object._id.toString()) {
                 objVotes.push(vote)
-                if (user && vote.user.toString() === user._id.toString()) {
-                    userVote = vote
-                }
                 if (vote.voteValue) {
                     if (vote.voteValue > 0) up++
                     else down++
@@ -602,7 +636,6 @@ function mapObjectWithVotes(objects, user, votes) {
         object.votes = {
             _id,
             total: up + down,
-            currentUser: userVote,
             up: up,
             down: down,
         }

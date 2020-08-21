@@ -195,33 +195,7 @@ exports.signin = function (req, res, next) {
     const token = createJWT(user)
 
     const responseData = {
-        voted: false,
         user,
-    }
-
-    if (req.cookies.vote) {
-        const cookieVote = JSON.parse(req.cookies.vote)
-        const org = req.organization.url
-
-        res.clearCookie('vote', {
-            path: '/',
-            domain: 'newvote.org',
-        })
-
-        return voteController
-            .loginVote(user, cookieVote)
-            .then(([vote, voteMetaData]) => {
-                socket.send(req, voteMetaData, 'vote', org)
-
-                responseData.voted = vote
-
-                return res.json(responseData)
-            })
-            .catch((err) => {
-                // Vote could not be processed
-                responseData.voted = false
-                return res.json(responseData)
-            })
     }
 
     res.cookie('credentials', JSON.stringify({ token }), tokenOptions)
@@ -327,38 +301,6 @@ exports.oauthCallback = function (strategy) {
                         : host + '/'
                 }
 
-                // if (req.cookies.vote) {
-                //     const cookieVote = JSON.parse(req.cookies.vote)
-                //     const voteParams = req.cookies.redirect
-                //         ? '&voted='
-                //         : '?voted='
-
-                //     res.clearCookie('vote', {
-                //         path: '/',
-                //         domain: 'newvote.org',
-                //     })
-                //     return voteController
-                //         .loginVote(user, cookieVote)
-                //         .then(([vote, voteMetaData]) => {
-                //             socket.send(req, voteMetaData, 'vote', organization)
-
-                //             // responseData.voted = vote
-                //             // return res.json(responseData)
-                //             return res.redirect(
-                //                 302,
-                //                 redirect + voteParams + 'true',
-                //             )
-                //         })
-                //         .catch((err) => {
-                //             // Vote could not be processed
-                //             return res.redirect(
-                //                 302,
-                //                 redirect + voteParams + 'false',
-                //             )
-                //         })
-                // }
-
-                console.log(redirect, 'this is redirect on SSO')
                 return res.redirect(302, redirect)
             })
         })(req, res, next)

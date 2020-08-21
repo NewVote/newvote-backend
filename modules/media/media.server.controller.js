@@ -38,11 +38,30 @@ exports.create = function (req, res) {
  * Show the current media
  */
 exports.read = function (req, res) {
-    votes
-        .attachVotes([req.media], req.user)
-        .then(function (mediaArr) {
-            const updatedMedia = mediaArr[0]
-            res.json(req.media)
+    const medias = [req.media]
+    const getVoteMetaData = votes.getVoteMetaData(medias)
+
+    if (!req.user) {
+        return getVoteMetaData.then((data) => {
+            const response = {
+                medias,
+                voteMetaData: data,
+            }
+
+            return res.json(response)
+        })
+    }
+
+    const getUserVoteData = votes.getUserVotes(medias, req.user)
+
+    return Promise.all([getVoteMetaData, getUserVoteData])
+        .then((voteMetaData, userVoteData) => {
+            const response = {
+                medias,
+                voteMetaData,
+                userVoteData,
+            }
+            return res.json(response)
         })
         .catch((err) => {
             return res.status(400).send({
@@ -205,18 +224,38 @@ exports.list = function (req, res) {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err),
             })
-        } else {
-            votes
-                .attachVotes(medias, req.user)
-                .then(function (mediaArr) {
-                    res.json(mediaArr)
-                })
-                .catch(function (err) {
-                    res.status(500).send({
-                        message: errorHandler.getErrorMessage(err),
-                    })
-                })
         }
+
+        // If there is no user return entities + vote totals for those entities
+        // once logged in, return user votes
+        const getVoteMetaData = votes.getVoteMetaData(medias)
+        if (!req.user) {
+            return getVoteMetaData.then((data) => {
+                const response = {
+                    medias,
+                    voteMetaData: data,
+                }
+
+                return res.json(response)
+            })
+        }
+
+        const getUserVoteData = votes.getUserVotes(medias, req.user)
+
+        return Promise.all([getVoteMetaData, getUserVoteData])
+            .then((voteMetaData, userVoteData) => {
+                const response = {
+                    medias,
+                    voteMetaData: voteMetaData,
+                    userVoteData,
+                }
+                return res.json(response)
+            })
+            .catch(function (err) {
+                res.status(500).send({
+                    message: errorHandler.getErrorMessage(err),
+                })
+            })
     })
 }
 

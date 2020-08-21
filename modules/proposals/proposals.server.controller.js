@@ -90,11 +90,30 @@ exports.create = function (req, res) {
  * Show the current proposal
  */
 exports.read = function (req, res) {
-    votes
-        .attachVotes([req.proposal], req.user, req.query.regions)
-        .then(function (proposalArr) {
-            const updatedProposal = proposalArr[0]
-            res.json(updatedProposal)
+    const proposals = [req.proposal]
+    const getVoteMetaData = voteController.getVoteMetaData(proposals)
+
+    if (!req.user) {
+        return getVoteMetaData.then((data) => {
+            const response = {
+                proposals,
+                voteMetaData: data,
+            }
+
+            return res.json(response)
+        })
+    }
+
+    const getUserVoteData = voteController.getUserVotes(proposals, req.user)
+
+    return Promise.all([getVoteMetaData, getUserVoteData])
+        .then((voteMetaData, userVoteData) => {
+            const response = {
+                proposals,
+                voteMetaData,
+                userVoteData,
+            }
+            return res.json(response)
         })
         .catch((err) => {
             return res.status(400).send({
@@ -270,18 +289,38 @@ exports.list = function (req, res) {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err),
             })
-        } else {
-            votes
-                .attachVotes(proposals, req.user, req.query.regions)
-                .then(function (proposals) {
-                    res.json(proposals)
-                })
-                .catch(function (err) {
-                    res.status(500).send({
-                        message: errorHandler.getErrorMessage(err),
-                    })
-                })
         }
+
+        // If there is no user return entities + vote totals for those entities
+        // once logged in, return user votes
+        const getVoteMetaData = votes.getVoteMetaData(proposals)
+        if (!req.user) {
+            return getVoteMetaData.then((data) => {
+                const response = {
+                    proposals,
+                    voteMetaData: data,
+                }
+
+                return res.json(response)
+            })
+        }
+
+        const getUserVoteData = votes.getUserVotes(proposals, req.user)
+
+        return Promise.all([getVoteMetaData, getUserVoteData])
+            .then((voteMetaData, userVoteData) => {
+                const response = {
+                    proposals,
+                    voteMetaData: voteMetaData,
+                    userVoteData,
+                }
+                return res.json(response)
+            })
+            .catch(function (err) {
+                return res.status(500).send({
+                    message: errorHandler.getErrorMessage(err),
+                })
+            })
     })
 }
 

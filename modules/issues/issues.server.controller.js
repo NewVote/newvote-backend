@@ -53,16 +53,19 @@ exports.create = function (req, res) {
  */
 exports.read = function (req, res) {
     // ;
-    IssuesController.attachMetaData([req.issue], req.user)
-        .then(function (issueArr) {
-            const updatedIssue = issueArr[0]
-            res.json(updatedIssue)
-        })
-        .catch((err) => {
-            return res.status(400).send({
-                message: errorHandler.getErrorMessage(err),
-            })
-        })
+
+    return res.json(req.issue)
+
+    // IssuesController.attachMetaData([req.issue], req.user)
+    //     .then(function (issueArr) {
+    //         const updatedIssue = issueArr[0]
+    //         res.json(updatedIssue)
+    //     })
+    //     .catch((err) => {
+    //         return res.status(400).send({
+    //             message: errorHandler.getErrorMessage(err),
+    //         })
+    //     })
 }
 
 /**
@@ -200,17 +203,21 @@ exports.list = function (req, res) {
             return res.status(400).send({
                 message: errorHandler.getErrorMessage(err),
             })
-        } else {
-            IssuesController.attachMetaData(issues, req.user)
-                .then(function (issues) {
-                    res.json(issues)
-                })
-                .catch(function (err) {
-                    res.status(500).send({
-                        message: errorHandler.getErrorMessage(err),
-                    })
-                })
         }
+
+        // else {
+        //     IssuesController.attachMetaData(issues, req.user)
+        //         .then(function (issues) {
+        //             res.json(issues)
+        //         })
+        //         .catch(function (err) {
+        //             res.status(500).send({
+        //                 message: errorHandler.getErrorMessage(err),
+        //             })
+        //         })
+        // }
+
+        return res.json(issues)
     })
 }
 
@@ -218,6 +225,7 @@ exports.list = function (req, res) {
  * Issue middleware
  */
 exports.issueByID = function (req, res, next, id) {
+    console.log('issueById')
     if (!id.match(/^[0-9a-fA-F]{24}$/)) {
         return Issue.findOne({
             slug: id,
@@ -232,6 +240,7 @@ exports.issueByID = function (req, res, next, id) {
                 next()
             })
             .catch((err) => {
+                console.log(err, 'this is err')
                 return res.status(400).send({
                     message: err,
                 })
@@ -244,6 +253,7 @@ exports.issueByID = function (req, res, next, id) {
         .populate('organizations')
         .exec(function (err, issue) {
             if (err) {
+                console.log(err, 'this is err')
                 return next(err)
             } else if (!issue) {
                 return res.status(404).send({
