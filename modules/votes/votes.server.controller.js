@@ -173,7 +173,7 @@ exports.read = function (req, res) {
  * Update a vote
  */
 exports.update = function (req, res) {
-    const org = JSON.parse(req.cookies.organization).url
+    const org = req.organization.url
     let vote = req.vote
     _.extend(vote, req.body)
 
@@ -195,7 +195,7 @@ exports.update = function (req, res) {
         }
 
         // User has not setup profile
-        if (!subscriptions[req.organization._id]) {
+        if (!subscriptions || !subscriptions[req.organization._id]) {
             return false
         }
 

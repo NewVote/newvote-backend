@@ -59,7 +59,7 @@ let RepSchema = new Schema({
     },
     imageUrl: {
         type: String,
-        default: 'assets/logo-no-text.png',
+        default: 'assets/portrait-placeholder.png',
     },
     tags: [{ type: String, unique: false }],
 })
