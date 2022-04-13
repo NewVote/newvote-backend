@@ -22,7 +22,7 @@
     "main": "./server.js",
     "dependencies": {
         "acl": "~0.4.4",
-        "async": "^1.5.2",
+        "async": "^3.2.2",
         "body-parser": "^1.19.0",
         "celebrate": "^10.1.0",
         "chai": "^4.2.0",
